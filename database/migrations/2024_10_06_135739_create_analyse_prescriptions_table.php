@@ -10,6 +10,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        // table pivot
         Schema::create('analyse_prescriptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('prescription_id')->constrained('prescriptions')->onDelete('cascade');

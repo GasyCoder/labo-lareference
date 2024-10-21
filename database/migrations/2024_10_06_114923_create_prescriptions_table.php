@@ -12,6 +12,7 @@ return new class extends Migration {
     {
         Schema::create('prescriptions', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('secretaire_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
             $table->foreignId('prescripteur_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('nouveau_prescripteur_nom')->nullable();

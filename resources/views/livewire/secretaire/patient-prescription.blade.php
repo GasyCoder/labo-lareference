@@ -18,7 +18,7 @@
                 </div>
                 <!-- button -->
                 <div>
-                <a href="{{route('admin.prescriptions.add')}}" class="btn btn-primary">
+                <a href="{{route('secretaire.prescriptions.add')}}" class="btn btn-primary">
                     <i class="fas fa-plus-circle"></i> Ajouter une prescription</a>
                 <a href="#" class="btn btn-secondary me-2"><i class="fas fa-file-download me-0"></i> Exporter</a>
                 </div>
@@ -45,13 +45,19 @@
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#actifs" type="button" role="tab" aria-selected="true">
                                         <i class="fas fa-list-ul me-2"></i>Prescriptions Actives
-                                        <span class="badge bg-success rounded-pill ms-1">{{$activePrescriptions->count()}}</span>
+                                        <span class="badge bg-warning rounded-pill ms-1">{{$activePrescriptions->count()}}</span>
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#archives" type="button" role="tab" aria-selected="false">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#valide" type="button" role="tab" aria-selected="true">
+                                        <i class="fas fa-list-ul me-2"></i>Prescriptions Validés
+                                        <span class="badge bg-success rounded-pill ms-1">{{$analyseValides->count()}}</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#deleted" type="button" role="tab" aria-selected="false">
                                         <i class="fas fa-trash me-2"></i>Prescriptions Corbeille
-                                        <span class="badge bg-danger rounded-pill ms-1">{{$archivedPrescriptions->count()}}</span>
+                                        <span class="badge bg-danger rounded-pill ms-1">{{$deletedPrescriptions->count()}}</span>
                                     </button>
                                 </li>
                             </ul>
@@ -77,22 +83,42 @@
                                     @endif
                                 </div>
 
-                                <!-- Liste Archivée -->
-                                <div class="tab-pane fade" id="archives" role="tabpanel">
-                                    @if($archivedPrescriptions->isNotEmpty())
+                                <!-- Liste Valide -->
+                                <div class="tab-pane fade" id="valide" role="tabpanel">
+                                    @if($analyseValides->isNotEmpty())
                                         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                                            @foreach($archivedPrescriptions as $prescription)
+                                            @foreach($activePrescriptions as $prescription)
+                                                <div class="col">
+                                                    @include('livewire.secretaire.partials.prescription-card', ['prescription' => $prescription, 'isArchived' => false])
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <div class="mt-4">
+                                            {{ $analyseValides->links() }}
+                                        </div>
+                                    @else
+                                        <div class="alert alert-info" role="alert">
+                                            <i class="fas fa-info-circle me-2"></i>Aucune prescription validé trouvée.
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <!-- Liste Archivée -->
+                                <div class="tab-pane fade" id="deleted" role="tabpanel">
+                                    @if($deletedPrescriptions->isNotEmpty())
+                                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                                            @foreach($deletedPrescriptions as $prescription)
                                                 <div class="col">
                                                     @include('livewire.secretaire.partials.prescription-card', ['prescription' => $prescription, 'isArchived' => true])
                                                 </div>
                                             @endforeach
                                         </div>
                                         <div class="mt-4">
-                                            {{ $archivedPrescriptions->links() }}
+                                            {{ $deletedPrescriptions->links() }}
                                         </div>
                                     @else
                                         <div class="alert alert-info" role="alert">
-                                            <i class="fas fa-info-circle me-2"></i>Aucune prescription archivée trouvée.
+                                            <i class="fas fa-info-circle me-2"></i>Aucune corbeille trouvée.
                                         </div>
                                     @endif
                                 </div>

@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->enum('mode_paiement', ['ESPECES', 'CARTE', 'CHEQUE']);
             $table->foreignId('recu_par')->constrained('users');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

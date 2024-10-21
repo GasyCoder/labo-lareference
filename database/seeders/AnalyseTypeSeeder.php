@@ -14,27 +14,6 @@ class AnalyseTypeSeeder extends Seeder
      */
     public function run(): void
     {
-        /**
-        ancien id 4 nouveau 'id' => 1,
-        ancien id 5 nouveau 'id' => 2,
-        ancien id 6 nouveau 'id' => 3,
-        ancien id 7 nouveau 'id' => 4,
-        ancien id 8 nouveau 'id' => 5,
-        ancien id 9 nouveau 'id' => 6,
-        ancien id 10 nouveau 'id' => 7,
-        ancien id 11 nouveau 'id' => 8,
-        ancien id 12 nouveau 'id' => 9,
-        ancien id 13 nouveau 'id' => 10,
-        ancien id 14 nouveau 'id' => 11,
-        ancien id 15 nouveau 'id' => 12,
-        ancien id 16 nouveau 'id' => 13,
-        ancien id 17 nouveau 'id' => 14,
-        ancien id 18 nouveau 'id' => 15,
-        ancien id 19 nouveau 'id' => 16,
-        ancien id 20 nouveau 'id' => 17,
-        ancien id 21 nouveau 'id' => 18,
-        **/
-
         $analyseTypes = [
             ['id' => 1, 'name' => 'MULTIPLE', 'libelle' => 'Ensemble de plusieur type elementaire', 'created_at' => '2018-07-25 22:47:23', 'updated_at' => '2018-09-06 20:23:44', 'status' => true],
             ['id' => 2, 'name' => 'TEST', 'libelle' => 'Test', 'created_at' => '2018-07-25 22:50:36', 'updated_at' => '2018-07-25 23:00:28', 'status' => true],

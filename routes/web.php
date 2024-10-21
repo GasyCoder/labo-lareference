@@ -1,9 +1,11 @@
 <?php
 
 use App\Livewire\Dashboard;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Admin\Users\EditUsers;
 use App\Livewire\Secretaire\AddAnalyses;
+use App\Livewire\Technicien\Traitements;
 use App\Livewire\Admin\Analyses\Analyses;
 use App\Livewire\Admin\Users\CreateUsers;
 use App\Livewire\Admin\Examen\IndexExamen;
@@ -15,8 +17,11 @@ use App\Livewire\Secretaire\EditPrescription;
 use App\Livewire\Admin\Analyses\AnalysesParent;
 use App\Livewire\Admin\Analyses\AnalysesElement;
 use App\Livewire\Secretaire\PatientPrescription;
+use App\Livewire\Secretaire\ProfilePrescription;
+use App\Livewire\Technicien\DetailsPrescription;
 use App\Livewire\Admin\Analyses\AnalysesPrincipal;
 use App\Livewire\Admin\Germes\BacteryFamilyManager;
+use App\Livewire\Technicien\TechnicianAnalysisForm;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,13 +29,14 @@ use App\Livewire\Admin\Germes\BacteryFamilyManager;
 |--------------------------------------------------------------------------
 */
 
-// Public routes
-Route::get('/', function () {
-    return view('welcome');
-});
-
 // Authentication routes
 require __DIR__.'/auth.php';
+Route::redirect('/', '/login');
+Route::redirect('/register', '/login');
+
+Route::get('/', function () {
+    return Auth::check() ? redirect('/dashboard') : redirect('/login');
+});
 
 // Protected routes
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -53,10 +59,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/analyse-principal', Analyses::class)->name('analyse.list');
             Route::get('/analyse-principal/view/{id}', Analyses::class)->name('analyse.view');
             Route::get('/analyse-element/create', AnalysesElement::class)->name('analyse-element.create');
-
-            Route::get('/prescriptions', PatientPrescription::class)->name('patients.index');
-            Route::get('/prescriptions/ajouter', AddPrescriptions::class)->name('prescriptions.add');
-            Route::get('/prescriptions/{id}/edit', EditPrescription::class)->name('prescriptions.edit');
         });
 
         // Biologiste routes
@@ -66,12 +68,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Secrétaire routes
         Route::middleware(['role:secretaire'])->prefix('secretaire')->name('secretaire.')->group(function () {
-            // Add specific secrétaire routes here
+
+            Route::get('/prescriptions', PatientPrescription::class)->name('patients.index');
+            Route::get('/prescriptions/ajouter', AddPrescriptions::class)->name('prescriptions.add');
+            Route::get('/prescriptions/{id}/edit', EditPrescription::class)->name('prescriptions.edit');
+            Route::get('/prescriptions/{id}/profil', ProfilePrescription::class)->name('prescriptions.profil');
+
         });
 
         // Technicien routes
-        Route::middleware(['role:technicien'])->prefix('technicien')->name('technicien.')->group(function () {
-            // Add specific technicien routes here
+        Route::middleware(['auth', 'role:technicien'])->prefix('technicien')->name('technicien.')->group(function () {
+            Route::get('/traitement', Traitements::class)->name('traitement.index');
+            Route::get('/traitement/{prescription}/analyse', TechnicianAnalysisForm::class)->name('traitement.show');
         });
 
         // Prescripteur routes

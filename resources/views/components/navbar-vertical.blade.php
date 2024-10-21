@@ -56,10 +56,6 @@
                       <a class="nav-link" href="{{route('admin.analyse.list')}}"><i class="nav-icon fe fe-chevron-right me-2"></i>
                         Principales </a>
                     </li>
-                    {{-- <li class="nav-item">
-                        <a class="nav-link" href="{{route('admin.analyse-element.create')}}"><i class="nav-icon fe fe-chevron-right me-2"></i>
-                            Elements</a>
-                    </li> --}}
                   </ul>
                 </div>
             </li>
@@ -68,7 +64,7 @@
       </li>
       @endif
 
-      @if(auth()->user()->hasRole('superadmin') || auth()->user()->can('biologiste'))
+      @if(auth()->user()->can('biologiste'))
       <li class="nav-item">
         <div class="navbar-heading">Biologistes</div>
       </li>
@@ -92,7 +88,7 @@
       </li>
       @endif
 
-      @if(auth()->user()->hasRole('superadmin') || auth()->user()->can('secretaire'))
+      @if(auth()->user()->can('secretaire'))
       <li class="nav-item">
         <div class="navbar-heading">Secrétaires</div>
       </li>
@@ -105,10 +101,7 @@
         <div id="navSec" class="collapse" data-bs-parent="#sideNavbar">
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a class="nav-link" href="{{route('admin.patients.index')}}"><i class="fas fa-user-plus me-2"></i> Prescriptions</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#"><i class="fas fa-check-circle me-2"></i> Analyses valides</a>
+              <a class="nav-link" href="{{route('secretaire.patients.index')}}"><i class="fas fa-user-plus me-2"></i> Prescriptions</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#"><i class="fas fa-archive me-2"></i> Archives</a>
@@ -118,23 +111,15 @@
       </li>
       @endif
 
-      @if(auth()->user()->hasRole('superadmin') || auth()->user()->can('technicien'))
+      @if(auth()->user()->can('technicien'))
       <li class="nav-item">
         <div class="navbar-heading">Techniciens</div>
       </li>
       <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
-          data-bs-target="#navTechnique" aria-expanded="false" aria-controls="navTechnique">
+        <a class="nav-link" href="{{route('technicien.traitement.index')}}">
          <i class="fas fa-microscope me-2"></i>
           Techniciens
         </a>
-        <div id="navTechnique" class="collapse" data-bs-parent="#sideNavbar">
-          <ul class="nav flex-column">
-            <li class="nav-item">
-              <a class="nav-link" href="#"><i class="fas fa-check-circle me-2"></i> Analyses valides</a>
-            </li>
-          </ul>
-        </div>
       </li>
       @endif
 

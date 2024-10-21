@@ -14,6 +14,7 @@ class Prescription extends Model
     public $timestamps = true;
     protected $fillable = [
 
+        'secretaire_id',
         'patient_id',
         'prescripteur_id',
         'nouveau_prescripteur_nom',
@@ -45,6 +46,11 @@ class Prescription extends Model
     public function prescripteur()
     {
         return $this->belongsTo(User::class, 'prescripteur_id');
+    }
+
+    public function secretaire()
+    {
+        return $this->belongsTo(User::class, 'secretaire_id');
     }
 
     public function analyses()
@@ -101,6 +107,11 @@ class Prescription extends Model
     public function isArchived()
     {
         return $this->status === self::STATUS_ARCHIVE;
+    }
+
+    public function isTermined()
+    {
+        return $this->status === self::STATUS_TERMINE;
     }
 
     public function paiements()

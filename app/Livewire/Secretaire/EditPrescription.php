@@ -54,7 +54,7 @@ class EditPrescription extends Component
 
         if (!$prescription) {
             session()->flash('error', 'Prescription introuvable.');
-            return redirect()->route('admin.patients.index');
+            return redirect()->route('secretaire.patients.index');
         }
 
         $this->prescriptionId = $prescription->id;
@@ -154,7 +154,7 @@ class EditPrescription extends Component
             });
 
             $this->alert('success', 'Prescription mise à jour avec succès.');
-            return redirect()->route('admin.patients.index');
+            return redirect()->route('secretaire.patients.index');
         } catch (\Exception $e) {
             $this->alert('error', 'Une erreur est survenue lors de la mise à jour: ' . $e->getMessage());
         }

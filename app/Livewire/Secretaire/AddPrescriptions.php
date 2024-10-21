@@ -11,6 +11,7 @@ use App\Models\Prescription;
 use Livewire\Attributes\Rule;
 use Illuminate\Support\Facades\DB;
 use App\Models\AnalysePrescription;
+use Illuminate\Support\Facades\Auth;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 class AddPrescriptions extends Component
@@ -111,7 +112,7 @@ class AddPrescriptions extends Component
 
             $this->alert('success', 'Patient, prescription et analyses enregistrés avec succès.');
             $this->reset();
-            return redirect()->route('admin.patients.index');
+            return redirect()->route('secretaire.patients.index');
         } catch (\Exception $e) {
             $this->alert('error', 'Une erreur est survenue lors de l\'enregistrement: ' . $e->getMessage());
         }
@@ -169,6 +170,7 @@ class AddPrescriptions extends Component
         $prescriptionData = $this->getPrescriptionData();
         $prescriptionData['patient_id'] = $patient->id;
         $prescriptionData['status'] = Prescription::STATUS_EN_ATTENTE;
+        $prescriptionData['secretaire_id'] = Auth::id();
 
         $prescription = $this->isEditing
             ? Prescription::findOrFail($this->prescriptionId)
@@ -205,6 +207,7 @@ class AddPrescriptions extends Component
             'remise' => $this->remise,
             'prescripteur_id' => $this->prescripteur_id,
             'nouveau_prescripteur_nom' => $this->prescripteur_id ? null : $this->nouveau_prescripteur_nom,
+            'secretaire_id' => Auth::id(),
         ];
     }
 
@@ -331,6 +334,5 @@ class AddPrescriptions extends Component
         // Mettre à jour le statut de la prescription
         $prescription->updateStatus();
     }
-
 
 }

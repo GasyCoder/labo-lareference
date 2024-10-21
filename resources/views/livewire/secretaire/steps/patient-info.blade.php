@@ -49,4 +49,16 @@
         <input type="number" step="0.01" id="poids" wire:model.defer="poids" class="form-control @error('poids') is-invalid @enderror">
         @error('poids') <div class="text-danger">{{ $message }}</div> @enderror
     </div>
+
+    <div class="col-md-6">
+        <label for="telephone" class="form-label">Téléphone</label>
+        <input type="text" id="telephone" wire:model="telephone" class="form-control @error('telephone') is-invalid @enderror">
+        @error('telephone') <div class="text-danger">{{ $message }}</div> @enderror
+    </div>
+
+    <div class="col-md-6">
+        <label for="email" class="form-label">Adresse email</label>
+        <input type="text" id="email" wire:model="email" class="form-control @error('email') is-invalid @enderror">
+        @error('email') <div class="text-danger">{{ $message }}</div> @enderror
+    </div>
 </div>

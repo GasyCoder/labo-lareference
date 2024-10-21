@@ -61,17 +61,25 @@ class Analyse extends Model
     /**
      * Obtenir les analyses enfants directes.
      */
-    public function children(): HasMany
-    {
-        return $this->hasMany(Analyse::class, 'parent_code');
-    }
+
+     public function children()
+     {
+         return $this->hasMany(Analyse::class, 'parent_code', 'code')->orderBy('ordre');
+     }
 
     /**
      * Obtenir tous les enfants récursivement.
      */
-    public function allChildren(): HasMany
+    // public function allChildren(): HasMany
+    // {
+    //     return $this->children()->with('allChildren');
+    // }
+
+    public function allChildren()
     {
-        return $this->children()->with('allChildren');
+             return $this->hasMany(Analyse::class, 'parent_code', 'code')
+                    ->with('allChildren')
+                    ->orderBy('ordre');
     }
 
     /**
@@ -135,4 +143,29 @@ class Analyse extends Model
 
         return (string) $nextCode;
     }
+
+
+    public function scopeWithHierarchy($query, $typeId = null, $resultDisponible = null)
+    {
+        return $query->with(['allChildren' => function ($query) use ($typeId, $resultDisponible) {
+            if ($typeId) {
+                $query->where('analyse_type_id', $typeId);
+            }
+
+            if ($resultDisponible) {
+                $query->whereJsonContains('result_disponible', $resultDisponible);
+            }
+        }])
+        ->where(function ($query) use ($typeId, $resultDisponible) {
+            if ($typeId) {
+                $query->where('analyse_type_id', $typeId);
+            }
+
+            if ($resultDisponible) {
+                $query->whereJsonContains('result_disponible', $resultDisponible);
+            }
+        })
+        ->orderBy('ordre');
+    }
+
 }
