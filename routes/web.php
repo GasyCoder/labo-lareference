@@ -63,6 +63,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Biologiste routes
         Route::middleware(['role:biologiste'])->prefix('biologiste')->name('biologiste.')->group(function () {
+            
             // Add specific biologiste routes here
         });
 

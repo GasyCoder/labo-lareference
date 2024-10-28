@@ -12,18 +12,28 @@
                         </button>
                     </li>
                 @endforeach
+
+                @if($validation)
+                    <button wire:click="validateAnalyse({{ $analyse->id }})"
+                                class="btn btn-success">
+                        Valider <i class="fas fa-check ms-2"></i>
+                    </button>
+                @endif
             </ul>
         </div>
         <div class="w-3/4">
-            @if($selectedParentAnalyse)
-                <h2 class="text-2xl font-bold mb-4">{{ $selectedParentAnalyse->designation }}</h2>
-                @include('livewire.technicien.partials.analyse-recursive', ['analyses' => $selectedParentAnalyse->children])
-                <button wire:click="saveResult({{ $selectedParentAnalyse->id }})"
-                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mt-4">
-                    Enregistrer
-                </button>
-            @else
-                <p>Veuillez sélectionner une analyse dans la liste de gauche.</p>
+            @if($showForm)
+                @if($selectedParentAnalyse)
+                    <h2 class="text-2xl font-bold mb-4">{{ $selectedParentAnalyse->designation }}</h2>
+                    @include('livewire.technicien.partials.analyse-recursive', ['analyses' => $selectedParentAnalyse->children])
+                    
+                    <button wire:click="saveResult({{ $selectedParentAnalyse->id }})"
+                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mt-4">
+                        Enregistrer
+                    </button>
+                @else
+                    <p>Veuillez sélectionner une analyse dans la liste de gauche.</p>
+                @endif
             @endif
         </div>
     </div>

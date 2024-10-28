@@ -7,15 +7,11 @@
             @case('SELECT_MULTIPLE')
             <select wire:model="results.{{ $analyse->id }}.valeur" class="border rounded px-2 py-1 mr-2" {{ $analyse->analyseType->name === 'SELECT_MULTIPLE' ? 'multiple' : '' }}>
                 <option value="">Veuillez choisir</option>
-                @php
-                    $options = is_array($analyse->result_disponible)
-                        ? $analyse->result_disponible
-                        : explode("\n", $analyse->result_disponible);
-                @endphp
-                @foreach($options as $option)
-                    <option value="{{ trim($option) }}">{{ trim($option) }}</option>
-                @endforeach
+                <option value="NEGATIF">Négatif</option>
+                <option value="POSITIF">Positif</option>
+                <option value="Autre">Autre</option>
             </select>
+
             @break
 
             @case('DOSAGE')
@@ -27,11 +23,17 @@
                        class="border rounded px-2 py-1 mr-2"
                        step="{{ in_array($analyse->analyseType->name, ['DOSAGE', 'COMPTAGE']) ? '0.01' : '1' }}">
                 @if($analyse->analyseType->name === 'INPUT_SUFFIXE')
-                    <span>{{ $analyse->result_disponible['suffixe'] ?? '' }}</span>
+                    <span>{{ $analyse->result_disponible['suffixe'] ?? '' }} </span>
                 @endif
             @break
-
+            
             @case('NEGATIF_POSITIF_1')
+                <select wire:model="results.{{ $analyse->id }}.valeur" class="border rounded px-2 py-1 mr-2">
+                        <option value="">Veuillez choisir</option>
+                        <option value="NEGATIF">Négatif</option>
+                        <option value="POSITIF">Positif</option>
+                </select>
+            @break
             @case('NEGATIF_POSITIF_2')
             @case('NEGATIF_POSITIF_3')
                 <select wire:model="results.{{ $analyse->id }}.valeur" class="border rounded px-2 py-1 mr-2">

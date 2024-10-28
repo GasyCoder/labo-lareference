@@ -6,22 +6,27 @@ use Livewire\Component;
 use App\Models\Prescription;
 use App\Models\Analyse;
 use App\Models\Resultat;
+use Carbon\Carbon;
 
 class TechnicianAnalysisForm extends Component
 {
     public Prescription $prescription;
     public $selectedParentAnalyse = null;
     public $results = [];
+    public $validation;
+    public $showForm = false;
+    public $showOtherInput = [];
 
     public function mount(Prescription $prescription)
     {
         $this->prescription = $prescription;
         $this->loadResults();
+        $this->showForm = false;
     }
 
     private function loadResults()
     {
-        $this->results = $this->prescription->resultats()
+        /*$this->results = $this->prescription->resultats()
             ->with('analyse')
             ->get()
             ->keyBy('analyse_id')
@@ -31,7 +36,14 @@ class TechnicianAnalysisForm extends Component
                     'interpretation' => $resultat->interpretation
                 ];
             })
-            ->toArray();
+            ->toArray();*/
+            
+        $result = Resultat::find($this->prescription->id);
+        if($result){
+            $this->results = json_decode($result->valeur, true);
+            $this->showForm = true;
+        }
+            
     }
 
     public function selectParentAnalyse($analyseId)
@@ -40,27 +52,86 @@ class TechnicianAnalysisForm extends Component
             ->where('level', 'PARENT')
             ->where('parent_code', 0)
             ->findOrFail($analyseId);
+        $this->showForm = true;
     }
 
     public function saveResult($analyseId)
     {
-        $this->validate([
-            "results.{$analyseId}.valeur" => 'required',
-            "results.{$analyseId}.interpretation" => 'nullable',
-        ]);
+        try{
+            
+            $analyses_parent = Analyse::where('id', $analyseId)->first();
 
-        Resultat::updateOrCreate(
-            [
-                'prescription_id' => $this->prescription->id,
-                'analyse_id' => $analyseId
-            ],
-            [
-                'valeur' => $this->results[$analyseId]['valeur'],
-                'interpretation' => $this->results[$analyseId]['interpretation'] ?? null
-            ]
-        );
+            if($analyses_parent){
+                $analyses_children = Analyse::where('parent_code', $analyses_parent->code)->get();
+                foreach ($analyses_children as $child) {
+                    $child_id[] = $child->id;
+                }
+            }
 
-        $this->dispatch('resultSaved');
+            try{
+                foreach($child_id as $childId){
+                    $this->validate([
+                        "results.{$childId}.valeur" => 'required',
+                        "results.{$childId}.interpretation" => 'nullable',
+                    ]);
+                }
+            } catch( \Exception $e){
+                dd('veuillez remplir tout les champs ou choisir parmi la liste proposé');
+            }
+            
+            // Initialiser un tableau pour stocker les valeurs associées
+            $valuesToStore = [];
+
+            // Récupérer les valeurs à partir de $this->results pour chaque enfant
+            foreach ($child_id as $childId) {
+                if (isset($this->results[$childId])) {
+                    $valuesToStore[$childId] = $this->results[$childId]['valeur'] ?? null; // Récupérer la valeur correspondante
+                }
+            }
+            // Convertir le tableau associatif en JSON
+            $jsonResults = json_encode($valuesToStore);
+
+            // Enregistrer les résultats dans la table Resultat
+            Resultat::updateOrCreate(
+                [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId // Utiliser l'ID de l'analyse parent
+                ],
+                [
+                    'valeur' => $jsonResults, // Stocker les valeurs JSON dans la colonne "valeur"
+                    'interpretation' => $this->results[$analyseId]['interpretation'] ?? null // Interprétation si elle existe
+                ]
+            );
+            
+            $search_prescription = Prescription::find($this->prescription->id);
+            if($search_prescription){
+
+                $search_prescription->status = Prescription::STATUS_TERMINE;
+                $search_prescription->save();
+            }
+            
+            $this->validation = true;
+            $this->showForm = false;
+            $this->dispatch('resultSaved');
+
+        } catch (\Exception $e){
+            dd($e->getMessage());
+        }
+        
+    }
+
+    public function validateAnalyse($analyseId){
+        try{
+            $prescription_validate = Resultat::where('prescription_id', $this->prescription->id)->get();
+            foreach ($prescription_validate as $prescription){
+                $prescription->validated_at = Carbon::now();
+                $prescription->save();
+            }
+            
+        } catch(\Exception $e){
+            dd($e->getMessage());
+        }
+        
     }
 
     public function render()
