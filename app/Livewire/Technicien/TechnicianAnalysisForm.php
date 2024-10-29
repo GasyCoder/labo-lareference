@@ -18,6 +18,7 @@ class TechnicianAnalysisForm extends Component
     public $showForm = false;
     public $showOtherInput = [];
     public $showBactery = null;
+    public $antibiotics_name = null;
 
     public function mount(Prescription $prescription)
     {
@@ -57,6 +58,23 @@ class TechnicianAnalysisForm extends Component
             ->findOrFail($analyseId);
         $this->showForm = true;
         $this->showBactery = BacteryFamily::all();
+    }
+
+    public function bacteries($bactery_name){
+        $bactery_familly = BacteryFamily::all();
+        foreach($bactery_familly as $bactery){
+            $bacteriaArray = is_string($bactery->bacteries) ? json_decode($bactery->bacteries): $bactery->bacteries;
+            foreach($bacteriaArray as $bacteri){
+                if($bacteri == $bactery_name){
+                    $bactery_familly_name = $bactery->name;
+                    break;
+                }
+            }
+        break;
+        }
+
+        $this->antibiotics_name = BacteryFamily::first('antibiotics',$bactery_familly_name);
+        
     }
 
     public function saveResult($analyseId)

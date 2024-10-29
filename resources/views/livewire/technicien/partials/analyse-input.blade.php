@@ -1,5 +1,52 @@
 {{-- resources/views/partials/analyse-input.blade.php --}}
 <div class="mb-4">
+    <style>
+        /* Style pour le conteneur principal */
+        .table-container {
+            display: flex;
+            border: 1px solid #ccc;
+            font-family: Arial, sans-serif;
+            width: 500px;
+            margin: auto;
+        }
+
+        /* Colonne de gauche pour les antibiotiques */
+        .antibiotics-column {
+            width: 50%;
+            border-right: 1px solid #ccc;
+        }
+
+        /* Colonne de droite pour les menus déroulants */
+        .select-column {
+            width: 50%;
+        }
+
+        /* Style pour chaque ligne */
+        .table-row {
+            display: flex;
+            align-items: center; /* Alignement vertical au centre */
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            height: 40px; /* Hauteur fixe pour chaque ligne */
+            box-sizing: border-box;
+        }
+
+        /* Couleur de fond alternée pour les lignes */
+        .table-row:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+
+        .table-row:nth-child(even) {
+            background-color: #ffffff;
+        }
+
+        /* Style pour le menu déroulant */
+        select {
+            width: 90%; /* Largeur ajustée pour que chaque menu soit bien centré */
+            padding: 5px;
+            font-size: 14px;
+        }
+    </style>
     <label class="block font-semibold mb-1">{{ $analyse->designation }} </label>
     <div class="flex items-center">
         @switch($analyse->analyseType->name)
@@ -57,7 +104,7 @@
                         @if(!empty($bacteriaArray) && is_array($bacteriaArray))
                             <ul>
                                 @foreach($bacteriaArray as $bacteri)
-                                    <option>{{ $bacteri }}</option> <!-- Affiche chaque bactérie en liste -->
+                                    <option wire:click="bacteries('{{ $bacteri }}')">{{ $bacteri }}</option> <!-- Affiche chaque bactérie en liste -->
                                 @endforeach
                             </ul>
                         @else
@@ -65,7 +112,32 @@
                         @endif
                     @endforeach
                     <option value="autre" style="font-weight: bold;">Autre</option>
-                </select>
+                </select> <br>
+                @if($antibiotics_name)
+                    <h2 class="text-2xl font-bold mb-4">ANTIBIOGRAMMES</h2>
+                    <div class="table-container">
+                            @php
+                                $antibiotics_data = json_decode($antibiotics_name, true);
+                            @endphp
+                            <div class="antibiotics-column">
+                                @foreach($antibiotics_data['antibiotics'] as $antibiotic)
+                                    <div class="table-row">{{ $antibiotic }}</div>
+                                @endforeach
+                            </div>
+                            <div class="select-column">
+                                @foreach($antibiotics_data['antibiotics'] as $antibiotic)
+                                    <div class="table-row">
+                                        <select class="antibiotics-select">
+                                            <option value="">Veuillez choisir</option>
+                                            <option value="resistant">Résistant</option>
+                                            <option value="intermediaire">Intermediaire</option>
+                                            <option value="sensible">Sensible</option>
+                                        </select>
+                                    </div>
+                                @endforeach
+                            </div>
+                    </div>
+                @endif
             @break
             
             @case('NEGATIF_POSITIF_1')
