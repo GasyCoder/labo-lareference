@@ -18,7 +18,7 @@
             @if(!empty($suggestions) || $showCreateOption)
                 <div class="position-absolute w-100 bg-white mt-1 rounded shadow-sm" style="z-index: 1000;">
                     @foreach($suggestions as $prescripteur)
-                        <div class="p-2 hover-bg-light cursor-pointer" wire:click="selectPrescripteur({{ $prescripteur['id'] }}, '{{ $prescripteur['name'] }}')">
+                        <div class="p-2 hover-bg-light cursor-pointer" wire:click="selectPrescripteur({{ $prescripteur['id'] ?? '' }}, '{{ $prescripteur['name'] }}')">
                             {{ $prescripteur['name'] }}
                         </div>
                     @endforeach

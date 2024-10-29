@@ -25,7 +25,8 @@
             @if($showForm)
                 @if($selectedParentAnalyse)
                     <h2 class="text-2xl font-bold mb-4">{{ $selectedParentAnalyse->designation }}</h2>
-                    @include('livewire.technicien.partials.analyse-recursive', ['analyses' => $selectedParentAnalyse->children])
+                    
+                    @include('livewire.technicien.partials.analyse-recursive', ['analyses' => $selectedParentAnalyse->children,'bacteries' => $showBactery])
                     
                     <button wire:click="saveResult({{ $selectedParentAnalyse->id }})"
                             class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mt-4">

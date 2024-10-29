@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Prescription;
 use App\Models\Analyse;
 use App\Models\Resultat;
+use App\Models\BacteryFamily;
 use Carbon\Carbon;
 
 class TechnicianAnalysisForm extends Component
@@ -16,12 +17,14 @@ class TechnicianAnalysisForm extends Component
     public $validation;
     public $showForm = false;
     public $showOtherInput = [];
+    public $showBactery = null;
 
     public function mount(Prescription $prescription)
     {
         $this->prescription = $prescription;
         $this->loadResults();
         $this->showForm = false;
+        
     }
 
     private function loadResults()
@@ -53,12 +56,13 @@ class TechnicianAnalysisForm extends Component
             ->where('parent_code', 0)
             ->findOrFail($analyseId);
         $this->showForm = true;
+        $this->showBactery = BacteryFamily::all();
     }
 
     public function saveResult($analyseId)
     {
         try{
-            
+           
             $analyses_parent = Analyse::where('id', $analyseId)->first();
 
             if($analyses_parent){
@@ -68,8 +72,11 @@ class TechnicianAnalysisForm extends Component
                 }
             }
 
+            
+            
             try{
                 foreach($child_id as $childId){
+                     
                     $this->validate([
                         "results.{$childId}.valeur" => 'required',
                         "results.{$childId}.interpretation" => 'nullable',
