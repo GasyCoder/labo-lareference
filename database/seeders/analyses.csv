@@ -129,7 +129,7 @@ Rare
 Quelques
 Peu nombreux
 ",3,1,NULL,2025-01-03 08:10:30,2025-01-03 08:10:30
-131,NORMAL,127,FCVELEUNIFORM,Lévures,,0,0,5,17,"Absence 
+131,NORMAL,127,FCVELEUNIFORM,Lévures,,0,0,5,17,"Absence
 Levures assez nombreux
 Présence de filaments mycéliens",4,1,NULL,2025-01-04 08:10:30,2025-01-04 08:10:30
 132,NORMAL,127,FCVCELLULE,Clue cells,,0,0,5,8,"Absence
@@ -323,7 +323,7 @@ Urines légèrement troubles
 Urines troubles
 citrin
  Urines hématiques
- 
+
 ",99,1,NULL,2025-04-16 08:10:30,2025-04-16 08:10:30
 264,PARENT,262,ECBU_examendirect,Examen à l'état frais,,0,1,5,1,NULL,99,1,NULL,2025-04-17 08:10:30,2025-04-17 08:10:30
 265,NORMAL,264,ECBU_leucocyte,Leucocytes,,0,0,5,5,"{""val_ref"":"" Normale <10 000"",""unite"":""\/ml""}",99,1,NULL,2025-04-18 08:10:30,2025-04-18 08:10:30
@@ -371,11 +371,11 @@ Autre",91,1,NULL,2025-05-08 08:10:30,2025-05-08 08:10:30
 305,NORMAL,304,USD24_volume,Volume,,0,0,1,7,NULL,99,1,NULL,2025-05-20 08:10:30,2025-05-20 08:10:30
 306,NORMAL,304,USD24_2,Glycose urinaire de 24h,,0,0,1,4,"{""val_ref"":"""",""unite"":""""}",99,1,NULL,2025-05-21 08:10:30,2025-05-21 08:10:30
 307,PARENT,0,GS,GROUPAGE SANGUIN ABO - RHESUS,,16000,1,1,1,NULL,NULL,1,NULL,2025-05-22 08:10:30,2025-05-22 08:10:30
-309,NORMAL,307,GS_gs,Groupe sanguin,,0,1,1,8,"A 
-B 
-AB 
-O 
-A 
+309,NORMAL,307,GS_gs,Groupe sanguin,,0,1,1,8,"A
+B
+AB
+O
+A
 B Rhésus négatif (B-)
 AB Rhésus négatif (AB-)
 O Rhésus négatif (O-)
@@ -582,7 +582,7 @@ Rare
 Quelques
 Peu nombreux
 ",3,1,NULL,2025-11-02 08:10:30,2025-11-02 08:10:30
-502,NORMAL,498,fcv1levure,Lévures,,0,0,5,8,"Absence 
+502,NORMAL,498,fcv1levure,Lévures,,0,0,5,8,"Absence
 Levures assez nombreux
 Présence de filaments mycéliens",4,1,NULL,2025-11-03 08:10:30,2025-11-03 08:10:30
 503,NORMAL,498,fcv1cluecells,Clue cells,,0,0,5,8,"Absence
@@ -620,11 +620,11 @@ Rare
 Quelques
 Peu nombreux
 Nombreux",99,1,NULL,2025-11-19 08:10:30,2025-11-19 08:10:30
-519,NORMAL,516,PG_filaments, Filaments mycéliens,,0,0,5,8,"Absence 
-Quelques 
+519,NORMAL,516,PG_filaments, Filaments mycéliens,,0,0,5,8,"Absence
+Quelques
 Nombreux",99,1,NULL,2025-11-20 08:10:30,2025-11-20 08:10:30
-520,PARENT,516,PG_levure,Lévure,,0,0,5,1,"Absence 
-Quelques 
+520,PARENT,516,PG_levure,Lévure,,0,0,5,1,"Absence
+Quelques
 Nombreux",99,1,NULL,2025-11-21 08:10:30,2025-11-21 08:10:30
 521,CHILD,515,PG_examen_apres_culture,Examen après culture,,0,0,5,7,NULL,99,1,NULL,2025-11-22 08:10:30,2025-11-22 08:10:30
 522,CHILD,521,PG_Candidose,Candidose,,0,0,5,12,NULL,99,1,NULL,2025-11-23 08:10:30,2025-11-23 08:10:30

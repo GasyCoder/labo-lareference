@@ -67,13 +67,6 @@ class Analyse extends Model
          return $this->hasMany(Analyse::class, 'parent_code', 'code')->orderBy('ordre');
      }
 
-    /**
-     * Obtenir tous les enfants récursivement.
-     */
-    // public function allChildren(): HasMany
-    // {
-    //     return $this->children()->with('allChildren');
-    // }
 
     public function allChildren()
     {
@@ -166,6 +159,26 @@ class Analyse extends Model
             }
         })
         ->orderBy('ordre');
+    }
+
+    public function getFormattedResultsAttribute()
+    {
+        if(!isset($this->result_disponible['value'])) {
+            return [];
+        }
+
+        $value = $this->result_disponible['value'];
+
+        // Cas spécifique pour les valeurs avec "25 par champ"
+        if(str_contains($value, '25 par champ')) {
+            return [
+                '> 25 par champ',
+                '< 25 par champ'
+            ];
+        }
+
+        // Pour tous les autres cas (séparation sur les majuscules)
+        return preg_split('/(?=[A-Z])/', $value, -1, PREG_SPLIT_NO_EMPTY);
     }
 
 }
