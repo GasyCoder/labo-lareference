@@ -47,7 +47,6 @@
                     <option value="en-cours">En cours</option>
                     <option value="culture-sterile">Culture stérile</option>
                     <option value="absence">Absence de germe pathogène</option>
-
                     @foreach($bacteries as $bactery)
                         <optgroup label="{{ $bactery->name }}">
                             @php
@@ -99,23 +98,46 @@
                 @endif
                 @break
 
-            @case('NEGATIF_POSITIF_1')
-            @case('NEGATIF_POSITIF_2')
-            @case('NEGATIF_POSITIF_3')
-                <select wire:model="results.{{ $analyse->id }}.valeur" class="form-select">
-                    <option value="">Veuillez choisir</option>
-                    <option value="NEGATIF">Négatif</option>
-                    <option value="POSITIF">Positif</option>
-                </select>
-                @if(in_array($analyse->analyseType->name, ['NEGATIF_POSITIF_2', 'NEGATIF_POSITIF_3']))
-                    <input
-                        type="text"
-                        wire:model="results.{{ $analyse->id }}.interpretation"
-                        class="form-control"
-                        placeholder="Valeur"
-                    >
-                @endif
-                @break
+                @case('NEGATIF_POSITIF_1')
+                @case('NEGATIF_POSITIF_2')
+                    <select wire:model="results.{{ $analyse->id }}.valeur" class="form-select">
+                        <option value="">Veuillez choisir</option>
+                        <option value="NEGATIF">Négatif</option>
+                        <option value="POSITIF">Positif</option>
+                    </select>
+                    @if($analyse->analyseType->name === 'NEGATIF_POSITIF_2')
+                        <input
+                            type="text"
+                            wire:model="results.{{ $analyse->id }}.interpretation"
+                            class="form-control mt-2"
+                            placeholder="Valeur"
+                        >
+                    @endif
+                    @break
+
+                    @case('NEGATIF_POSITIF_3')
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <select wire:model="results.{{ $analyse->id }}.valeur" class="form-select">
+                                <option value="">Veuillez choisir</option>
+                                <option value="ABSENCE">Absence de</option>
+                                <option value="PRESENCE">Présence de</option>
+                            </select>
+                            <input
+                                type="text"
+                                wire:model="results.{{ $analyse->id }}.interpretation"
+                                class="form-control"
+                                placeholder="Préciser ici..."
+                                @if(!$results[$analyse->id]['valeur']) disabled @endif
+                            >
+                        </div>
+                        @error("results.{$analyse->id}.interpretation")
+                            <div class="text-danger mt-1">
+                                <small>{{ $message }}</small>
+                            </div>
+                        @enderror
+                    </div>
+                    @break
 
             @case('LEUCOCYTES')
                 <input
