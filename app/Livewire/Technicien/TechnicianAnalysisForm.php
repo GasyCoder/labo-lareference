@@ -1,5 +1,5 @@
 <?php
-
+// app/Livewire/Technicien/TechnicianAnalysisForm.php
 namespace App\Livewire\Technicien;
 
 use Livewire\Component;
@@ -16,60 +16,155 @@ class TechnicianAnalysisForm extends Component
     public $results = [];
     public $validation;
     public $showForm = false;
-    public $showOtherInput = [];
     public $showBactery = null;
     public $antibiotics_name = null;
+    public $selectedBacteriaResults = [];
+    public $currentBacteria = null;
+    public $showAntibiotics = false;
+    public $otherBacteriaValue = '';
+    public $conclusion = '';
+    public $selectedOption = [];
+    public $showOtherInput = false;
+    public $showPresenceInputs = [];
 
     public function mount(Prescription $prescription)
     {
         $this->prescription = $prescription;
         $this->loadResults();
-        $this->showForm = false;
     }
 
     private function loadResults()
     {
         $result = Resultat::where('prescription_id', $this->prescription->id)->first();
         if ($result) {
-            $this->results = json_decode($result->valeur, true) ?: [];
+            $decodedResults = json_decode($result->valeur, true) ?: [];
+            $this->results = $decodedResults;
             $this->showForm = true;
+
+            // Restaurer les états
+            if (isset($decodedResults['option_speciale'])) {
+                $this->selectedOption = $decodedResults['option_speciale'];
+                $this->showOtherInput = in_array('autre', (array)$this->selectedOption);
+                $this->otherBacteriaValue = $decodedResults['autre_valeur'] ?? '';
+            }
+
+            // Restaurer les états pour Présence/Absence
+            foreach ($this->results as $analyseId => $data) {
+                if (isset($data['valeur']) && $data['valeur'] === 'Présence') {
+                    $this->showPresenceInputs[$analyseId] = true;
+                }
+            }
+
+            if (isset($decodedResults['bacteries'])) {
+                $this->selectedBacteriaResults = $decodedResults['bacteries'];
+            }
+            if (isset($decodedResults['conclusion'])) {
+                $this->conclusion = $decodedResults['conclusion'];
+            }
         }
     }
 
     public function selectAnalyse($analyseId)
     {
         try {
-            // Charger l'analyse sélectionnée sans filtres
             $this->selectedAnalyse = Analyse::with(['allChildren.analyseType'])
                 ->findOrFail($analyseId);
-
             $this->showForm = true;
             $this->showBactery = BacteryFamily::all();
 
-            // Charger les résultats existants pour cette analyse
             $existingResult = Resultat::where([
                 'prescription_id' => $this->prescription->id,
                 'analyse_id' => $analyseId
             ])->first();
 
             if ($existingResult) {
-                $this->results = json_decode($existingResult->valeur, true) ?: [];
+                $this->loadResults();
+            } else {
+                $this->resetStates();
             }
-
         } catch (\Exception $e) {
             session()->flash('error', "Erreur lors de la sélection de l'analyse: " . $e->getMessage());
         }
     }
 
+    private function resetStates()
+    {
+        $this->results = [];
+        $this->selectedOption = [];
+        $this->showOtherInput = false;
+        $this->otherBacteriaValue = '';
+        $this->selectedBacteriaResults = [];
+        $this->currentBacteria = null;
+        $this->showAntibiotics = false;
+        $this->antibiotics_name = null;
+        $this->conclusion = '';
+        $this->showPresenceInputs = [];
+    }
+
+    public function updatedResults($value, $key)
+    {
+        // Détecter si c'est un changement de valeur pour NEGATIF_POSITIF_3
+        if (str_contains($key, '.valeur')) {
+            $analyseId = explode('.', $key)[1];
+
+            // Vérifier si l'analyse correspondante est de type NEGATIF_POSITIF_3
+            $analyse = Analyse::find($analyseId);
+            if ($analyse && $analyse->analyseType->name === 'NEGATIF_POSITIF_3') {
+                if ($value === 'Presence') {
+                    $this->showPresenceInputs[$analyseId] = true;
+                } else {
+                    $this->showPresenceInputs[$analyseId] = false;
+                    // Réinitialiser l'interprétation
+                    if (isset($this->results[$analyseId])) {
+                        $this->results[$analyseId]['interpretation'] = null;
+                    }
+                }
+            }
+        }
+    }
+
+    public function updatedSelectedOption($value)
+    {
+        if (!is_array($value)) {
+            $value = [$value];
+        }
+
+        $this->selectedOption = array_filter($value);
+
+        // Gérer l'affichage/masquage des éléments
+        $specialOptions = ['non-rechercher', 'en-cours', 'culture-sterile', 'absence'];
+        $hasSpecialOption = !empty(array_intersect($specialOptions, $this->selectedOption));
+
+        if ($hasSpecialOption || in_array('autre', $this->selectedOption)) {
+            $this->resetBacterySelection();
+        }
+
+        $this->showOtherInput = in_array('autre', $this->selectedOption);
+    }
+
+    private function resetBacterySelection()
+    {
+        $this->showAntibiotics = false;
+        $this->antibiotics_name = null;
+        $this->currentBacteria = null;
+        $this->selectedBacteriaResults = [];
+    }
+
     public function bacteries($bactery_name)
     {
         try {
+            // Réinitialiser les options spéciales
+            $this->selectedOption = [$bactery_name];
+            $this->showOtherInput = false;
+            $this->currentBacteria = $bactery_name;
+
             $bactery_familly = BacteryFamily::all();
             $bactery_familly_name = null;
 
             foreach ($bactery_familly as $bactery) {
                 $bacteriaArray = is_string($bactery->bacteries) ?
-                    json_decode($bactery->bacteries) : $bactery->bacteries;
+                    json_decode($bactery->bacteries) :
+                    $bactery->bacteries;
 
                 if (in_array($bactery_name, $bacteriaArray)) {
                     $bactery_familly_name = $bactery->name;
@@ -78,25 +173,42 @@ class TechnicianAnalysisForm extends Component
             }
 
             if ($bactery_familly_name) {
-                $this->antibiotics_name = BacteryFamily::where('name', $bactery_familly_name)
+                $antibiotics = BacteryFamily::where('name', $bactery_familly_name)
                     ->value('antibiotics');
+
+                $this->antibiotics_name = is_string($antibiotics) ?
+                    json_decode($antibiotics, true) :
+                    $antibiotics;
+
+                $this->showAntibiotics = true;
+
+                if (!isset($this->selectedBacteriaResults[$bactery_name])) {
+                    $this->selectedBacteriaResults[$bactery_name] = [
+                        'name' => $bactery_name,
+                        'antibiotics' => []
+                    ];
+                }
             }
         } catch (\Exception $e) {
             session()->flash('error', "Erreur lors de la sélection de la bactérie: " . $e->getMessage());
         }
     }
 
+    public function updateAntibiogramResult($antibiotic, $sensitivity)
+    {
+        if ($this->currentBacteria) {
+            $this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'][$antibiotic] = $sensitivity;
+        }
+    }
+
     public function saveResult($analyseId)
     {
         try {
-            // Récupérer l'analyse sans filtres
+            // Validation
             $analyse = Analyse::findOrFail($analyseId);
-
-            // Récupérer tous les enfants
             $analyses_children = Analyse::where('parent_code', $analyse->code)->get();
             $child_ids = $analyses_children->pluck('id')->toArray();
 
-            // Validation
             $validationRules = [];
             foreach ($child_ids as $childId) {
                 $validationRules["results.{$childId}.valeur"] = 'required';
@@ -108,7 +220,12 @@ class TechnicianAnalysisForm extends Component
             ]);
 
             // Préparer les données
-            $valuesToStore = [];
+            $valuesToStore = [
+                'option_speciale' => $this->selectedOption,
+                'autre_valeur' => $this->otherBacteriaValue,
+                'conclusion' => $this->conclusion
+            ];
+
             foreach ($child_ids as $childId) {
                 if (isset($this->results[$childId])) {
                     $valuesToStore[$childId] = [
@@ -118,7 +235,11 @@ class TechnicianAnalysisForm extends Component
                 }
             }
 
-            // Sauvegarder le résultat
+            if (!empty($this->selectedBacteriaResults)) {
+                $valuesToStore['bacteries'] = $this->selectedBacteriaResults;
+            }
+
+            // Sauvegarder
             Resultat::updateOrCreate(
                 [
                     'prescription_id' => $this->prescription->id,
@@ -130,9 +251,7 @@ class TechnicianAnalysisForm extends Component
                 ]
             );
 
-            // Mettre à jour le statut de la prescription
             $this->prescription->update(['status' => Prescription::STATUS_TERMINE]);
-
             $this->validation = true;
             $this->showForm = false;
             $this->dispatch('resultSaved');
@@ -151,7 +270,6 @@ class TechnicianAnalysisForm extends Component
 
             $this->prescription->update(['status' => Prescription::STATUS_VALIDE]);
             session()->flash('success', 'Analyse validée avec succès');
-
         } catch (\Exception $e) {
             session()->flash('error', "Erreur lors de la validation: " . $e->getMessage());
         }
@@ -159,15 +277,14 @@ class TechnicianAnalysisForm extends Component
 
     public function render()
     {
-        // Récupérer toutes les analyses sans filtres
         $topLevelAnalyses = $this->prescription->analyses()
             ->orderBy('ordre')
             ->get()
             ->groupBy('parent_code');
 
         return view('livewire.technicien.details-prescription', [
-            'topLevelAnalyses' => $topLevelAnalyses[0] ?? collect(), // analyses racines
-            'childAnalyses' => $topLevelAnalyses->forget(0) ?? collect() // sous-analyses
+            'topLevelAnalyses' => $topLevelAnalyses[0] ?? collect(),
+            'childAnalyses' => $topLevelAnalyses->forget(0) ?? collect()
         ]);
     }
 }

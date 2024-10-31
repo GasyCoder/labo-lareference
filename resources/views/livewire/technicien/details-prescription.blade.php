@@ -5,7 +5,7 @@
         <!-- Sidebar avec toutes les analyses -->
         <div class="col-md-3">
             <div class="card">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header text-white">
                     <h5 class="mb-0">Toutes les analyses</h5>
                 </div>
 
@@ -17,10 +17,7 @@
                             class="list-group-item list-group-item-action
                                 {{ $selectedAnalyse && $selectedAnalyse->id == $analyse->id ? 'active' : '' }}">
                             <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ $analyse->designation. ' (' .$analyse->abr. ') ' }}</h6>
-                                @if($analyse->is_bold)
-                                    <span class="">*</span>
-                                @endif
+                                <h6 class="mb-1">{{ strtoupper($analyse->designation). ' (' .$analyse->abr. ') ' }}</h6>
                             </div>
                         </button>
                     @endforeach
@@ -64,7 +61,7 @@
             @if($showForm && $selectedAnalyse)
                 <div class="card">
                     <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">{{ $selectedAnalyse->designation }}</h4>
+                        <h4 class="mb-0">{{ strtoupper($selectedAnalyse->designation) }}</h4>
                     </div>
                     <div class="card-body">
                         @include('livewire.technicien.partials.analyse-recursive', [
@@ -73,11 +70,20 @@
                             'antibiotics_name' => $antibiotics_name
                         ])
 
+                        <!-- Section Conclusion (séparée) -->
+                        <h4>{{ __('Conclusion') }}</h4>
+                        <div class="mb-3">
+                            <textarea
+                                wire:model="conclusion"
+                                class="form-control"
+                                rows="4"
+                                placeholder="{{ __('Ajouter ici vos commentaires sur la résultat de l\'analyse') }}"
+                            ></textarea>
+                        </div>
                         <div class="mt-4">
                             <button
                                 wire:click="saveResult({{ $selectedAnalyse->id }})"
-                                class="btn btn-primary"
-                            >
+                                class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i> Enregistrer
                             </button>
                         </div>

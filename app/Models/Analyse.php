@@ -161,24 +161,97 @@ class Analyse extends Model
         ->orderBy('ordre');
     }
 
+
     public function getFormattedResultsAttribute()
     {
-        if(!isset($this->result_disponible['value'])) {
+        if (!isset($this->result_disponible['value'])) {
             return [];
         }
 
         $value = $this->result_disponible['value'];
 
         // Cas spécifique pour les valeurs avec "25 par champ"
-        if(str_contains($value, '25 par champ')) {
+        if (str_contains($value, '25 par champ')) {
             return [
                 '> 25 par champ',
                 '< 25 par champ'
             ];
         }
 
-        // Pour tous les autres cas (séparation sur les majuscules)
-        return preg_split('/(?=[A-Z])/', $value, -1, PREG_SPLIT_NO_EMPTY);
+        // Extraire toutes les options distinctes
+        return $this->extractOptions($value);
+    }
+
+    private function extractOptions($value)
+    {
+        // 1. Nettoyer la chaîne de base
+        $value = trim($value);
+
+        // 2. Séparation initiale basée sur les mots qui commencent par une majuscule
+        $parts = preg_split('/(?=(?<!^)[A-Z][a-z])/', $value);
+
+        // 3. Nettoyage et reconstruction des options
+        $options = [];
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if (!empty($part)) {
+                $options[] = $part;
+            }
+        }
+
+        return array_unique($options);
+    }
+
+    private function parseOptionsString($value)
+    {
+        // Première étape : normaliser les espaces avant les majuscules
+        $value = preg_replace('/([a-z])([A-Z])/', '$1 $2', $value);
+
+        // Deuxième étape : gérer les cas spéciaux
+        $specialCases = [
+            'GRAM' => ' GRAM ',  // Assure des espaces autour de GRAM
+            'à GRAM' => 'à GRAM' // Préserve "à GRAM" ensemble
+        ];
+
+        foreach ($specialCases as $search => $replace) {
+            $value = str_replace($search, $replace, $value);
+        }
+
+        // Troisième étape : séparer en options
+        $options = array_map('trim', explode(' ', $value));
+
+        // Quatrième étape : reconstruire les options complètes
+        return $this->reconstructOptions($options);
+    }
+
+    private function reconstructOptions($parts)
+    {
+        $options = [];
+        $currentOption = '';
+
+        foreach ($parts as $part) {
+            if ($this->isStartOfNewOption($part)) {
+                if (!empty($currentOption)) {
+                    $options[] = trim($currentOption);
+                }
+                $currentOption = $part;
+            } else {
+                $currentOption .= ' ' . $part;
+            }
+        }
+
+        if (!empty($currentOption)) {
+            $options[] = trim($currentOption);
+        }
+
+        return $options;
+    }
+
+    private function isStartOfNewOption($part)
+    {
+        // Définir les mots qui commencent une nouvelle option
+        $optionStarters = ['Cocci', 'Bacille', 'Autre'];
+        return in_array($part, $optionStarters);
     }
 
 }
