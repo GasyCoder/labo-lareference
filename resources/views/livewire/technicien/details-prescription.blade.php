@@ -68,7 +68,7 @@
                     </div>
                     <div class="card-body">
                         @include('livewire.technicien.partials.analyse-recursive', [
-                            'analyses' => $selectedAnalyse->children,
+                            'analyses' => $selectedAnalyse,
                             'bacteries' => $showBactery,
                             'antibiotics_name' => $antibiotics_name
                         ])
