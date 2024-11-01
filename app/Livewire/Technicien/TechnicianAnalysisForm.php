@@ -205,16 +205,48 @@ class TechnicianAnalysisForm extends Component
     {
         try {
             // Validation
+            
             $analyse = Analyse::findOrFail($analyseId);
             $analyses_children = Analyse::where('parent_code', $analyse->code)->get();
             $child_ids = $analyses_children->pluck('id')->toArray();
 
             $validationRules = [];
-            foreach ($child_ids as $childId) {
+            $id_child = [];
+           
+            //Fonction pour rechercher toutes les enfants de l'analyse parent
+            function searchChild($child_ids, &$id_child, &$test){
+                foreach($child_ids as $childId){
+                    $Analysechild = Analyse::findOrFail($childId);
+                    if($Analysechild->children->isNotEmpty()){
+                        $analyse = Analyse::findOrFail($childId);
+                        $analyses_children = Analyse::where('parent_code', $analyse->code)->get();
+                        $child_ids = $analyses_children->pluck('id')->toArray();
+                        searchChild($child_ids,  $id_child, $test);
+                    } else{
+                        $id_child [$childId]= $childId;
+                    }
+                }
+            }
+            
+            //Appel de la fonction searchChild
+            searchChild($child_ids, $id_child, $test);
+
+            //Boucle pour insérer la valeur de la select germe dans l'id du variable 'results' de l'enfant qui  a le germe   
+            foreach($id_child as $id_germe){
+                $analyse = Analyse::findOrFail($id_germe);
+                if($analyse->analyse_type_id == 15){
+                    $this->results[$id_germe]['valeur'] = $this->selectedBacteriaResults[$this->currentBacteria];
+                } 
+            }
+            
+            //Vérification que les champs soit bien  remplis
+            foreach ($id_child as $childId) {
                 $validationRules["results.{$childId}.valeur"] = 'required';
                 $validationRules["results.{$childId}.interpretation"] = 'nullable';
+                
             }
-
+            
+            
             $this->validate($validationRules, [
                 'results.*.valeur.required' => 'Ce champ est obligatoire'
             ]);
@@ -226,7 +258,7 @@ class TechnicianAnalysisForm extends Component
                 'conclusion' => $this->conclusion
             ];
 
-            foreach ($child_ids as $childId) {
+            foreach ($id_child as $childId) {
                 if (isset($this->results[$childId])) {
                     $valuesToStore[$childId] = [
                         'valeur' => $this->results[$childId]['valeur'],
@@ -234,6 +266,7 @@ class TechnicianAnalysisForm extends Component
                     ];
                 }
             }
+            
 
             if (!empty($this->selectedBacteriaResults)) {
                 $valuesToStore['bacteries'] = $this->selectedBacteriaResults;
@@ -258,7 +291,8 @@ class TechnicianAnalysisForm extends Component
             session()->flash('success', 'Résultats enregistrés avec succès');
 
         } catch (\Exception $e) {
-            session()->flash('error', "Erreur lors de l'enregistrement: " . $e->getMessage());
+            //session()->flash('error', "Erreur lors de l'enregistrement: " . $e->getMessage());
+            dd($e->getMessage());
         }
     }
 

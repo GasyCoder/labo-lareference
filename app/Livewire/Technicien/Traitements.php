@@ -5,6 +5,7 @@ namespace App\Livewire\Technicien;
 use Livewire\Component;
 use App\Models\Prescription;
 use Livewire\WithPagination;
+use App\Models\AnalysePrescription;
 
 class Traitements extends Component
 {
@@ -89,8 +90,19 @@ class Traitements extends Component
         $prescription = Prescription::findOrFail($prescriptionId);
 
         if ($prescription->status === Prescription::STATUS_EN_ATTENTE) {
-            $prescription->status = Prescription::STATUS_EN_COURS;
-            $prescription->save();
+            // Démarrer une transaction pour assurer la cohérence des données
+            \DB::transaction(function () use ($prescription) {
+                // Mettre à jour le statut de la prescription
+                $prescription->status = Prescription::STATUS_EN_COURS;
+                $prescription->save();
+
+                // Mettre à jour le statut de toutes les analyses dans la table pivot
+                $prescription->analyses()->wherePivot('status', AnalysePrescription::STATUS_EN_ATTENTE)
+                    ->each(function ($analyse) {
+                        $analyse->pivot->status = AnalysePrescription::STATUS_EN_COURS;
+                        $analyse->pivot->save();
+                    });
+            });
 
             $this->dispatch('prescriptionStatusUpdated');
         }

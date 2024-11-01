@@ -1,101 +1,109 @@
-{{-- resources/views/livewire/technicien/details-prescription.blade.php --}}
 <div class="container-fluid py-4">
-    <section class="container-fluid p-4">
-    <div class="row">
-        <!-- Sidebar avec toutes les analyses -->
+    <section class="row g-4">
+        <!-- Sidebar des analyses -->
         <div class="col-md-3">
-            <div class="card">
-                <div class="card-header text-white">
-                    <h5 class="mb-0">Toutes les analyses</h5>
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-vial me-2"></i>ANALYSES
+                    </h5>
                 </div>
 
                 <div class="list-group list-group-flush">
-                    {{-- Analyses principales --}}
+                    <!-- Analyses principales -->
                     @foreach($topLevelAnalyses as $analyse)
-                        <button
-                            wire:click="selectAnalyse({{ $analyse->id }})"
-                            class="list-group-item list-group-item-action
-                                {{ $selectedAnalyse && $selectedAnalyse->id == $analyse->id ? 'active' : '' }}">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ strtoupper($analyse->designation). ' (' .$analyse->abr. ') ' }}</h6>
+                        <button wire:click="selectAnalyse({{ $analyse->id }})"
+                                @class([
+                                    'list-group-item list-group-item-action d-flex justify-content-between align-items-center',
+                                    'active' => $selectedAnalyse && $selectedAnalyse->id == $analyse->id
+                                ])>
+                            <div>
+                                <i class="fas fa-flask me-2"></i>
+                                <span class="fw-medium">{{ strtoupper($analyse->designation) }}</span>
+                                <span class="badge bg-secondary ms-2">{{ $analyse->abr }}</span>
                             </div>
                         </button>
                     @endforeach
 
-                    {{-- Sous-analyses (normal ou child ici) --}}
+                    <!-- Sous-analyses -->
                     @foreach($childAnalyses as $parentCode => $children)
-                        {{-- <div class="list-group-item list-group-item-secondary">
-                            {{ optional(app\Models\Analyse::find($parentCode))->designation }}
-                        </div> --}}
                         @foreach($children as $analyse)
-                        <button
-                            wire:click="selectAnalyse({{ $analyse->id }})"
-                            class="list-group-item list-group-item-action ps-4
-                                {{ $selectedAnalyse && $selectedAnalyse->id == $analyse->id ? 'active' : '' }}">
-                            <div class="d-flex w-100 justify-content-between">
+                            <button wire:click="selectAnalyse({{ $analyse->id }})"
+                                    @class([
+                                        'list-group-item list-group-item-action d-flex justify-content-between align-items-center ps-4',
+                                        'active' => $selectedAnalyse && $selectedAnalyse->id == $analyse->id
+                                    ])>
                                 <span>{{ $analyse->designation }}</span>
                                 @if($analyse->is_bold)
-                                    <span class="badge bg-danger">*</span>
+                                    <span class="badge bg-danger rounded-pill">
+                                        <i class="fas fa-asterisk"></i>
+                                    </span>
                                 @endif
-                            </div>
-                        </button>
+                            </button>
                         @endforeach
                     @endforeach
                 </div>
 
                 @if($validation)
-                    <div class="card-footer">
-                        <button
-                            wire:click="validateAnalyse"
-                            class="btn btn-success w-100"
-                        >
-                            <i class="fas fa-check me-2"></i> Valider
+                    <div class="card-footer bg-light p-3">
+                        <button wire:click="validateAnalyse"
+                                class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2">
+                            <i class="fas fa-check"></i>
+                            <span>Valider l'analyse</span>
                         </button>
                     </div>
                 @endif
             </div>
         </div>
 
-        <!-- Contenu principal -->
+        <!-- Zone de contenu principal -->
         <div class="col-md-9">
             @if($showForm && $selectedAnalyse)
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">{{ strtoupper($selectedAnalyse->designation) }}</h4>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="card-title mb-0">
+                                <i class="fas fa-microscope me-2"></i>
+                                {{ strtoupper($selectedAnalyse->designation) }}
+                            </h4>
+                        </div>
                     </div>
-                    <div class="card-body">
+
+                    <div class="card-body p-4">
                         @include('livewire.technicien.partials.analyse-recursive', [
                             'analyses' => $selectedAnalyse,
                             'bacteries' => $showBactery,
                             'antibiotics_name' => $antibiotics_name
                         ])
 
-                        <!-- Section Conclusion (séparée) -->
-                        <h4>{{ __('Conclusion') }}</h4>
-                        <div class="mb-3">
-                            <textarea
-                                wire:model="conclusion"
-                                class="form-control"
-                                rows="4"
-                                placeholder="{{ __('Ajouter ici vos commentaires sur la résultat de l\'analyse') }}"
-                            ></textarea>
-                        </div>
-                        <div class="mt-4">
-                            <button
-                                wire:click="saveResult({{ $selectedAnalyse->id }})"
-                                class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i> Enregistrer
-                            </button>
+                        <div class="mt-4 border-top pt-4">
+                            <h4 class="mb-3">
+                                <i class="fas fa-clipboard-check me-2"></i>
+                                {{ __('Conclusion') }}
+                            </h4>
+                            <div class="mb-3">
+                                <textarea wire:model="conclusion"
+                                         class="form-control"
+                                         rows="4"
+                                         placeholder="{{ __('Ajouter ici vos commentaires sur le résultat de l\'analyse') }}"></textarea>
+                            </div>
+
+                            <div class="mt-4">
+                                <button wire:click="saveResult({{ $selectedAnalyse->id }})"
+                                        class="btn btn-primary d-flex align-items-center gap-2">
+                                    <i class="fas fa-save"></i>
+                                    <span>Enregistrer</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             @else
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Veuillez sélectionner une analyse dans la liste
+                <div class="alert alert-info d-flex align-items-center gap-3 shadow-sm">
+                    <i class="fas fa-info-circle fs-4"></i>
+                    <span>Veuillez sélectionner une analyse dans la liste</span>
                 </div>
             @endif
         </div>
-    </div>
     </section>
 </div>
