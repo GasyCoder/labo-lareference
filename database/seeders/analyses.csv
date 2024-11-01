@@ -230,7 +230,7 @@ Test immunochromatographique",12000,1,4,1,,NULL,1,NULL,2025-03-01 08:10:30,2025-
 210,PARENT,209,pus_examenapresculture,Examen après culture,,0,1,5,1,NULL,99,1,NULL,2025-03-05 08:10:30,2025-03-05 08:10:30
 213,PARENT,0,FU,FROTTIS URETRAL,,40000,1,5,1,NULL,NULL,1,NULL,2025-03-06 08:10:30,2025-03-06 08:10:30
 214,PARENT,213,FU_ExamenDirect,Examen direct,,0,1,5,1,NULL,99,1,NULL,2025-03-07 08:10:30,2025-03-07 08:10:30
-215,NORMAL,214,FU_ecoulement,Écoulement urétral,,0,1,5,11,NULL,99,1,NULL,2025-03-08 08:10:30,2025-03-08 08:10:30
+215,NORMAL,214,FU_ecoulement,Écoulement urétral,,0,1,5,14,NULL,99,1,NULL,2025-03-08 08:10:30,2025-03-08 08:10:30
 216,PARENT,214,FU_etatfrais,Examen à l'état frais,,0,1,5,1,NULL,99,1,NULL,2025-03-09 08:10:30,2025-03-09 08:10:30
 217,NORMAL,216,fu_epitheliales,Cellules epithèliales,,0,0,5,8,"Absence
 Quelques
@@ -405,7 +405,7 @@ Autre",99,1,NULL,2025-05-30 08:10:30,2025-05-30 08:10:30
 330,NORMAL,0,UK,Potassium urinaire,,0,0,1,4,NULL,99,1,NULL,2025-06-11 08:10:30,2025-06-11 08:10:30
 332,NORMAL,0,UAD24,Protéinurie de  24 h,,10000,1,1,4,"{""val_ref"":""0.00 - 0.15 "",""unite"":""g\/24h""}",99,1,NULL,2025-06-12 08:10:30,2025-06-12 08:10:30
 333,NORMAL,0,RAI,Recherche agglutinines irrégulières,,0,0,6,4,NULL,99,1,NULL,2025-06-13 08:10:30,2025-06-13 08:10:30
-334,NORMAL,0,SCOTCH,Scotch Test,,12000,0,3,11,NULL,99,1,NULL,2025-06-14 08:10:30,2025-06-14 08:10:30
+334,NORMAL,0,SCOTCH,Scotch Test,,12000,0,3,14,NULL,99,1,NULL,2025-06-14 08:10:30,2025-06-14 08:10:30
 335,NORMAL,0,HBPI,Sérologie de Helicobacter pylori,"En cas de contrôle après traitement, la recherche des antigènes de H. pylori dans les selles est suggérée.",25000,1,4,4,"{""val_ref"":"""",""unite"":""""}",NULL,1,NULL,2025-06-15 08:10:30,2025-06-15 08:10:30
 336,NORMAL,0,UNA,Sodium urinaire,,0,0,1,4,"{""val_ref"":"""",""unite"":""""}",99,1,NULL,2025-06-16 08:10:30,2025-06-16 08:10:30
 337,NORMAL,0,TROPO,Troponine cardiaque,,50000,1,1,4,"{""val_ref"":""< 0.3 ng\/mL"",""unite"":""  ""}",NULL,1,NULL,2025-06-17 08:10:30,2025-06-17 08:10:30
