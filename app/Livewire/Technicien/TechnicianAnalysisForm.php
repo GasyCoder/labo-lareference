@@ -257,7 +257,7 @@ class TechnicianAnalysisForm extends Component
                 'autre_valeur' => $this->otherBacteriaValue,
                 'conclusion' => $this->conclusion
             ];
-
+            
             foreach ($id_child as $childId) {
                 if (isset($this->results[$childId])) {
                     $valuesToStore[$childId] = [
@@ -266,7 +266,6 @@ class TechnicianAnalysisForm extends Component
                     ];
                 }
             }
-            
 
             if (!empty($this->selectedBacteriaResults)) {
                 $valuesToStore['bacteries'] = $this->selectedBacteriaResults;
