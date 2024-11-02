@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->foreignId('analyse_id')->constrained('analyses')->onDelete('cascade');
             $table->text('valeur');
             $table->enum('interpretation', ['NORMAL', 'PATHOLOGIQUE'])->nullable();
+            $table->text('conclusion')->nullable();
             $table->foreignId('validated_by')->nullable()->constrained('users');
             $table->timestamp('validated_at')->nullable();
             $table->timestamps();

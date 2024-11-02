@@ -27,29 +27,31 @@
             @case('MULTIPLE')
             @break
             @case('DOSAGE')
-                <div class="input-group input-group-lg" wire:ignore.self>
-                    <input type="text"
-                           wire:model="results.{{ $analyse->id }}.valeur"
-                           class="form-control" 
-                           placeholder="Valeur"/>
-                    <select wire:model="results.{{ $analyse->id }}.valeur"
-                            class="form-select">
-                        <option value="normal">{{ __('NORMAL') }}</option>
-                        <option value="pathologie">{{ __('PATHOLOGIE') }}</option>
+                <div class="input-group input-group-lg">
+                    <input type="number"
+                        wire:model="results.{{ $analyse->id }}.valeur"
+                        class="form-control"
+                        placeholder="Valeur"/>
+                    <select wire:model="results.{{ $analyse->id }}.interpretation"
+                            class="form-select" width="20">
+                            <option value="">---choisir---</option>
+                            <option value="NORMAL">{{ __('NORMAL') }}</option>
+                            <option value="PATHOLOGIQUE">{{ __('PATHOLOGIQUE') }}</option>
                     </select>
                 </div>
             @break
 
             @case('COMPTAGE')
                 <div class="input-group input-group-lg">
-                    <input type="text"
+                    <input type="number"
                            wire:model="results.{{ $analyse->id }}.valeur"
                            class="form-control"
                            placeholder="Valeur"/>
-                    <select wire:model="results.{{ $analyse->id }}.valeur"
+                    <select wire:model="results.{{ $analyse->id }}.interpretation"
                             class="form-select">
-                        <option value="normal">{{ __('NORMAL') }}</option>
-                        <option value="pathologie">{{ __('PATHOLOGIE') }}</option>
+                            <option value="">---choisir---</option>
+                            <option value="NORMAL">{{ __('NORMAL') }}</option>
+                            <option value="PATHOLOGIQUE">{{ __('PATHOLOGIQUE') }}</option>
                     </select>
                 </div>
             @break
@@ -138,31 +140,30 @@
             @break
 
             @case('NEGATIF_POSITIF_1')
-            <div class="input-group">
+            <div class="input-group input-group-lg">
                 <input
-                    type="text"
+                    type="number"
                     wire:model="results.{{ $analyse->id }}.valeur"
-                    class="form-control"
-                />
+                    class="form-control"/>
                 <select
-                    wire:model="results.{{ $analyse->id }}.valeur"
-                    class="form-select"
-                >
-                    <option value="normal">{{ __('NORMAL') }}</option>
-                    <option value="pathologie">{{ __('PATHOLOGIE') }}</option>
+                    wire:model="results.{{ $analyse->id }}.interpretation"
+                    class="form-select">
+                    <option value="">---choisir---</option>
+                    <option value="NORMAL">{{ __('NORMAL') }}</option>
+                    <option value="PATHOLOGIQUE">{{ __('PATHOLOGIQUE') }}</option>
                 </select>
             </div>
             @break
             @case('NEGATIF_POSITIF_2')
-                <div>
-                    <input
-                        type="text"
-                        wire:model="results.{{ $analyse->id }}.valeur"
-                        class="form-control"
-                        placeholder="{{ __('Valeur') }}"
-                    />
-                </div>
-                @break
+            <div>
+                <input
+                    type="number"
+                    wire:model="results.{{ $analyse->id }}.valeur"
+                    class="form-control"
+                    placeholder="{{ __('Valeur') }}"
+                />
+            </div>
+            @break
 
             @case('NEGATIF_POSITIF_3')
                 <div class="input-group input-group-lg">
@@ -175,9 +176,9 @@
 
                     @if(($results[$analyse->id]['valeur'] ?? '') === 'Presence')
                         <input type="text"
-                               wire:model.defer="results.{{ $analyse->id }}.valeur"
-                               class="form-control"
-                               placeholder="{{ __('Précisez la présence...') }}"/>
+                            wire:model.defer="results.{{ $analyse->id }}.valeur"
+                            class="form-control"
+                            placeholder="{{ __('Précisez la présence...') }}"/>
                     @endif
                 </div>
                 @break
@@ -198,7 +199,7 @@
 
             @case('GERME')
                 <div class="mb-3">
-                    <select wire:model.live="selectedOption" 
+                    <select wire:model.live="selectedOption"
                             class="form-select form-select-lg mb-3"
                             multiple>
                         <option value="non-rechercher">{{ __('Non recherché') }}</option>
@@ -274,17 +275,18 @@
 
             @case('NEGATIF_POSITIF_1')
                 <div class="input-group input-group-lg">
-                    <input type="text"
-                           wire:model="results.{{ $analyse->id }}.valeur"
-                           class="form-control"
-                           placeholder="Valeur"/>
-                    <select wire:model="results.{{ $analyse->id }}.valeur"
+                    <input type="number"
+                        wire:model="results.{{ $analyse->id }}.valeur"
+                        class="form-control"
+                        placeholder="Valeur"/>
+                    <select wire:model="results.{{ $analyse->id }}.interpretation"
                             class="form-select">
-                        <option value="normal">{{ __('NORMAL') }}</option>
-                        <option value="pathologie">{{ __('PATHOLOGIE') }}</option>
+                            <option value="">---choisir---</option>
+                            <option value="NORMAL">{{ __('NORMAL') }}</option>
+                            <option value="PATHOLOGIQUE">{{ __('PATHOLOGIQUE') }}</option>
                     </select>
                 </div>
-                @break
+            @break
 
             @case('NEGATIF_POSITIF_2')
                 <div>
@@ -384,11 +386,5 @@
             </div>
         @endif
 
-        @if(isset($analyse->description))
-            <div class="alert alert-light mt-3 mb-0">
-                <i class="fas fa-info-circle me-2 text-primary"></i>
-                {{ $analyse->description }}
-            </div>
-        @endif
     </div>
 </div>

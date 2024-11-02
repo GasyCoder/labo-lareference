@@ -9,7 +9,15 @@ class Resultat extends Model
 {
     use HasFactory;
     public $timestamps = true;
-    protected $fillable = ['prescription_id', 'analyse_id', 'valeur', 'interpretation', 'validated_by', 'validated_at'];
+    protected $fillable = [
+        'prescription_id',
+        'analyse_id',
+        'valeur',
+        'interpretation',
+        'conclusion',
+        'validated_by',
+        'validated_at'
+    ];
 
     public function prescription()
     {

@@ -635,7 +635,7 @@ Trophozoïtes de Plasmodium ovale
 Trophozoïtes Plasmodium vivax
 Trophozoïtes de Plasmodium malariae
 Trophozoïtes de Plasmodium knowlesi",97,1,NULL,2025-11-25 08:10:30,2025-11-25 08:10:30
-525,NORMAL,209,PRELEVEMENT_PUS_ORIGINE, Origine de prélèvement,,0,0,5,2,NULL,99,1,NULL,2025-11-26 08:10:30,2025-11-26 08:10:30
+525,NORMAL,209,PRELEVEMENT_PUS_ORIGINE, Origine de prélèvement,,0,0,5,7,NULL,99,1,NULL,2025-11-26 08:10:30,2025-11-26 08:10:30
 526,NORMAL,201,Rub_IgM,IgM,,0,1,4,4,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",98,1,NULL,2025-11-27 08:10:30,2025-11-27 08:10:30
 527,NORMAL,0,cal,Calciurie des 24h,,6000,1,1,4,"{""val_ref"":""2.50 - 7.50"",""unite"":""  mmol\/24h""}",NULL,1,NULL,2025-11-28 08:10:30,2025-11-28 08:10:30
 528,NORMAL,0,Ur,Uricurie des 24h,,0,1,1,4,"{""val_ref"":""2.37 - 4.75"",""unite"":""  mmol\/24h""}",NULL,1,NULL,2025-11-29 08:10:30,2025-11-29 08:10:30
