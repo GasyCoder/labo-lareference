@@ -29,10 +29,10 @@
             @case('DOSAGE')
                 <div class="input-group input-group-lg" wire:ignore.self>
                     <input type="text"
-                           wire:model="results.{{ $analyse->id }}.interpretation"
+                           wire:model="results.{{ $analyse->id }}.valeur"
                            class="form-control" 
                            placeholder="Valeur"/>
-                    <select wire:model="results.{{ $analyse->id }}.interpretation"
+                    <select wire:model="results.{{ $analyse->id }}.valeur"
                             class="form-select">
                         <option value="normal">{{ __('NORMAL') }}</option>
                         <option value="pathologie">{{ __('PATHOLOGIE') }}</option>
@@ -46,7 +46,7 @@
                            wire:model="results.{{ $analyse->id }}.valeur"
                            class="form-control"
                            placeholder="Valeur"/>
-                    <select wire:model="results.{{ $analyse->id }}.interpretation"
+                    <select wire:model="results.{{ $analyse->id }}.valeur"
                             class="form-select">
                         <option value="normal">{{ __('NORMAL') }}</option>
                         <option value="pathologie">{{ __('PATHOLOGIE') }}</option>
@@ -62,7 +62,7 @@
 
             @case('INPUT_SUFFIXE')
                 <div class="mb-3">
-                    <select wire:model.live="selectedOption" wire:model="results.{{ $analyse->id }}.interpretation"
+                    <select wire:model.live="selectedOption" wire:model="results.{{ $analyse->id }}.valeur"
                             class="form-select form-select-lg mb-3"
                             multiple>
                         <option value="non-rechercher">{{ __('Non recherché') }}</option>
@@ -141,11 +141,11 @@
             <div class="input-group">
                 <input
                     type="text"
-                    wire:model="results.{{ $analyse->id }}.interpretation"
+                    wire:model="results.{{ $analyse->id }}.valeur"
                     class="form-control"
                 />
                 <select
-                    wire:model="results.{{ $analyse->id }}.interpretation"
+                    wire:model="results.{{ $analyse->id }}.valeur"
                     class="form-select"
                 >
                     <option value="normal">{{ __('NORMAL') }}</option>
@@ -157,7 +157,7 @@
                 <div>
                     <input
                         type="text"
-                        wire:model="results.{{ $analyse->id }}.interpretation"
+                        wire:model="results.{{ $analyse->id }}.valeur"
                         class="form-control"
                         placeholder="{{ __('Valeur') }}"
                     />
@@ -175,7 +175,7 @@
 
                     @if(($results[$analyse->id]['valeur'] ?? '') === 'Presence')
                         <input type="text"
-                               wire:model.defer="results.{{ $analyse->id }}.interpretation"
+                               wire:model.defer="results.{{ $analyse->id }}.valeur"
                                class="form-control"
                                placeholder="{{ __('Précisez la présence...') }}"/>
                     @endif
@@ -275,10 +275,10 @@
             @case('NEGATIF_POSITIF_1')
                 <div class="input-group input-group-lg">
                     <input type="text"
-                           wire:model="results.{{ $analyse->id }}.interpretation"
+                           wire:model="results.{{ $analyse->id }}.valeur"
                            class="form-control"
                            placeholder="Valeur"/>
-                    <select wire:model="results.{{ $analyse->id }}.interpretation"
+                    <select wire:model="results.{{ $analyse->id }}.valeur"
                             class="form-select">
                         <option value="normal">{{ __('NORMAL') }}</option>
                         <option value="pathologie">{{ __('PATHOLOGIE') }}</option>
@@ -289,7 +289,7 @@
             @case('NEGATIF_POSITIF_2')
                 <div>
                     <input type="text"
-                           wire:model="results.{{ $analyse->id }}.interpretation"
+                           wire:model="results.{{ $analyse->id }}.valeur"
                            class="form-control form-control-lg"
                            placeholder="{{ __('Valeur') }}"/>
                 </div>
@@ -306,7 +306,7 @@
 
                     @if(($results[$analyse->id]['valeur'] ?? '') === 'Presence')
                         <input type="text"
-                               wire:model.defer="results.{{ $analyse->id }}.interpretation"
+                               wire:model.defer="results.{{ $analyse->id }}.ivaleur"
                                class="form-control"
                                placeholder="{{ __('Précisez la présence...') }}"/>
                     @endif

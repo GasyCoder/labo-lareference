@@ -230,7 +230,7 @@ class TechnicianAnalysisForm extends Component
             
             //Appel de la fonction searchChild
             searchChild($child_ids, $id_child, $test);
-
+            
             //Boucle pour insérer la valeur de la select germe dans l'id du variable 'results' de l'enfant qui  a le germe   
             foreach($id_child as $id_germe){
                 $analyse = Analyse::findOrFail($id_germe);
@@ -241,8 +241,12 @@ class TechnicianAnalysisForm extends Component
             
             //Vérification que les champs soit bien  remplis
             foreach ($id_child as $childId) {
-                $validationRules["results.{$childId}.valeur"] = 'required';
-                $validationRules["results.{$childId}.interpretation"] = 'nullable';
+                if($childId == 264){
+                    continue;
+                } else{
+                    $validationRules["results.{$childId}.valeur"] = 'required';
+                    $validationRules["results.{$childId}.interpretation"] = 'nullable';
+                }
                 
             }
             
