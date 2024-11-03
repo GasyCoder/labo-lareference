@@ -14,7 +14,7 @@
         @switch($analyse->analyseType->name)
             @case('SELECT')
             @case('SELECT_MULTIPLE')
-                <select wire:model="results.{{ $analyse->id }}.valeur"
+                <select wire:model.live="results.{{ $analyse->id }}.valeur"
                         class="form-select form-select-lg"
                         {{ $analyse->analyseType->name === 'SELECT_MULTIPLE' ? 'multiple' : '' }}>
                     <option value="">{{ __('Veuillez choisir') }}</option>
