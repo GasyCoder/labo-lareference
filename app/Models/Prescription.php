@@ -24,19 +24,141 @@ class Prescription extends Model
         'poids',
         'renseignement_clinique',
         'remise',
-        'status'
+        'status',
+        'is_archive'
     ];
 
     protected $casts = [
         'poids' => 'decimal:2',
         'remise' => 'decimal:2',
+        'is_archive' => 'boolean'
     ];
+
+    public static function countArchived()
+    {
+        return static::where('is_archive', true)
+                    ->where('status', self::STATUS_ARCHIVE)
+                    ->count();
+    }
+
+    // Dans votre méthode archive() du modèle Prescription
+    public function archive()
+    {
+        return DB::transaction(function () {
+            DB::table('analyse_prescriptions')
+                ->where('prescription_id', $this->id)
+                ->update(['status' => AnalysePrescription::STATUS_ARCHIVE]);
+
+            $result = $this->update([
+                'status' => self::STATUS_ARCHIVE,
+                'is_archive' => true
+            ]);
+
+            // Émettre l'événement pour mettre à jour le compteur
+            if ($result) {
+                event('archive-counter-updated');
+            }
+
+            return $result;
+        });
+    }
+
+    // Dans votre méthode unarchive()
+    public function unarchive()
+    {
+        return DB::transaction(function () {
+            DB::table('analyse_prescriptions')
+                ->where('prescription_id', $this->id)
+                ->update(['status' => AnalysePrescription::STATUS_VALIDE]);
+
+            $result = $this->update([
+                'status' => self::STATUS_VALIDE,
+                'is_archive' => false
+            ]);
+
+            // Émettre l'événement pour mettre à jour le compteur
+            if ($result) {
+                event('archive-counter-updated');
+            }
+
+            return $result;
+        });
+    }
+
+
+    public function analyseResults()
+    {
+        return $this->hasManyThrough(
+            Resultat::class,
+            AnalysePrescription::class,
+            'prescription_id',
+            'analyse_prescription_id'
+        );
+    }
+
+    // Si vous avez besoin d'accéder aux détails des analyses :
+    public function analysesWithDetails()
+    {
+        return $this->belongsToMany(Analyse::class, 'analyse_prescriptions')
+                    ->using(AnalysePrescription::class)
+                    ->withPivot(['prix', 'status', 'resultat'])
+                    ->withTimestamps();
+    }
 
     const STATUS_EN_ATTENTE = 'EN_ATTENTE';
     const STATUS_EN_COURS = 'EN_COURS';
     const STATUS_TERMINE = 'TERMINE';
     const STATUS_VALIDE = 'VALIDE';
     const STATUS_ARCHIVE = 'ARCHIVE';
+
+    // Ajoutez cette relation
+    public function prelevements()
+    {
+        return $this->belongsToMany(Prelevement::class)
+                    ->withPivot('prix_unitaire', 'quantite')
+                    ->withTimestamps();
+    }
+
+    // Dans le modèle Prescription
+    public function hasValidatedResults()
+    {
+        return $this->resultats()
+            ->whereNotNull('validated_by')
+            ->whereNotNull('validated_at')
+            ->exists();
+    }
+
+    public function hasValidatedResultsByBiologiste()
+    {
+        return $this->resultats()
+            ->whereNotNull('validated_by') // Validés par un biologiste
+            ->exists();
+    }
+
+
+
+    public function hasUnvalidatedResults(): bool
+    {
+        return $this->resultats()
+            ->whereNull('validated_by')
+            ->exists();
+    }
+
+    public function allAnalysesCompleted(): bool
+    {
+        return $this->analyses()
+            ->wherePivot('status', 'TERMINE')
+            ->count() === $this->analyses()->count();
+    }
+
+    // Ajoutez cette méthode pour calculer le total
+    public function calculateTotal()
+    {
+        $totalAnalyses = $this->analyses->sum('pivot.prix');
+        $totalPrelevements = $this->prelevements->sum('pivot.prix_unitaire');
+
+        return $totalAnalyses + $totalPrelevements;
+    }
 
     public function patient()
     {
@@ -81,14 +203,19 @@ class Prescription extends Model
         });
     }
 
+
     public function updateStatus()
     {
         $analyseStatuses = $this->analyses()->pluck('analyse_prescriptions.status');
 
         if ($analyseStatuses->contains(AnalysePrescription::STATUS_EN_COURS)) {
             $this->status = self::STATUS_EN_COURS;
-        } elseif ($analyseStatuses->count() > 0 && $analyseStatuses->every(function ($status) {
-            return $status === AnalysePrescription::STATUS_TERMINE;
+        } elseif ($analyseStatuses->every(function ($status) {
+            return $status === AnalysePrescription::STATUS_VALIDE;
+        })) {
+            $this->status = self::STATUS_VALIDE;
+        } elseif ($analyseStatuses->every(function ($status) {
+            return $status === AnalysePrescription::STATUS_TERMINE || $status === AnalysePrescription::STATUS_VALIDE;
         })) {
             $this->status = self::STATUS_TERMINE;
         } else {
@@ -98,16 +225,6 @@ class Prescription extends Model
         $this->save();
     }
 
-    public function archive()
-    {
-        $this->status = self::STATUS_ARCHIVE;
-        $this->save();
-    }
-
-    public function isArchived()
-    {
-        return $this->status === self::STATUS_ARCHIVE;
-    }
 
     public function isTermined()
     {
@@ -123,4 +240,6 @@ class Prescription extends Model
     {
         return $this->hasMany(Resultat::class);
     }
+
+
 }

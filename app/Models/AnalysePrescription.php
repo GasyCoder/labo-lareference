@@ -20,6 +20,8 @@ class AnalysePrescription extends Pivot
     const STATUS_EN_ATTENTE = 'EN_ATTENTE';
     const STATUS_EN_COURS = 'EN_COURS';
     const STATUS_TERMINE = 'TERMINE';
+    const STATUS_VALIDE = 'VALIDE';
+    const STATUS_ARCHIVE = 'ARCHIVE';
 
     public function prescription()
     {

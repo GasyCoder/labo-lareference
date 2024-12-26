@@ -14,10 +14,12 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('prescription_id')->constrained('prescriptions')->onDelete('cascade');
             $table->foreignId('analyse_id')->constrained('analyses')->onDelete('cascade');
-            $table->text('valeur');
+            $table->text('resultats')->nullable(); // Absense ou Negatif ou Rare ou NUll
+            $table->text('valeur')->nullable(); // 1 ou null ou 5 ou
             $table->enum('interpretation', ['NORMAL', 'PATHOLOGIQUE'])->nullable();
             $table->text('conclusion')->nullable();
-            $table->foreignId('validated_by')->nullable()->constrained('users');
+            $table->enum('status', ['EN_ATTENTE', 'EN_COURS', 'TERMINE', 'VALIDE', 'ARCHIVE'])->default('EN_ATTENTE');
+            $table->foreignId('validated_by')->nullable()->constrained('users')->onDelete(NULL);
             $table->timestamp('validated_at')->nullable();
             $table->timestamps();
         });

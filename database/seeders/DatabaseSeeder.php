@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             AnalyseCsvSeeder::class,
             // AnalyseElementSeeder::class,
             BacteryFamiliesSeeder::class,
+            PrelevementSeeder::class,
         ]);
     }
 }

@@ -12,6 +12,7 @@ return new class extends Migration {
     {
         Schema::create('patients', function (Blueprint $table) {
             $table->id();
+            $table->string('ref');
             $table->string('nom');
             $table->string('prenom')->nullable();
             $table->string('sexe');

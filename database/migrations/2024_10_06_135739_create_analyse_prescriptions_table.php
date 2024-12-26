@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->foreignId('prescription_id')->constrained('prescriptions')->onDelete('cascade');
             $table->foreignId('analyse_id')->constrained('analyses')->onDelete('cascade');
             $table->decimal('prix', 10, 2)->default(0);
-            $table->enum('status', ['EN_ATTENTE', 'EN_COURS', 'TERMINE'])->default('EN_ATTENTE');
+            $table->enum('status', ['EN_ATTENTE', 'EN_COURS', 'TERMINE', 'VALIDE', 'ARCHIVE'])->default('EN_ATTENTE');
             $table->timestamps();
         });
     }

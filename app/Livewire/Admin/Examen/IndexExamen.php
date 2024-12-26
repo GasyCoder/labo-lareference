@@ -112,4 +112,6 @@ class IndexExamen extends Component
             'examens' => Examen::latest()->paginate(10),
         ]);
     }
+
+
 }

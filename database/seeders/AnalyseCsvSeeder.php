@@ -73,20 +73,22 @@ class AnalyseCsvSeeder extends Seeder
         }
     }
 
+
     private function validateJson($value)
     {
         if ($value === 'NULL' || $value === null || $value === '') {
             return null;
         }
 
-        $decoded = json_decode($value, true);
+        // Séparer les valeurs par saut de ligne (\n) et les nettoyer
+        $lines = preg_split("/\r\n|\n|\r/", $value);
+        $lines = array_map('trim', $lines); // Supprimer les espaces vides
+        $lines = array_filter($lines);     // Enlever les lignes vides
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return json_encode(['value' => str_replace(["\r", "\n"], '', $value)]);
-        }
-
-        return $value;
+        // Retourner le tableau JSON formaté
+        return json_encode(['value' => array_values($lines)], JSON_UNESCAPED_UNICODE);
     }
+
 
     private function nullableValue($value)
     {

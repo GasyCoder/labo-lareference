@@ -12,9 +12,9 @@ class Examen extends Model
     public $timestamps = true;
     protected $fillable = ['name', 'abr', 'status'];
 
-    public function analyse()
+    public function analyses()
     {
-        return $this->hasMany(Analyse::class);
+        return $this->hasMany(Analyse::class, 'examen_id');
     }
 
 
@@ -24,4 +24,22 @@ class Examen extends Model
             'status' => 'boolean',
         ];
     }
+
+
+
+     // Méthode pour récupérer les examens avec analyses et vérifier les boucles
+     public function getExamensWithAnalyses($validatedIds)
+     {
+         return $this->with(['analyses' => function ($query) use ($validatedIds) {
+             $query->whereIn('id', $validatedIds)->with('children');
+         }])->get()->each(function ($examen) {
+             foreach ($examen->analyses as $analyse) {
+                 if ($analyse->hasCyclicRelation()) {
+                     throw new \Exception("Boucle détectée dans l'analyse ID: {$analyse->id}");
+                 }
+                 $analyse->loadChildrenWithDepth(3);
+             }
+         });
+     }
+
 }

@@ -1,41 +1,3 @@
-{{-- <div>
-    <h2>Traitements des analyses</h2>
-
-    <div class="mb-3">
-        <input type="text" wire:model.live="search" class="form-control" placeholder="Rechercher une prescription, un patient ou une analyse...">
-    </div>
-
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Patient</th>
-                <th>Analyses</th>
-                <th>Date</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($prescriptions as $prescription)
-                <tr>
-                    <td>{{ $prescription->id }}</td>
-                    <td>{{ $prescription->patient->nom }} {{ $prescription->patient->prenom }}</td>
-                    <td>
-                        {{ $prescription->analyses->pluck('abr')->implode(', ') }}
-                    </td>
-                    <td>{{ $prescription->created_at->format('Y-m-d H:i:s') }}</td>
-                    <td>
-                        <a href="{{ route('technicien.traitement.show', $prescription) }}" class="btn btn-primary">
-                            Ouvrir
-                        </a>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    {{ $prescriptions->links() }}
-</div> --}}
 <div class="container-fluid py-4">
     <section class="container-fluid p-4">
         <div class="row">
@@ -73,63 +35,28 @@
                                     </form>
                                 </div>
                             </div>
-                            <!-- Onglets -->
-                            <ul class="nav nav-tabs mb-4" role="tablist">
-                                <li class="nav-item" role="analyse">
-                                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#actifs" type="button" role="tab" aria-selected="true">
-                                        <i class="fas fa-list-ul me-2"></i>Analyses En enttente
-                                        <span class="badge bg-warning rounded-pill ms-1">{{$analyseEntentes->count()}}</span>
+                            <!-- Tabs -->
+                            <ul class="nav nav-tabs mb-4">
+                                <li class="nav-item">
+                                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#actifs" type="button">
+                                        <i class="fas fa-list-ul me-2"></i>Actives
+                                        <span class="badge bg-primary ms-1">{{$activePrescriptions->total()}}</span>
                                     </button>
                                 </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#termine" type="button" role="tab" aria-selected="false">
-                                        <i class="fas fa-check-circle me-2"></i>Analyse Terminé
-                                        <span class="badge bg-success rounded-pill ms-1">{{$analyseTermines->count()}}</span>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#termine" type="button">
+                                        <i class="fas fa-check-circle me-2"></i>Terminés
+                                        <span class="badge bg-success ms-1">{{$analyseTermines->total()}}</span>
                                     </button>
                                 </li>
                             </ul>
                             <!-- Contenu des onglets -->
                             <div class="tab-content">
-                                <!-- Liste Active -->
-                                <div class="tab-pane fade show active" id="actifs" role="tabpanel">
-                                    @if($analyseEntentes->isNotEmpty())
-                                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                                            @foreach($analyseEntentes as $prescription)
-                                                <div class="col">
-                                                    @include('livewire.technicien.partials.prescription-card', ['prescription' => $prescription, 'isArchived' => false])
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                        <div class="mt-4">
-                                            {{ $analyseEntentes->links() }}
-                                        </div>
-                                    @else
-                                        <div class="alert alert-info" role="alert">
-                                            <i class="fas fa-info-circle me-2"></i>Aucune analyse en enttente trouvée.
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <!-- Liste Archivée -->
-                                <div class="tab-pane fade" id="termine" role="tabpanel">
-                                    @if($analyseTermines->isNotEmpty())
-                                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                                            @foreach($analyseTermines as $prescription)
-                                                <div class="col">
-                                                    @include('livewire.technicien.partials.prescription-card', ['prescription' => $prescription, 'isArchived' => true])
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                        <div class="mt-4">
-                                            {{ $analyseTermines->links() }}
-                                        </div>
-                                    @else
-                                        <div class="alert alert-info" role="alert">
-                                            <i class="fas fa-info-circle me-2"></i>Aucune analyse terminé trouvée.
-                                        </div>
-                                    @endif
-                                </div>
-
+                                @foreach(['actifs' => $activePrescriptions, 'termine' => $analyseTermines] as $tab => $prescriptions)
+                                    <div class="tab-pane fade {{ $tab === 'actifs' ? 'show active' : '' }}" id="{{ $tab }}">
+                                        @include('livewire.technicien.partials.prescription-card', ['prescriptions' => $prescriptions])
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>

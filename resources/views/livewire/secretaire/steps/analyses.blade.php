@@ -12,7 +12,7 @@
     <div class="list-group mb-3">
         @foreach($analyseSuggestions as $analyse)
             <button type="button" class="list-group-item list-group-item-action" wire:click="addAnalyse({{ $analyse['id'] }})">
-                {{ $analyse['abr'] }} - {{ $analyse['designation'] }} ({{ number_format($analyse['prix'], 2) }} €)
+                {{ $analyse['abr'] }} - {{ $analyse['designation'] }} ({{ number_format($analyse['prix'], 2) }} Ariary)
             </button>
         @endforeach
     </div>
@@ -29,7 +29,7 @@
                 {{ $analyse['abr'] }} - {{ $analyse['designation'] }}
             </div>
             <span>
-                {{ number_format($analyse['prix'], 2) }} €
+                {{ number_format($analyse['prix'], 2) }} Ariary
                 <button type="button" class="btn btn-sm btn-danger ms-2" wire:click="removeAnalyse({{ $analyseId }})" wire:loading.attr="disabled">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -39,8 +39,59 @@
     </ul>
 </div>
 
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Options de prélèvement</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            @foreach($prelevements as $prelevement)
+            <div class="col-md-6">
+                <div class="border rounded p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="form-check">
+                            <input type="checkbox"
+                                class="form-check-input"
+                                id="prelevement-{{ $prelevement['id'] }}"
+                                wire:model.live="selectedPrelevements"
+                                value="{{ $prelevement['id'] }}">
+                            <label class="form-check-label" for="prelevement-{{ $prelevement['id'] }}">
+                                {{ $prelevement['nom'] }}
+                            </label>
+                        </div>
+                        <span class="badge bg-primary">{{ number_format($this->getPrelevementPrice($prelevement['id']), 2) }} Ariary</span>
+                    </div>
+                    @if($this->isPrelevementSelected($prelevement['id']))
+                        <div class="mt-2">
+                            <label class="form-label">Quantité</label>
+                            <input type="number"
+                                class="form-control"
+                                min="1"
+                                wire:model.live="prelevementQuantities.{{ $prelevement['id'] }}"
+                                placeholder="Nombre">
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+        </div>
+    </div>
+</div>
+
 <div class="alert alert-info">
-    <strong>Total : {{ number_format($totalPrice, 2) }} €</strong>
+    <div class="d-flex justify-content-between mb-2">
+        <span>Sous-total Analyses:</span>
+        <strong>{{ number_format($totalPrice - $totalPrelevementsPrice, 2) }} Ariary</strong>
+    </div>
+    <div class="d-flex justify-content-between mb-2">
+        <span>Sous-total Prélèvements:</span>
+        <strong>{{ number_format($totalPrelevementsPrice, 2) }} Ariary</strong>
+    </div>
+    <hr class="my-2">
+    <div class="d-flex justify-content-between">
+        <span>Total Général:</span>
+        <strong>{{ number_format($totalPrice, 2) }} Ariary</strong>
+    </div>
 </div>
 
 @error('selectedAnalyses') <div class="text-danger">{{ $message }}</div> @enderror

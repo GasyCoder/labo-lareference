@@ -49,6 +49,10 @@ class Analyse extends Model
         'level' => AnalyseLevel::class,
     ];
 
+    public function resultats()
+    {
+        return $this->hasMany(Resultat::class, 'analyse_id');
+    }
 
     /**
      * Obtenir l'analyse parente.
@@ -64,15 +68,39 @@ class Analyse extends Model
 
      public function children()
      {
-         return $this->hasMany(Analyse::class, 'parent_code', 'code')->orderBy('ordre');
+         return $this->hasMany(Analyse::class, 'parent_code', 'code')
+                     ->orderBy('ordre')
+                     ->distinct('id'); // Évite les doublons
      }
 
+    // public function allChildren()
+    // {
+    //          return $this->hasMany(Analyse::class, 'parent_code', 'code')
+    //                 ->with('allChildren')
+    //                 ->orderBy('ordre');
+    // }
 
-    public function allChildren()
+    public function getLevelValueAttribute(): string
     {
-             return $this->hasMany(Analyse::class, 'parent_code', 'code')
-                    ->with('allChildren')
-                    ->orderBy('ordre');
+        return $this->level instanceof AnalyseLevel ? $this->level->value : $this->level;
+    }
+
+    public function allChildren($depth = 3)
+    {
+        if ($depth === 0) {
+            return $this->hasMany(Analyse::class, 'parent_code', 'code')->whereNull('id');
+        }
+
+        return $this->hasMany(Analyse::class, 'parent_code', 'code')
+            ->with(['allChildren' => function ($query) use ($depth) {
+                $query->with('resultats')->orderBy('ordre');
+            }])
+            ->orderBy('ordre');
+    }
+
+    public function analysePrescription(): HasMany
+    {
+        return $this->hasMany(AnalysePrescription::class, 'analyse_id');
     }
 
     /**
@@ -161,26 +189,57 @@ class Analyse extends Model
         ->orderBy('ordre');
     }
 
-
+    // Dans votre modèle Analyse, ajoutez ce mutateur
+    /**
+     * Accesseur pour les valeurs du select
+     */
     public function getFormattedResultsAttribute()
     {
-        if (!isset($this->result_disponible['value'])) {
+        $rawValue = $this->attributes['result_disponible'] ?? null;
+        if (empty($rawValue)) {
             return [];
         }
 
-        $value = $this->result_disponible['value'];
+        $data = is_array($rawValue) ? $rawValue : json_decode($rawValue, true);
 
-        // Cas spécifique pour les valeurs avec "25 par champ"
-        if (str_contains($value, '25 par champ')) {
+        // Vérifier directement si nous avons un tableau de valeurs
+        if (isset($data['value']) && is_array($data['value'])) {
+            // S'assurer que ce n'est pas un format d'unités
+            $firstValue = reset($data['value']);
+            if (!is_array($firstValue) && !isset($data['value']['val_ref'])) {
+                return $data['value'];
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Accesseur pour les unités (garder celui-ci inchangé)
+     */
+    public function getResultDisponibleAttribute($value)
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        $data = is_array($value) ? $value : json_decode($value, true);
+
+        // Format pour les unités
+        if (isset($data['value'][0]) && is_string($data['value'][0])) {
+            $innerData = json_decode($data['value'][0], true);
             return [
-                '> 25 par champ',
-                '< 25 par champ'
+                'val_ref' => $innerData['val_ref'] ?? null,
+                'unite' => $innerData['unite'] ?? null,
+                'suffixe' => $innerData['suffixe'] ?? null
             ];
         }
 
-        // Extraire toutes les options distinctes
-        return $this->extractOptions($value);
+        return $data;
     }
+
+
+
 
     private function extractOptions($value)
     {
@@ -252,6 +311,59 @@ class Analyse extends Model
         // Définir les mots qui commencent une nouvelle option
         $optionStarters = ['Cocci', 'Bacille', 'Autre'];
         return in_array($part, $optionStarters);
+    }
+
+
+    public function getFormattedResultValue()
+    {
+        $resultat = $this->resultats->first();
+        if (!$resultat) return null;
+
+        if ($resultat->valeur) {
+            return $resultat->valeur;
+        }
+
+        if ($resultat->resultats) {
+            if (is_string($resultat->resultats)) {
+                $jsonData = json_decode($resultat->resultats, true);
+                return $jsonData['resultats'] ?? $resultat->resultats;
+            }
+            return $resultat->resultats;
+        }
+
+        return null;
+    }
+
+
+
+    public function loadChildrenWithDepth($depth = 3)
+    {
+        if ($depth === 0) {
+            return $this; // Stop au niveau actuel
+        }
+
+        $this->load(['children' => function ($query) use ($depth) {
+            $query->with('children')->get()->each->loadChildrenWithDepth($depth - 1);
+        }]);
+
+        return $this;
+    }
+
+    public function hasCyclicRelation($visited = [])
+    {
+        if (in_array($this->id, $visited)) {
+            return true; // Boucle détectée
+        }
+
+        $visited[] = $this->id;
+
+        foreach ($this->children as $child) {
+            if ($child->hasCyclicRelation($visited)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }

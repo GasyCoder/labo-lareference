@@ -68,4 +68,6 @@ class User extends Authenticatable
     {
         return $this->hasMany(Resultat::class, 'validated_by');
     }
+
+
 }

@@ -1,60 +1,79 @@
 {{-- resources/views/livewire/technicien/details-prescription.blade.php --}}
 <div class="container-fluid py-4">
-    <div class="row g-4">
-        <!-- Sidebar des analyses -->
+    <div class="row">
+        <!-- En-tête -->
+        <div class="col-lg-12 mb-4">
+            <div class="border-bottom pb-3 d-flex justify-content-between align-items-center">
+               {{-- info patient --}}
+               @include('livewire.forms-input.patient-info', ['patient' => $prescription->patient])
+                <div>
+                    <a href="{{ route('technicien.traitement.index')}}" class="btn btn-warning">
+                        <i class="fas fa-arrow-left me-2"></i>Retour au précédent
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des analyses coté technicien -->
         <div class="col-md-3">
             <div class="card shadow-sm">
-                <div class="card-header bg-info text-white py-3">
+                <div class="card-header bg-primary text-white py-3">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-vial me-2"></i>ANALYSES
+                        <i class="fas fa-vial me-2"></i>LISTE DES ANALYSES
                     </h5>
                 </div>
                 <div class="list-group list-group-flush">
                     @foreach($topLevelAnalyses as $analyse)
                         <button wire:click="selectAnalyse({{ $analyse->id }})"
+                                wire:loading.attr="disabled"
                                 @class([
                                     'list-group-item list-group-item-action d-flex justify-content-between align-items-center',
-                                    'active' => $selectedAnalyse && $selectedAnalyse->id == $analyse->id
+                                    'active' => $selectedAnalyse && $selectedAnalyse->id == $analyse->id,
                                 ])>
                             <div>
                                 <i class="fas fa-flask me-2"></i>
                                 <span class="fw-medium">{{ strtoupper($analyse->designation) }}</span>
                                 <span class="badge bg-secondary ms-2">{{ $analyse->abr }}</span>
                             </div>
+                            @if($analyse->is_validated)
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>Terminé
+                                </span>
+                            @elseif($this->hasRequiredFields($analyse->id))
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-clock me-1"></i>En attente
+                                </span>
+                            @endif
                         </button>
-                        {{-- @if($selectedAnalyse && $selectedAnalyse->id == $analyse->id)
-                            @foreach($analyse->children as $child)
-                                <button wire:click="selectAnalyse({{ $child->id }})"
-                                        class="list-group-item list-group-item-action ps-4">
-                                    <span>{{ $child->designation }}</span>
-                                    @if($child->is_bold)
-                                        <span class="badge bg-danger rounded-pill">
-                                            <i class="fas fa-asterisk"></i>
-                                        </span>
-                                    @endif
-                                </button>
-                            @endforeach
-                        @endif --}}
                     @endforeach
                 </div>
 
-                @if($validation)
+                @if($selectedAnalyse && !$selectedAnalyse->is_validated)
                     <div class="card-footer bg-light p-3">
-                        <button wire:click="validateAnalyse"
-                                class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2">
-                            <i class="fas fa-check"></i>
-                            <span>Terminer l'analyse</span>
-                        </button>
+                        @if($this->hasRequiredFields($selectedAnalyse->id))
+                            <button wire:click="validateAnalyse"
+                                    wire:loading.attr="disabled"
+                                    class="btn btn-success w-100">
+                                <span wire:loading.remove>
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Terminer l'analyse
+                                </span>
+                                <span wire:loading>
+                                    <i class="fas fa-spinner fa-spin me-2"></i>
+                                    Traitement...
+                                </span>
+                            </button>
+                        @endif
                     </div>
                 @endif
             </div>
         </div>
 
-        <!-- Contenu principal -->
+        <!-- Formulaire de résultats -->
         <div class="col-md-9">
             @if($showForm && $selectedAnalyse)
                 <div class="card shadow-sm">
-                    <div class="card-header bg-info text-white py-3">
+                    <div class="card-header bg-primary text-white py-3">
                         <h4 class="card-title mb-0">
                             <i class="fas fa-microscope me-2"></i>
                             {{ strtoupper($selectedAnalyse->designation) }}
@@ -62,35 +81,17 @@
                     </div>
 
                     <div class="card-body p-4">
-                        <!-- Formulaire d'analyse -->
                         <form wire:submit.prevent="saveResult({{ $selectedAnalyse->id }})">
-                            @include('livewire.technicien.partials.analyse-recursive', [
+                            @include('livewire.forms-input.analyse-recursive', [
                                 'analyses' => $selectedAnalyse,
                                 'bacteries' => $showBactery,
                                 'antibiotics_name' => $antibiotics_name
                             ])
-
-                            <div class="mt-4 border-top pt-4">
-                                <h5 class="mb-3">
-                                    <i class="fas fa-clipboard-check me-2"></i>
-                                    {{ __('Conclusion') }}
-                                </h5>
-                                <div class="mb-3">
-                                    <textarea wire:model="conclusion"
-                                             class="form-control"
-                                             rows="4"
-                                             placeholder="{{ __('Ajouter vos commentaires sur le résultat de l\'analyse') }}"></textarea>
-                                </div>
-
-                                <div class="d-flex justify-content-end gap-2">
-                                    <button type="submit"
-                                            class="btn btn-primary d-flex align-items-center gap-2">
-                                        <i class="fas fa-save"></i>
-                                        <span>{{ __('Enregistrer') }}</span>
-                                    </button>
-                                </div>
-                            </div>
+                            <x-conclusion-section
+                            wire:model="conclusion"
+                            />
                         </form>
+
                     </div>
                 </div>
             @else
@@ -100,5 +101,10 @@
                 </div>
             @endif
         </div>
+
     </div>
+
+@include('layouts.style-patient-info')
+
 </div>
+@include('layouts.scripts')

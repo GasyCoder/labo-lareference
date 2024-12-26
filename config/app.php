@@ -2,6 +2,10 @@
 
 return [
 
+    'tel_bureau' => '261 34 53 211 41',
+    'tel_urgence' => '261 34 76 637 92',
+    'adresse' => 'Mangarvotra MAHAJANGA 401',
+
     /*
     |--------------------------------------------------------------------------
     | Application Name

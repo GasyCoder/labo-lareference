@@ -23,16 +23,53 @@ class Traitements extends Component
         $this->resetPage();
     }
 
-
     public function render()
     {
         $search = '%' . $this->search . '%';
-        // Prescriptions actives
-        $analyseEntentes = Prescription::with(['patient', 'prescripteur', 'analyses'])
+
+        // Prescriptions actives (non terminées et non archivées)
+        $activePrescriptions = Prescription::with([
+            'patient' => function($query) {
+                $query->select('id', 'ref', 'nom', 'prenom', 'telephone');
+            },
+            'prescripteur',
+            'analyses',
+            'resultats'
+        ])
+        ->whereHas('patient', function ($query) {
+            $query->whereNull('deleted_at');
+        })
+        ->where('is_archive', false)
+        ->whereIn('status', [Prescription::STATUS_EN_ATTENTE, Prescription::STATUS_EN_COURS])  // Modification ici
+        ->where(function ($query) use ($search) {
+            $query->where('renseignement_clinique', 'like', $search)
+                ->orWhere('status', 'like', $search)
+                ->orWhere('nouveau_prescripteur_nom', 'like', $search)
+                ->orWhereHas('patient', function ($query) use ($search) {
+                    $query->where('nom', 'like', $search)
+                        ->orWhere('prenom', 'like', $search)
+                        ->orWhere('telephone', 'like', $search);
+                })
+                ->orWhereHas('prescripteur', function ($query) use ($search) {
+                    $query->where('name', 'like', $search)
+                        ->whereHas('roles', function ($query) {
+                            $query->where('name', 'prescripteur');
+                        });
+                });
+        })
+        ->orderBy('created_at', 'desc')
+        ->paginate(15);
+
+        // Prescriptions terminées
+        $analyseTermines = Prescription::with(['patient', 'prescripteur', 'analyses'])
             ->whereHas('patient', function ($query) {
                 $query->whereNull('deleted_at');
             })
-            ->where('status', '=', Prescription::STATUS_EN_ATTENTE)
+            ->where('is_archive', false)  // Ajout de cette condition
+            ->where('status', Prescription::STATUS_TERMINE)  // Modification ici
+            ->whereDoesntHave('resultats', function($query) {  // Ajout de cette condition
+                $query->where('status', 'VALIDE');
+            })
             ->where(function ($query) use ($search) {
                 $query->where('renseignement_clinique', 'like', $search)
                     ->orWhere('status', 'like', $search)
@@ -49,41 +86,15 @@ class Traitements extends Component
                             });
                     });
             })
-            ->latest()
-            ->paginate(10);
-
-
-            // Prescriptions terminé
-            $analyseTermines = Prescription::with(['patient', 'prescripteur', 'analyses'])
-            ->whereHas('patient', function ($query) {
-                $query->whereNull('deleted_at');
-            })
-            ->where('status', '=', Prescription::STATUS_TERMINE)
-            ->where(function ($query) use ($search) {
-                $query->where('renseignement_clinique', 'like', $search)
-                    ->orWhere('status', 'like', $search)
-                    ->orWhere('nouveau_prescripteur_nom', 'like', $search)
-                    ->orWhereHas('patient', function ($patientQuery) use ($search) {
-                        $patientQuery->where('nom', 'like', $search)
-                            ->orWhere('prenom', 'like', $search)
-                            ->orWhere('telephone', 'like', $search);
-                    })
-                    ->orWhereHas('prescripteur', function ($prescripteurQuery) use ($search) {
-                        $prescripteurQuery->where('name', 'like', $search)
-                            ->whereHas('roles', function ($roleQuery) {
-                                $roleQuery->where('name', 'prescripteur');
-                            });
-                    });
-            })
-            ->latest()
-            ->paginate(10, ['*'], 'termine_page');
-
+            ->orderBy('created_at', 'asc')
+            ->paginate(15, ['*'], 'termine_page');
 
         return view('livewire.technicien.traitements', [
-            'analyseEntentes' => $analyseEntentes,
-            'analyseTermines'=> $analyseTermines,
+            'activePrescriptions' => $activePrescriptions,
+            'analyseTermines' => $analyseTermines,
         ]);
     }
+
 
     public function openPrescription($prescriptionId)
     {

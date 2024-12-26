@@ -1,7 +1,7 @@
 9,PARENT,0,NFS,HEMOGRAMME,"Devant toute thrombopénie isolée à l'examen microscopique, la recherche de Plasmodium est faite systématiquement dans une région endémique du paludisme.",14000,1,2,1,NULL,NULL,1,NULL,2024-10-13 08:10:30,2024-10-13 08:10:30
 17,NORMAL,9,HG,Hémoglobine,,0,0,2,4,"{""val_ref"":""120 - 160"",""unite"":""  g\/l""}",99,1,NULL,2024-10-14 08:10:30,2024-10-14 08:10:30
 18,NORMAL,9,HEMATOCRITE,Hématocrite,,0,0,2,4,"{""val_ref"":""40 - 55"",""unite"":""  %""}",99,1,NULL,2024-10-15 08:10:30,2024-10-15 08:10:30
-19,NORMAL,9,VGM,VGM,,0,0,1,4,"{""val_ref"":""80 - 100"",""unite"":""  \u00b53""}",99,1,NULL,2024-10-16 08:10:30,2024-10-16 08:10:30
+19,NORMAL,9,VGM,VGM,,0,0,2,4,"{""val_ref"":""80 - 100"",""unite"":""  \u00b53""}",99,1,NULL,2024-10-16 08:10:30,2024-10-16 08:10:30
 20,CHILD,16,GB0,Globules blancs,,0,0,2,4,"{""val_ref"":""4.00-10"",""unite"":""G\/l""}",99,1,NULL,2024-10-17 08:10:30,2024-10-17 08:10:30
 21,NORMAL,9,TCMH,TCMH,,0,0,2,4,"{""val_ref"":""27- 41"",""unite"":""  pg""}",99,1,NULL,2024-10-18 08:10:30,2024-10-18 08:10:30
 25,PARENT,0,FT,FT,,1000,0,4,1,NULL,99,1,NULL,2024-10-19 08:10:30,2024-10-19 08:10:30
@@ -152,11 +152,11 @@ Jaune citrin
 Séro-hémorragique
 Chyleux
 Autre",1,1,NULL,2025-01-13 08:10:30,2025-01-13 08:10:30
-148,PARENT,77,LIQPLEBacterio,Analyse bactériologique,,1000,1,5,1,NULL,2,1,NULL,2025-01-14 08:10:30,2025-01-14 08:10:30
-149,PARENT,148,liqpleExamenDirect,Examen direct,,0,0,5,1,NULL,99,1,NULL,2025-01-15 08:10:30,2025-01-15 08:10:30
-150,PARENT,148,liqpleExamenApresCulture,Examen après culture,,0,0,5,1,NULL,99,1,NULL,2025-01-16 08:10:30,2025-01-16 08:10:30
-153,NORMAL,149,liqpleleuco,Leucocytes,La formule leucocytaire n'est pas effectuée lorsque le taux des leucocytes est inférieur à 70 /mm3,0,0,5,10,"{""unite"":""\/  mm3"",""val_min"":""100""}",99,1,NULL,2025-01-17 08:10:30,2025-01-17 08:10:30
-154,NORMAL,149,leqplehematie,Hematie,,0,0,5,8,"Absence
+148,PARENT,77,LIQPLEBacterio,Analyse bactériologique,,1000,1,1,1,NULL,2,1,NULL,2025-01-14 08:10:30,2025-01-14 08:10:30
+149,PARENT,148,liqpleExamenDirect,Examen direct,,0,0,1,1,NULL,99,1,NULL,2025-01-15 08:10:30,2025-01-15 08:10:30
+150,PARENT,148,liqpleExamenApresCulture,Examen après culture,,0,0,1,1,NULL,99,1,NULL,2025-01-16 08:10:30,2025-01-16 08:10:30
+153,NORMAL,149,liqpleleuco,Leucocytes,La formule leucocytaire n'est pas effectuée lorsque le taux des leucocytes est inférieur à 70 /mm3,0,0,1,13,"{""unite"":""\/  mm3"",""val_min"":""100""}",99,1,NULL,2025-01-17 08:10:30,2025-01-17 08:10:30
+154,NORMAL,149,leqplehematie,Hematie,,0,0,1,8,"Absence
 Quelques
 Nombreux",99,1,NULL,2025-01-18 08:10:30,2025-01-18 08:10:30
 155,PARENT,0,LiqArt,Liquide Articulaire,,35000,0,1,6,NULL,NULL,1,NULL,2025-01-19 08:10:30,2025-01-19 08:10:30
@@ -167,7 +167,7 @@ Hémorragique
 Autre",99,1,NULL,2025-01-21 08:10:30,2025-01-21 08:10:30
 158,PARENT,155,LiqArtBacterio,Bacteriologie,,0,0,5,1,NULL,99,1,NULL,2025-01-22 08:10:30,2025-01-22 08:10:30
 159,PARENT,158,liqArtExamenDirect,Examen direct,,0,0,5,1,NULL,99,1,NULL,2025-01-23 08:10:30,2025-01-23 08:10:30
-160,NORMAL,159,liqartleuco,Leucocytes,,0,0,5,10,"{""unite"":""\/mm3"",""val_min"":""1000""}",99,1,NULL,2025-01-24 08:10:30,2025-01-24 08:10:30
+160,NORMAL,159,liqartleuco,Leucocytes,,0,0,5,13,"{""unite"":""\/mm3"",""val_min"":""1000""}",99,1,NULL,2025-01-24 08:10:30,2025-01-24 08:10:30
 161,NORMAL,159,leqarthematie,Hematie,,0,0,5,8,"Absence
 Quelques
 Nombreux",99,1,NULL,2025-01-25 08:10:30,2025-01-25 08:10:30
@@ -182,7 +182,7 @@ Autre",1,1,NULL,2025-01-28 08:10:30,2025-01-28 08:10:30
 168,NORMAL,156,asciteProtide,Protide,,0,1,1,4,"{""val_ref"":"""",""unite"":""g\/l""}",2,1,NULL,2025-01-30 08:10:30,2025-01-30 08:10:30
 169,PARENT,167,asciteExamenDirect,Examen direct,,0,1,5,1,NULL,99,1,NULL,2025-01-31 08:10:30,2025-01-31 08:10:30
 170,NORMAL,169,asciteLeucocytes,Leucocytes,"La formule leucocytaire n'est pas recommandée en dessous de 70 leucocytes par mm3.
- ",0,1,5,10,"{""unite"":""\/mm3 "",""val_min"":""399""}",99,1,NULL,2025-02-01 08:10:30,2025-02-01 08:10:30
+ ",0,1,5,13,"{""unite"":""\/mm3 "",""val_min"":""399""}",99,1,NULL,2025-02-01 08:10:30,2025-02-01 08:10:30
 171,NORMAL,169,asciteHematie,Hématies,,0,1,5,8,"Absence
 Quelques
 Nombreux
@@ -314,7 +314,7 @@ Autre",99,1,NULL,2025-04-04 08:10:30,2025-04-04 08:10:30
 257,CHILD,222,FU_GERMEISOLE,Germe isolés,,0,0,5,15,NULL,99,1,NULL,2025-04-10 08:10:30,2025-04-10 08:10:30
 258,CHILD,249,ECYT_GERME,Germe isolés,,0,0,5,15,NULL,99,1,NULL,2025-04-11 08:10:30,2025-04-11 08:10:30
 259,CHILD,180,LCR_GERME,Germe isolés,,0,0,5,15,NULL,99,1,NULL,2025-04-12 08:10:30,2025-04-12 08:10:30
-260,CHILD,150,LIQPLE_GERME,Germe isolés,,0,0,5,15,NULL,99,1,NULL,2025-04-13 08:10:30,2025-04-13 08:10:30
+260,CHILD,150,LIQPLE_GERME,Germe isolés,,0,0,1,15,NULL,99,1,NULL,2025-04-13 08:10:30,2025-04-13 08:10:30
 261,CHILD,162,LIQART_GERME,Germe isolés,,0,0,5,15,NULL,99,1,NULL,2025-04-14 08:10:30,2025-04-14 08:10:30
 262,PARENT,0,ECBU,ECBU,"Hyperleucocyturie associée à une flore polymorphe (présence de 2 à 1 types de bactéries) évoquant une contamination probablement liée aux mauvaises conditions de prélèvement d'urines. Refaire l'ECBU en respectant les règles d'hygiène lors du recueil si persistance des signes cliniques.
 Antibiogramme non réalisé",40000,1,5,1,NULL,NULL,1,NULL,2025-04-15 08:10:30,2025-04-15 08:10:30
@@ -473,7 +473,6 @@ Positif  +++",99,1,NULL,2025-08-05 08:10:30,2025-08-05 08:10:30
 392,NORMAL,69,pH-bu,pH,,0,1,1,4,"{""val_ref"":"""",""unite"":""""}",99,1,NULL,2025-08-06 08:10:30,2025-08-06 08:10:30
 393,NORMAL,69,densité-bu,Densité urinaire,,0,1,1,4,"{""val_ref"":"""",""unite"":""""}",99,1,NULL,2025-08-07 08:10:30,2025-08-07 08:10:30
 394,NORMAL,69,Bilirubine-bu,Bilirubine urinaire,,0,1,1,10,NULL,99,1,NULL,2025-08-08 08:10:30,2025-08-08 08:10:30
-395,NORMAL,0,hgfgfg,es,,0,0,5,10,NULL,99,1,NULL,2025-08-09 08:10:30,2025-08-09 08:10:30
 397,NORMAL,307,GS-rh,Antigène D (Rhésus),,0,1,1,9,NULL,99,1,NULL,2025-08-10 08:10:30,2025-08-10 08:10:30
 399,NORMAL,227,Culot - cristaux,Cristaux,,0,0,5,8,"Absence
 Présence d'Oxalate de Calcium
@@ -501,7 +500,6 @@ Cristaux  de Phosphate Ammoniaco-Magnésien",99,1,NULL,2025-08-11 08:10:30,2025-
 422,NORMAL,0,UMA24,Microalbuminurie,,20000,0,1,4,"{""val_ref"":"""",""unite"":""mg\/l""}",99,1,NULL,2025-08-29 08:10:30,2025-08-29 08:10:30
 423,NORMAL,0,SPERMOC,SPERMOCULTURE,,38000,1,5,5,"{""val_ref"":"""",""unite"":""""}",NULL,1,NULL,2025-08-30 08:10:30,2025-08-30 08:10:30
 424,NORMAL,0,PRIX_PRELEVEMENT_AIGUILLE_TUBE,Tube et aiguille,,3500,0,1,16,NULL,99,1,NULL,2025-08-31 08:10:30,2025-08-31 08:10:30
-425,NORMAL,0,HEMOC,HEMOCULTURE,,65000,1,5,3,NULL,99,1,NULL,2025-09-01 08:10:30,2025-09-01 08:10:30
 427,CHILD,426,cgp nbx,Nombreux,,0,0,5,16,NULL,99,1,NULL,2025-09-02 08:10:30,2025-09-02 08:10:30
 428,NORMAL,426,bgp abs,Absence,,0,0,5,16,NULL,99,1,NULL,2025-09-03 08:10:30,2025-09-03 08:10:30
 430,NORMAL,429,bgn rare,Rare,,0,0,5,16,NULL,99,1,NULL,2025-09-04 08:10:30,2025-09-04 08:10:30
@@ -642,8 +640,8 @@ Trophozoïtes de Plasmodium knowlesi",97,1,NULL,2025-11-25 08:10:30,2025-11-25 0
 529,NORMAL,0,CORTISOLEMIE,CORTISOLEMIE (8h),,0,1,7,4,"{""val_ref"":""201.31 - 536.54"",""unite"":""    nmol\/l""}",NULL,1,NULL,2025-11-30 08:10:30,2025-11-30 08:10:30
 530,NORMAL,0,CORTISOLEMIE 16,CORTISOLEMIE (16h),"Le taux  peut être au dessus de la normale  en cas de tumeur maligne (taux élevé) ou daffections non tumorales (inflammations, ulcère gastroduodénale,... Résultat à interpréter avec la clinique.",0,1,7,4,"{""val_ref"":""65.78 - 330.85"",""unite"":""  nmol\/ml""}",NULL,1,NULL,2025-12-01 08:10:30,2025-12-01 08:10:30
 531,NORMAL,0,ACE,Antigène Carcino-Embryonnaire (ACE),,0,1,6,9,"{""val_ref"":""0 - 5 "",""unite"":""  ng\/ml""}",NULL,1,NULL,2025-12-02 08:10:30,2025-12-02 08:10:30
-532,NORMAL,0,Ag H. Pylori,Helicobater pylori dans les selles (antigènes),,0,1,6,4,NULL,NULL,1,NULL,2025-12-03 08:10:30,2025-12-03 08:10:30
-533,PARENT,155,LiqArt Glucose,Glucose,,0,0,1,1,"{""val_ref"":""3.9 - 6.1"",""unite"":""mmol\/l""}",99,1,NULL,2025-12-04 08:10:30,2025-12-04 08:10:30
+532,NORMAL,0,Ag H. Pylori,Helicobater pylori dans les selles (antigènes),,0,1,6,9,NULL,NULL,1,NULL,2025-12-03 08:10:30,2025-12-03 08:10:30
+533,NORMAL,155,LiqArt Glucose,Glucose,,0,0,1,4,"{""val_ref"":""3.9 - 6.1"",""unite"":""mmol\/l""}",99,1,NULL,2025-12-04 08:10:30,2025-12-04 08:10:30
 534,NORMAL,0,DEN,Sérologie de la Dengue,,0,1,4,2,NULL,99,1,NULL,2025-12-05 08:10:30,2025-12-05 08:10:30
 536,NORMAL,534,Ag,Recherche d'Antigènes,,0,1,4,2,"[""NEGATIF"",""POSITIF_1""]",99,1,NULL,2025-12-06 08:10:30,2025-12-06 08:10:30
 537,NORMAL,534,IgM,Anticorps IgM,,0,1,4,2,"[""NEGATIF"",""POSITIF_1""]",99,1,NULL,2025-12-07 08:10:30,2025-12-07 08:10:30

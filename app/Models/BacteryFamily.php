@@ -18,6 +18,7 @@ class BacteryFamily extends Model
         'status' => 'boolean',
     ];
 
+
     public function setAntibioticsAttribute($value)
     {
         $this->attributes['antibiotics'] = is_string($value)

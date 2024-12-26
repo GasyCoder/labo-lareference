@@ -1,17 +1,8 @@
 <h4 class="card-title mb-4">Informations médicales et le prescripteur</h4>
 <div class="row g-3">
-    <div class="col-md-6">
-        <label for="patient_type" class="form-label">Type de patient</label>
-        <select id="patient_type" wire:model.defer="patient_type" class="form-select @error('patient_type') is-invalid @enderror">
-            <option value="EXTERNE">Externe</option>
-            <option value="HOSPITALISE">Hospitalisé</option>
-        </select>
-        @error('patient_type') <div class="text-danger">{{ $message }}</div> @enderror
-    </div>
-
 
     <div class="col-md-6">
-        <label for="prescripteur_search" class="form-label">Nom du prescripteur</label>
+        <label for="prescripteur_search" class="form-label">Nom du prescripteur <span class="text-danger">*</span></label>
         <div class="position-relative">
             <input type="text" wire:model.live="prescripteur_search" id="prescripteur_search"
             class="form-control" autocomplete="on">
@@ -40,6 +31,14 @@
         @error('nouveau_prescripteur_nom') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
     </div>
 
+    <div class="col-md-6">
+        <label for="patient_type" class="form-label">Type de patient</label>
+        <select id="patient_type" wire:model.defer="patient_type" class="form-select @error('patient_type') is-invalid @enderror">
+            <option value="EXTERNE">Externe</option>
+            <option value="HOSPITALISE">Hospitalisé</option>
+        </select>
+        @error('patient_type') <div class="text-danger">{{ $message }}</div> @enderror
+    </div>
 
     <div class="col-12">
         <label for="renseignement_clinique" class="form-label">Renseignement clinique</label>

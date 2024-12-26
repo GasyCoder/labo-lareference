@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Analyse;
 use App\Models\Patient;
 use Livewire\Component;
+use App\Models\Prelevement;
 use Illuminate\Support\Str;
 use App\Models\Prescription;
 use Livewire\Attributes\Rule;
@@ -53,10 +54,30 @@ class AddPrescriptions extends Component
     public $totalPrice = 0;
     public $analysesPrices;
 
+    // Propriétés pour les prélèvements
+    public $prelevements = [];
+    public $selectedPrelevements = [];
+    public $totalPrelevementsPrice = 0;
+
+    public $prelevementQuantities = [];
+    public $basePrelevementPrice = 2000;
+    public $elevatedPrelevementPrice = 3500;
+
     public function mount()
     {
         $this->loadAnalyses();
+        $this->loadPrelevements();
     }
+
+    public function loadPrelevements()
+    {
+        $this->prelevements = Prelevement::actif()
+            ->select('id', 'nom', 'description', 'prix')
+            ->orderBy('nom')
+            ->get()
+            ->toArray();
+    }
+
 
     public function getProgressPercentageProperty()
     {
@@ -68,6 +89,8 @@ class AddPrescriptions extends Component
         return view('livewire.secretaire.add-prescription', [
             'analyses' => $this->analyses,
             'analysesPrices' => $this->analysesPrices,
+            'prelevements' => $this->prelevements,  // Ajout des prélèvements
+            'totalPrelevementsPrice' => $this->totalPrelevementsPrice,
         ]);
     }
 
@@ -108,13 +131,14 @@ class AddPrescriptions extends Component
                 $patient = $this->isEditing ? $this->updatePatient() : $this->createPatient();
                 $prescription = $this->savePrescription($patient);
                 $this->saveAnalyses($prescription);
+                $this->savePrelevements($prescription);
             });
 
             $this->alert('success', 'Patient, prescription et analyses enregistrés avec succès.');
             $this->reset();
             return redirect()->route('secretaire.patients.index');
         } catch (\Exception $e) {
-            $this->alert('error', 'Une erreur est survenue lors de l\'enregistrement: ' . $e->getMessage());
+            $this->alert('error', 'Erreur lors de l\'enregistrement: ' . $e->getMessage());
         }
     }
 
@@ -239,6 +263,7 @@ class AddPrescriptions extends Component
         return $rules;
     }
 
+
     public function updatedNom($value)
     {
         if (strlen($value) > 2) {
@@ -304,12 +329,87 @@ class AddPrescriptions extends Component
         $this->dispatch('analyseRemoved', analyseId: $analyseId);
     }
 
+    public function togglePrelevement($prelevementId)
+    {
+        $index = array_search($prelevementId, $this->selectedPrelevements);
+
+        if ($index !== false) {
+            unset($this->selectedPrelevements[$index]);
+            unset($this->prelevementQuantities[$prelevementId]);
+        } else {
+            $this->selectedPrelevements[] = $prelevementId;
+            $this->prelevementQuantities[$prelevementId] = 1; // Quantité par défaut
+        }
+
+        $this->calculateTotal();
+        $this->dispatch('prelevementUpdated');
+    }
+
+
+    public function updatedSelectedPrelevements($value)
+    {
+        $this->calculateTotal();
+    }
+
+    // Dans la classe AddPrescriptions
     public function calculateTotal()
     {
-        $this->totalPrice = collect($this->analyses)
+        // Calcul du total des prélèvements
+        $this->totalPrelevementsPrice = collect($this->prelevements)
+            ->whereIn('id', $this->selectedPrelevements)
+            ->sum(function ($prelevement) {
+                // Si c'est un tube aiguille
+                if ($prelevement['nom'] === 'Tube aiguille') {
+                    $quantity = $this->prelevementQuantities[$prelevement['id']] ?? 1;
+                    // Si la quantité est > 1, on utilise le prix élevé
+                    $price = $quantity > 1 ? 3500 : 2000;
+                    return $price;
+                }
+                // Pour les autres prélèvements, prix normal
+                return $prelevement['prix'];
+            });
+
+        // Calcul du total des analyses
+        $analysesTotal = collect($this->analyses)
             ->whereIn('id', $this->selectedAnalyses)
             ->sum('prix');
+
+        // Total final
+        $this->totalPrice = $analysesTotal + $this->totalPrelevementsPrice;
     }
+
+    // Ajouter cette méthode pour réagir aux changements de quantité
+    public function updatedPrelevementQuantities($value, $key)
+    {
+        $this->calculateTotal();
+        $this->dispatch('prelevementUpdated');
+    }
+
+
+    private function savePrelevements($prescription)
+    {
+        if (empty($this->selectedPrelevements)) {
+            return;
+        }
+
+        $prelevementsToSync = collect($this->prelevements)
+            ->whereIn('id', $this->selectedPrelevements)
+            ->mapWithKeys(function ($prelevement) {
+                $prix = $this->getPrelevementPrice($prelevement['id']);
+                $quantity = $this->prelevementQuantities[$prelevement['id']] ?? 1;
+
+                return [$prelevement['id'] => [
+                    'prix_unitaire' => $prix,
+                    'quantite' => $quantity,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]];
+            })
+            ->toArray();
+
+        $prescription->prelevements()->sync($prelevementsToSync);
+    }
+
 
     public function getSelectedAnalysesCountProperty()
     {
@@ -334,5 +434,34 @@ class AddPrescriptions extends Component
         // Mettre à jour le statut de la prescription
         $prescription->updateStatus();
     }
+
+
+    // Méthode pour récupérer le prix d'un prélèvement spécifique
+    public function getPrelevementPrice($prelevementId)
+    {
+        $prelevement = collect($this->prelevements)->firstWhere('id', $prelevementId);
+        if (!$prelevement) return 0;
+
+        // Si c'est un prélèvement tube/aiguille
+        if ($prelevement['nom'] === 'Tube/Aiguille') {
+            $quantity = $this->prelevementQuantities[$prelevementId] ?? 1;
+            return $quantity > 1 ? $this->elevatedPrelevementPrice : $this->basePrelevementPrice;
+        }
+
+        return $prelevement['prix'];
+    }
+
+    // Méthode pour vérifier si un prélèvement est sélectionné
+    public function isPrelevementSelected($prelevementId)
+    {
+        return in_array($prelevementId, $this->selectedPrelevements);
+    }
+
+    // Propriété calculée pour le nombre de prélèvements sélectionnés
+    public function getSelectedPrelevementsCountProperty()
+    {
+        return count($this->selectedPrelevements);
+    }
+
 
 }

@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->decimal('poids', 5, 2)->nullable(); // en kg
             $table->text('renseignement_clinique')->nullable();
             $table->decimal('remise', 10, 2)->default(0);
+            $table->boolean('is_archive')->default(false);
             $table->enum('status', ['EN_ATTENTE', 'EN_COURS', 'TERMINE', 'VALIDE', 'ARCHIVE'])->default('EN_ATTENTE');
             $table->softDeletes();
             $table->timestamps();

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Analyse;
 use App\Models\Patient;
 use Livewire\Component;
+use App\Models\Prelevement;
 use Illuminate\Support\Str;
 use App\Models\Prescription;
 use Illuminate\Support\Facades\DB;
@@ -48,9 +49,13 @@ class EditPrescription extends Component
     public $totalPrice = 0;
     public $analysesPrices;
 
+    public $prelevements = [];
+    public $selectedPrelevements = [];
+    public $totalPrelevementsPrice = 0;
+
     public function mount($id)
     {
-        $prescription = Prescription::with(['patient', 'prescripteur', 'analyses'])->find($id);
+        $prescription = Prescription::with(['patient', 'prescripteur', 'analyses', 'prelevements'])->find($id);
 
         if (!$prescription) {
             session()->flash('error', 'Prescription introuvable.');
@@ -60,7 +65,33 @@ class EditPrescription extends Component
         $this->prescriptionId = $prescription->id;
         $this->loadPrescriptionData($prescription);
         $this->loadAnalyses();
+        $this->loadPrelevements($prescription); // Ajoutez cette ligne
     }
+
+
+    // Ajoutez cette méthode
+    public function loadPrelevements($prescription)
+    {
+        // Charger tous les prélèvements disponibles
+        $this->prelevements = Prelevement::all()->toArray();
+
+        // Sélectionner les prélèvements existants de la prescription
+        $this->selectedPrelevements = $prescription->prelevements->pluck('id')->toArray();
+
+        $this->calculateTotalPrelevements();
+    }
+
+       // Ajoutez cette méthode
+    public function calculateTotalPrelevements()
+    {
+        $this->totalPrelevementsPrice = collect($this->prelevements)
+            ->whereIn('id', $this->selectedPrelevements)
+            ->sum('prix');
+
+        // Recalculer le total général
+        $this->totalPrice = $this->totalPrice + $this->totalPrelevementsPrice;
+    }
+
 
     public function loadPrescriptionData($prescription)
     {
@@ -140,6 +171,12 @@ class EditPrescription extends Component
         }
     }
 
+    private function updatePrelevements($prescription)
+    {
+        $prescription->prelevements()->sync($this->selectedPrelevements);
+    }
+
+
     public function updatePatientAndPrescription()
     {
         $this->validate();
@@ -159,6 +196,7 @@ class EditPrescription extends Component
             $this->alert('error', 'Une erreur est survenue lors de la mise à jour: ' . $e->getMessage());
         }
     }
+
 
     private function getPatientData()
     {

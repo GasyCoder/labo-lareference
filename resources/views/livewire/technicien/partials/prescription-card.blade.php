@@ -1,73 +1,111 @@
 {{-- resources/views/livewire/technicien/partials/prescription-card.blade.php --}}
-<div class="card h-100 shadow-xl border-1 rounded-lg hover-shadow-lg transition-all">
-    <div class="card-body">
+@if($prescriptions->isNotEmpty())
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Patient</th>
+                <th scope="col">Prescripteur</th>
+                <th scope="col">Créé</th>
+                <th scope="col">Statut</th>
+                <th scope="col">Analyses</th>
+                <th scope="col" class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($prescriptions as $prescription)
+                <tr>
+                    <td class="fw-medium">
+                        {{ $prescription->patient->formatted_ref ?? 'Non défini' }}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-success d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <span class="text-white fw-bold">
+                                    {{ strtoupper(substr($prescription->patient->nom, 0, 1) . substr($prescription->patient->prenom, 0, 1)) }}
+                                </span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ $prescription->patient->nom }} {{ $prescription->patient->prenom }}</h6>
+                                @if($prescription->patient->telephone)
+                                    <small class="text-muted">
+                                        <i class="fas fa-phone-alt me-1"></i>{{ $prescription->patient->telephone }}
+                                    </small>
+                                @endif
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fas fa-user-md text-primary"></i>
+                            <span>{{ $prescription->prescripteur ? $prescription->prescripteur->name : ($prescription->nouveau_prescripteur_nom ?? 'Non assigné') }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fas fa-calendar-alt text-muted"></i>
+                            <small>{{ $prescription->created_at->diffForHumans(['parts' => 1, 'short' => true]) }}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <x-prescription-status :status="$prescription->status" />
+                    </td>
+                    {{-- Analyses --}}
+                    <td>
+                        <div class="d-flex flex-wrap gap-1">
+                            {{-- Premiers badges --}}
+                            @foreach($prescription->analyses->take(3) as $analyse)
+                                <span class="badge rounded-pill bg-primary px-2 py-1">
+                                    <i class="fas fa-flask me-1"></i>{{ $analyse->abr }}
+                                </span>
+                            @endforeach
 
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="d-flex align-items-center" style="max-width: 80%;">
-                <div class="rounded-circle bg-success }}
-                text-white d-flex justify-content-center align-items-center shadow-sm"
-                style="width: 40px; height: 40px; flex-shrink: 0;">
-                    <span class="fs-6 fw-bold">
-                        {{ strtoupper(substr($prescription->patient->nom, 0, 1) . substr($prescription->patient->prenom, 0, 1)) }}
-                    </span>
-                </div>
-                <div class="ms-2 overflow-hidden">
-                    <h6 class="card-title fw-bold mb-0 text-truncate" title="{{ $prescription->patient->nom }} {{ $prescription->patient->prenom }}">
-                        {{ $prescription->patient->nom }} {{ $prescription->patient->prenom }}
-                    </h6>
-                </div>
-            </div>
-            @php
-            $statusConfig = [
-                'EN_ATTENTE' => ['class' => 'warning', 'icon' => 'clock', 'text' => 'En attente'],
-                'TERMINE' => ['class' => 'success', 'icon' => 'check', 'text' => '']
-            ][$prescription->status] ?? ['class' => 'secondary', 'icon' => 'question', 'text' => 'Inconnu'];
-        @endphp
-        <span class="badge bg-{{ $statusConfig['class'] }} text-white d-inline-flex align-items-center"
-              style="font-size: 0.7rem; padding: 0.25em 0.5em;"
-              title="{{ $prescription->status }}">
-            <i class="fe fe-{{ $statusConfig['icon'] }} {{ $statusConfig['text'] ? 'me-1' : '' }}"></i>
-            {{ $statusConfig['text'] }}
-        </span>
-        </div>
-
-
-        <div class="mb-2">
-            @if($prescription->patient->telephone)
-                <p class="card-text mb-1 text-muted" style="font-size: 0.85rem;">
-                    <i class="fas fa-phone-alt me-2 text-primary"></i>
-                    {{ $prescription->patient->telephone }}
-                </p>
-            @endif
-            <p class="card-text mb-1">
-                <i class="fas fa-user-md me-2 text-primary"></i>
-                <strong>Prescripteur:</strong>
-                {{ $prescription->prescripteur ? $prescription->prescripteur->name : ($prescription->nouveau_prescripteur_nom ?? 'Non assigné') }}
-            </p>
-            <p class="card-text mb-1" title="{{ $prescription->created_at->format('d/m/Y H:i') }}">
-                <i class="fas fa-calendar-alt me-2 text-primary"></i>
-                <strong>Créé:</strong>
-                {{ $prescription->created_at->diffForHumans() }}
-            </p>
-        </div>
-        <div>
-            <strong><i class="fas fa-vial me-2 text-primary"></i>Analyses:</strong>
-            <div class="mt-2">
-                @foreach($prescription->analyses->take(3) as $analyse)
-                    <span class="badge bg-info text-dark me-1 mb-1">{{ $analyse->abr }}</span>
-                @endforeach
-                @if($prescription->analyses->count() > 3)
-                    <span class="badge bg-secondary text-white">+{{ $prescription->analyses->count() - 3 }}</span>
-                @endif
-            </div>
-        </div>
-    </div>
-
-    <div class="card-footer bg-transparent border-top pt-3">
-        <div class="d-flex justify-content-between">
-            <button wire:click="openPrescription({{ $prescription->id }})" class="btn btn-sm btn-outline-primary">
-                <i class="fas fa-eye me-1"></i>Ouvrir
-            </button>
-        </div>
-    </div>
+                            {{-- Badge dropdown plus compact --}}
+                            @if($prescription->analyses->count() > 3)
+                                <div class="dropdown">
+                                    <span class="badge rounded-pill bg-secondary dropdown-toggle px-2 py-1"
+                                        role="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                        +{{ $prescription->analyses->count() - 3 }}
+                                    </span>
+                                    <ul class="dropdown-menu py-1">
+                                        @foreach($prescription->analyses->skip(3) as $analyse)
+                                            <li>
+                                                <span class="dropdown-item py-1">
+                                                    <i class="fas fa-flask me-1"></i>{{ $analyse->abr }}
+                                                </span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                        </div>
+                    </td>
+                    {{-- Actions --}}
+                    <td>
+                        <button wire:click="openPrescription({{ $prescription->id }})"
+                                class="btn btn-sm btn-primary"
+                                title="Voir détails">
+                            <i class="fas fa-eye text-white"></i>
+                        </button>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 </div>
+<div class="mt-4">
+    {{ $prescriptions->links() }}
+</div>
+@else
+<div class="alert alert-info">
+    Aucune prescription {{ $tab === 'actifs' ? 'active' : ($tab === 'termine' ? 'terminée' : 'dans la corbeille') }} trouvée.
+</div>
+@endif
+@include('layouts.scripts')
+
+
+
+

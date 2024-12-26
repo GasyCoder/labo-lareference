@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Laravel') }}</title>
     <!-- Favicon -->
-    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/images/favicon/favicon.ico') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/images/favicon/favicon.png') }}">
     <!-- Styles -->
     <link rel="stylesheet" href="{{ asset('assets/libs/flatpickr/dist/flatpickr.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/libs/yaireo/tagify/dist/tagify.css') }}">
@@ -19,6 +19,8 @@
     <script src="https://kit.fontawesome.com/b09d10e9b2.js" crossorigin="anonymous"></script>
     <!-- Scripts -->
     <script src="{{ asset('assets/js/vendors/darkMode.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
     @stack('styles')
 </head>
 <body>
@@ -42,6 +44,8 @@
 </div>
 
 <!-- Script -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <!-- Libs JS -->
 <script src="{{ asset('assets/libs/bs-stepper/dist/js/bs-stepper.min.js') }}"></script>
 <script src="{{ asset('assets/js/vendors/beStepper.js') }}"></script>
@@ -62,6 +66,12 @@
 
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <x-livewire-alert::scripts />
+
+<script>
+    Livewire.on('archive-counter-updated', () => {
+        Livewire.emit('refreshArchiveCount');
+    });
+</script>
 
 @stack('scripts')
 </body>

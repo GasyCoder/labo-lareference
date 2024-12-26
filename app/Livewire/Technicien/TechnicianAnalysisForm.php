@@ -1,17 +1,21 @@
 <?php
-// app/Livewire/Technicien/TechnicianAnalysisForm.php
 namespace App\Livewire\Technicien;
 
 use Carbon\Carbon;
 use App\Models\Analyse;
 use Livewire\Component;
 use App\Models\Resultat;
+use Illuminate\Support\Str;
 use App\Models\Prescription;
 use App\Models\BacteryFamily;
 use Illuminate\Support\Facades\DB;
+use App\Models\AnalysePrescription;
+use Illuminate\Support\Facades\Log;
+use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 class TechnicianAnalysisForm extends Component
 {
+    use LivewireAlert;
     public Prescription $prescription;
     public $selectedAnalyse = null;
     public $results = [];
@@ -27,69 +31,458 @@ class TechnicianAnalysisForm extends Component
     public $selectedOption = [];
     public $showOtherInput = false;
     public $showPresenceInputs = [];
+    public $hasResults = false;
 
     public function mount(Prescription $prescription)
     {
         $this->prescription = $prescription;
+
+        // Si une analyse est déjà sélectionnée
+        if ($this->selectedAnalyse) {
+            $savedState = session("analysis_state_{$prescription->id}_{$this->selectedAnalyse->id}");
+            if ($savedState) {
+                Log::info('État restauré depuis la session:', [
+                    'savedState' => $savedState
+                ]);
+                $this->hydrateSavedState($savedState);
+            }
+        }
+
         $this->loadResults();
+        $this->showBactery = BacteryFamily::all();
+        $this->showForm = true;
+    }
+
+
+    private function hydrateSavedState($savedState)
+    {
+        try {
+            Log::info('Début hydratation état:', [
+                'savedState' => $savedState
+            ]);
+
+            foreach ($savedState as $key => $value) {
+                if (property_exists($this, $key)) {
+                    if ($key === 'results') {
+                        foreach ($value as $analyseId => $analyseResult) {
+                            // Traitement spécial pour SELECT_MULTIPLE
+                            $analyse = Analyse::find($analyseId);
+                            if ($analyse && $analyse->analyseType->name === 'SELECT_MULTIPLE') {
+                                if (isset($analyseResult['resultats'])) {
+                                    // S'assurer que c'est un tableau
+                                    $resultats = is_array($analyseResult['resultats'])
+                                        ? $analyseResult['resultats']
+                                        : json_decode($analyseResult['resultats'], true);
+
+                                    $this->results[$analyseId] = [
+                                        'resultats' => $resultats,
+                                        'valeur' => $analyseResult['valeur'] ?? null,
+                                        'interpretation' => $analyseResult['interpretation'] ?? null
+                                    ];
+                                }
+                            } else {
+                                $this->results[$analyseId] = $analyseResult;
+                            }
+                        }
+                    } else {
+                        $this->{$key} = $value;
+                    }
+
+                    Log::info('Propriété restaurée:', [
+                        'key' => $key,
+                        'value' => $this->{$key}
+                    ]);
+                }
+            }
+
+            Log::info('État final après hydratation:', [
+                'results' => $this->results
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur hydratation:', [
+                'message' => $e->getMessage(),
+                'stack' => $e->getTraceAsString()
+            ]);
+        }
     }
 
     private function loadResults()
     {
-        $result = Resultat::where('prescription_id', $this->prescription->id)->first();
-        if ($result) {
-            $decodedResults = json_decode($result->valeur, true) ?: [];
-            $this->results = $decodedResults;
-            $this->showForm = true;
+        try {
+            $results = Resultat::where('prescription_id', $this->prescription->id)->get();
 
-            // Restaurer les états
-            if (isset($decodedResults['option_speciale'])) {
-                $this->selectedOption = $decodedResults['option_speciale'];
-                $this->showOtherInput = in_array('autre', (array)$this->selectedOption);
-                $this->otherBacteriaValue = $decodedResults['autre_valeur'] ?? '';
-            }
+            foreach ($results as $result) {
+                $analyse = Analyse::find($result->analyse_id);
+                if (!$analyse) continue;
 
-            // Restaurer les états pour Présence/Absence
-            foreach ($this->results as $analyseId => $data) {
-                if (isset($data['valeur']) && $data['valeur'] === 'Présence') {
-                    $this->showPresenceInputs[$analyseId] = true;
+                // Gestion selon le type d'analyse
+                switch ($analyse->analyseType->name) {
+                    case 'LEUCOCYTES':
+                        // Charger les leucocytes avec leurs enfants
+                        $leucocytesData = is_string($result->valeur) ?
+                            json_decode($result->valeur, true) :
+                            $result->valeur;
+
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            $this->results[$result->analyse_id] = [
+                                'valeur' => $leucocytesData['valeur'] ?? null,
+                                'polynucleaires' => $leucocytesData['polynucleaires'] ?? null,
+                                'lymphocytes' => $leucocytesData['lymphocytes'] ?? null,
+                                'resultats' => $result->resultats,
+                                'interpretation' => $result->interpretation
+                            ];
+                        } else {
+                            Log::error('Erreur JSON pour les leucocytes', [
+                                'valeur' => $result->valeur,
+                                'erreur' => json_last_error_msg()
+                            ]);
+                        }
+                        break;
+
+                    case 'GERME':
+                        // Charger les germes et leurs antibiogrammes
+                        $decodedResults = is_string($result->resultats) ?
+                            json_decode($result->resultats, true) :
+                            $result->resultats;
+
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decodedResults)) {
+                            // Nettoyer les antibiotiques avant de les stocker
+                            if (isset($decodedResults['bacteries'])) {
+                                foreach ($decodedResults['bacteries'] as $bacteriaName => $bacteriaData) {
+                                    if (isset($bacteriaData['antibiotics'])) {
+                                        // Nettoyer les antibiotiques
+                                        $cleanedAntibiotics = [];
+                                        foreach ($bacteriaData['antibiotics'] as $antibiotic => $sensitivity) {
+                                            // Ignorer les entrées vides
+                                            if (!empty($sensitivity)) {
+                                                // Normaliser le nom de l'antibiotique
+                                                $normalizedAntibiotic = $antibiotic;
+                                                if (strpos($antibiotic, 'C1G (Cefalotine') !== false) {
+                                                    $normalizedAntibiotic = 'C1G (Cefalotine)';
+                                                }
+                                                $cleanedAntibiotics[$normalizedAntibiotic] = $sensitivity;
+                                            }
+                                        }
+                                        $decodedResults['bacteries'][$bacteriaName]['antibiotics'] = $cleanedAntibiotics;
+                                    }
+                                }
+                            }
+
+                            // Stocker les résultats nettoyés
+                            $this->results[$result->analyse_id] = [
+                                'bacteries' => $decodedResults['bacteries'] ?? [],
+                                'option_speciale' => $decodedResults['option_speciale'] ?? [],
+                                'autre_valeur' => $decodedResults['autre_valeur'] ?? null,
+                                'resultats' => $result->resultats
+                            ];
+
+                            // Restaurer les options sélectionnées
+                            if (isset($decodedResults['option_speciale'])) {
+                                $this->selectedOption = $decodedResults['option_speciale'];
+                            }
+
+                            // Restaurer les résultats des antibiogrammes nettoyés
+                            if (isset($decodedResults['bacteries']) && is_array($decodedResults['bacteries'])) {
+                                foreach ($decodedResults['bacteries'] as $bacteriaName => $bacteriaData) {
+                                    $this->selectedBacteriaResults[$bacteriaName] = [
+                                        'name' => $bacteriaName,
+                                        'antibiotics' => $bacteriaData['antibiotics'] ?? []
+                                    ];
+
+                                    if (empty($this->currentBacteria)) {
+                                        $this->currentBacteria = $bacteriaName;
+                                        $this->showAntibiotics = true;
+                                    }
+                                }
+                            }
+                        }
+                    break;
+
+                    case 'DOSAGE':
+                        // Charger un dosage simple
+                        $this->results[$result->analyse_id] = [
+                            'valeur' => $result->valeur,
+                            'interpretation' => $result->interpretation,
+                            'resultats' => $result->resultats
+                        ];
+                        break;
+
+                    case 'SELECT_MULTIPLE':
+                        // Charger des sélections multiples
+                        $this->results[$result->analyse_id] = [
+                            'resultats' => is_array($result->resultats)
+                                ? $result->resultats
+                                : json_decode($result->resultats, true),
+                            'valeur' => $result->valeur,
+                            'interpretation' => $result->interpretation
+                        ];
+                        break;
+
+                    case 'INPUT':
+                        // Charger une valeur simple
+                        $this->results[$result->analyse_id] = [
+                            'valeur' => $result->valeur,
+                            'interpretation' => $result->interpretation
+                        ];
+                        break;
+
+                    case 'NEGATIF_POSITIF_3':
+                        // Charger une valeur booléenne ou textuelle
+                        $this->results[$result->analyse_id] = [
+                            'resultats' => $result->resultats,
+                            'valeur' => $result->resultats === 'Presence' ? $result->valeur : null
+                        ];
+                        break;
+
+                    default:
+                        // Cas générique
+                        $this->results[$result->analyse_id] = [
+                            'resultats' => $result->resultats,
+                            'valeur' => $result->valeur,
+                            'interpretation' => $result->interpretation
+                        ];
                 }
             }
 
-            if (isset($decodedResults['bacteries'])) {
-                $this->selectedBacteriaResults = $decodedResults['bacteries'];
+            // Initialiser les analyses sans résultats
+            $allAnalyses = Analyse::whereHas('prescriptions', function ($query) {
+                $query->where('prescription_id', $this->prescription->id);
+            })->with('analyseType')->get();
+
+            foreach ($allAnalyses as $analyse) {
+                if (!isset($this->results[$analyse->id])) {
+                    $this->results[$analyse->id] = [
+                        'valeur' => null,
+                        'resultats' => null,
+                        'interpretation' => null
+                    ];
+                }
             }
-            if (isset($decodedResults['conclusion'])) {
-                $this->conclusion = $decodedResults['conclusion'];
-            }
+
+            // Sauvegarder l'état dans la session
+            $this->saveStateToSession();
+
+        } catch (\Exception $e) {
+            Log::error('Erreur loadResults:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+    public function refreshAntibiograms(){
+        if ($this->currentBacteria && isset($this->selectedBacteriaResults[$this->currentBacteria])) {
+            $this->dispatch('resultsLoaded', [
+                'selectedBacteriaResults' => [
+                    $this->currentBacteria => $this->selectedBacteriaResults[$this->currentBacteria]
+                ]
+            ]);
         }
     }
 
-    public function selectAnalyse($analyseId)
+    private function loadBacteriaDetails($bacteriaName, $fromDb = false)
     {
         try {
-            $this->selectedAnalyse = Analyse::with(['allChildren.analyseType'])
-                ->findOrFail($analyseId);
-            $this->showForm = true;
-            $this->showBactery = BacteryFamily::all();
+            $this->currentBacteria = $bacteriaName;
+            $this->showOtherInput = false;
 
-            $existingResult = Resultat::where([
-                'prescription_id' => $this->prescription->id,
-                'analyse_id' => $analyseId
-            ])->first();
+            // Trouver la famille de bactéries
+            $bacteryFamily = BacteryFamily::all()->first(function ($family) use ($bacteriaName) {
+                $bacteries = is_string($family->bacteries) ?
+                    json_decode($family->bacteries) :
+                    $family->bacteries;
+                return in_array($bacteriaName, $bacteries);
+            });
 
-            if ($existingResult) {
-                $this->loadResults();
-            } else {
-                $this->resetStates();
+            if ($bacteryFamily) {
+                // Charger les antibiotiques
+                $antibiotics = $bacteryFamily->antibiotics;
+                $rawAntibiotics = is_string($antibiotics) ?
+                    json_decode($antibiotics, true) :
+                    $antibiotics;
+
+                // Nettoyer les noms d'antibiotiques
+                $this->antibiotics_name = array_map(function($antibiotic) {
+                    // Remplacer les cas problématiques
+                    if (strpos($antibiotic, 'C1G (Cefalotine') !== false) {
+                        return 'C1G (Cefalotine)';
+                    }
+                    if (strpos($antibiotic, 'Trimethoprime sulphaméthoxazole') !== false) {
+                        return 'Trimethoprime sulphamétoxazole (Bactrim)';
+                    }
+                    return rtrim($antibiotic, '.,)');
+                }, $rawAntibiotics);
+
+                $this->showAntibiotics = true;
+
+                // Initialiser ou restaurer les résultats
+                if (!isset($this->selectedBacteriaResults[$bacteriaName])) {
+                    $this->selectedBacteriaResults[$bacteriaName] = [
+                        'name' => $bacteriaName,
+                        'antibiotics' => []
+                    ];
+                }
+
+                if (!$fromDb) {
+                    $this->dispatch('bacteriaSelected', [
+                        'bacteria' => $bacteriaName,
+                        'results' => $this->selectedBacteriaResults[$bacteriaName]
+                    ]);
+                }
+
+                $this->saveStateToSession();
             }
         } catch (\Exception $e) {
-            session()->flash('error', "Erreur lors de la sélection de l'analyse: " . $e->getMessage());
+            Log::error('Erreur loadBacteriaDetails:', [
+                'message' => $e->getMessage(),
+                'bacteria' => $bacteriaName
+            ]);
         }
     }
 
-    private function resetStates()
+
+    public function bacteries($bactery_name)
     {
+        try {
+            $this->selectedOption = [$bactery_name];
+            $this->loadBacteriaDetails($bactery_name);
+            $this->saveStateToSession();
+        } catch (\Exception $e) {
+            Log::error('Erreur bacteries:', [
+                'message' => $e->getMessage(),
+                'bactery_name' => $bactery_name
+            ]);
+        }
+    }
+
+    public function updateAntibiogramResult($antibiotic, $sensitivity)
+    {
+        try {
+            if ($this->currentBacteria) {
+                if (!isset($this->selectedBacteriaResults[$this->currentBacteria])) {
+                    $this->selectedBacteriaResults[$this->currentBacteria] = [
+                        'name' => $this->currentBacteria,
+                        'antibiotics' => []
+                    ];
+                }
+
+                // Nettoyer toutes les variantes de C1G Cefalotine avant d'ajouter la nouvelle
+                if (strpos($antibiotic, 'C1G (Cefalotine') !== false) {
+                    // Supprimer toutes les variantes existantes
+                    $keysToRemove = [];
+                    foreach ($this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'] as $key => $_) {
+                        if (strpos($key, 'C1G (Cefalotine') !== false) {
+                            $keysToRemove[] = $key;
+                        }
+                    }
+                    foreach ($keysToRemove as $key) {
+                        unset($this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'][$key]);
+                    }
+
+                    // Utiliser le format normalisé
+                    $antibiotic = 'C1G (Cefalotine)';
+                }
+
+                // N'ajouter que si la sensibilité n'est pas vide
+                if (!empty($sensitivity)) {
+                    $this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'][$antibiotic] = $sensitivity;
+                }
+
+                Log::info('Antibiogramme mis à jour:', [
+                    'bacteria' => $this->currentBacteria,
+                    'antibiotic' => $antibiotic,
+                    'sensitivity' => $sensitivity,
+                    'current_state' => $this->selectedBacteriaResults[$this->currentBacteria]
+                ]);
+
+                $this->saveStateToSession();
+            }
+        } catch (\Exception $e) {
+            Log::error('Erreur updateAntibiogramResult:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    private function cleanAntibioticKey($key)
+    {
+        // Remplacer les parenthèses et leur contenu par des chaînes simplifiées
+        $key = preg_replace('/\([^)]+\)/', '', $key);
+        // Supprimer les caractères spéciaux tout en gardant les espaces et tirets
+        $key = preg_replace('/[^A-Za-z0-9\s-]/', '', $key);
+        // Normaliser les espaces
+        $key = trim($key);
+        // Convertir en slug pour une clé propre
+        return Str::slug($key);
+    }
+
+    private function saveStateToSession()
+    {
+        if (!$this->selectedAnalyse) return;
+
+        try {
+            $analyseType = $this->selectedAnalyse->analyseType->name;
+
+            // État de base commun à tous les types
+            $baseState = [
+                'analyseId' => $this->selectedAnalyse->id,
+                'results' => $this->results,
+                'conclusion' => $this->conclusion
+            ];
+
+            // États spécifiques selon le type
+            switch ($analyseType) {
+                case 'GERME':
+                    $state = array_merge($baseState, [
+                        'selectedOption' => $this->selectedOption,
+                        'otherBacteriaValue' => $this->otherBacteriaValue,
+                        'selectedBacteriaResults' => $this->cleanBacteriaResults(),
+                        'currentBacteria' => $this->currentBacteria,
+                        'showAntibiotics' => $this->showAntibiotics,
+                        'antibiotics_name' => $this->antibiotics_name,
+                        'showOtherInput' => $this->showOtherInput,
+                    ]);
+                    break;
+
+                case 'SELECT_MULTIPLE':
+                    $state = array_merge($baseState, [
+                        'selectedValues' => $this->results[$this->selectedAnalyse->id]['resultats'] ?? []
+                    ]);
+                    break;
+
+                case 'LEUCOCYTES':
+                    $state = array_merge($baseState, [
+                        'leucocytesValues' => [
+                            'valeur' => $this->results[$this->selectedAnalyse->id]['valeur'] ?? null,
+                            'polynucleaires' => $this->results[$this->selectedAnalyse->id]['polynucleaires'] ?? null,
+                            'lymphocytes' => $this->results[$this->selectedAnalyse->id]['lymphocytes'] ?? null
+                        ]
+                    ]);
+                    break;
+
+                default:
+                    $state = $baseState;
+            }
+
+            $sessionKey = "analysis_state_{$this->prescription->id}_{$this->selectedAnalyse->id}";
+            session([$sessionKey => $state]);
+
+            Log::info('État sauvegardé dans la session', [
+                'sessionKey' => $sessionKey,
+                'analyseType' => $analyseType,
+                'state' => $state
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur saveStateToSession:', [
+                'message' => $e->getMessage(),
+                'stack' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    private function resetAnalysisForm(){
         $this->results = [];
         $this->selectedOption = [];
         $this->showOtherInput = false;
@@ -100,286 +493,693 @@ class TechnicianAnalysisForm extends Component
         $this->antibiotics_name = null;
         $this->conclusion = '';
         $this->showPresenceInputs = [];
+        $this->hasResults = false;
     }
 
-    public function updatedResults($value, $key)
+    private function findChildAnalyses($child_ids, &$id_child)
     {
-        // Détecter si c'est un changement de valeur pour NEGATIF_POSITIF_3
-        if (str_contains($key, '.valeur')) {
-            $analyseId = explode('.', $key)[1];
-
-            // Vérifier si l'analyse correspondante est de type NEGATIF_POSITIF_3
-            $analyse = Analyse::find($analyseId);
-            if ($analyse && $analyse->analyseType->name === 'NEGATIF_POSITIF_3') {
-                if ($value === 'Presence') {
-                    $this->showPresenceInputs[$analyseId] = true;
-                } else {
-                    $this->showPresenceInputs[$analyseId] = false;
-                    // Réinitialiser l'interprétation
-                    if (isset($this->results[$analyseId])) {
-                        $this->results[$analyseId]['interpretation'] = null;
-                    }
-                }
+        foreach ($child_ids as $childId) {
+            $analyseChild = Analyse::findOrFail($childId);
+            if ($analyseChild->children->isNotEmpty()) {
+                $analyses_children = Analyse::where('parent_code', $analyseChild->code)->get();
+                $next_child_ids = $analyses_children->pluck('id')->toArray();
+                $this->findChildAnalyses($next_child_ids, $id_child);
+            } else {
+                $id_child[$childId] = $childId;
             }
         }
     }
 
-    public function updatedSelectedOption($value)
+    // Sélection d'une analyse
+    public function selectAnalyse($analyseId)
     {
-        if (!is_array($value)) {
-            $value = [$value];
+        try {
+            // Sauvegarder l'état de l'analyse précédente si elle existe
+            if ($this->selectedAnalyse) {
+                $this->saveStateToSession();
+            }
+
+            $this->selectedAnalyse = Analyse::with(['allChildren.analyseType'])
+                ->findOrFail($analyseId);
+
+            // Réinitialiser les propriétés spécifiques au type
+            $this->resetTypeSpecificProperties();
+
+            // Charger l'état sauvegardé
+            $savedState = session("analysis_state_{$this->prescription->id}_{$analyseId}");
+
+            if ($savedState) {
+                $this->hydrateSavedState($savedState);
+            } else {
+                $this->resetAnalysisForm();
+            }
+
+            $this->showForm = true;
+            $this->loadResults();
+
+        } catch (\Exception $e) {
+            Log::error('Erreur selectAnalyse:', [
+                'message' => $e->getMessage(),
+                'analyse_id' => $analyseId,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
-
-        $this->selectedOption = array_filter($value);
-
-        // Gérer l'affichage/masquage des éléments
-        $specialOptions = ['non-rechercher', 'en-cours', 'culture-sterile', 'absence'];
-        $hasSpecialOption = !empty(array_intersect($specialOptions, $this->selectedOption));
-
-        if ($hasSpecialOption || in_array('autre', $this->selectedOption)) {
-            $this->resetBacterySelection();
-        }
-
-        $this->showOtherInput = in_array('autre', $this->selectedOption);
     }
 
-    private function resetBacterySelection()
+    public function isAnalyseValidated($analyseId)
+    {
+        return Resultat::where([
+            'prescription_id' => $this->prescription->id,
+            'analyse_id' => $analyseId,
+        ])->whereNotNull('validated_at')->exists();
+    }
+
+    public function updatedResults($value, $key)
+    {
+        try {
+            if (is_string($value) && str_contains($value, ',')) {
+                $value = str_replace(',', '.', $value);
+            }
+
+            preg_match('/results\.(\d+)\./', $key, $matches);
+            if (!empty($matches[1])) {
+                $analyseId = $matches[1];
+                $analyse = Analyse::find($analyseId);
+
+                if ($analyse && $analyse->analyseType->name === 'SELECT_MULTIPLE') {
+                    if (!is_array($value)) {
+                        $value = [$value];
+                    }
+                    $this->results[$analyseId]['resultats'] = array_values(array_filter($value));
+                }
+            }
+
+            $this->saveStateToSession();
+
+        } catch (\Exception $e) {
+            Log::error('Erreur updatedResults:', [
+                'message' => $e->getMessage(),
+                'value' => $value,
+                'key' => $key,
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    private function getChildAnalyses($analyse)
+    {
+        $childIds = collect();
+        foreach ($analyse->children as $child) {
+            $childIds->push($child->id);
+            if ($child->children->isNotEmpty()) {
+                $childIds = $childIds->merge($this->getChildAnalyses($child));
+            }
+        }
+        return $childIds;
+    }
+
+    public function updatedSelectedOption($value)
+    {
+        try {
+            if (!is_array($value)) {
+                $value = [$value];
+            }
+
+            $this->selectedOption = array_filter($value);
+
+            $standardOptions = [
+                'non-rechercher',
+                'en-cours',
+                'culture-sterile',
+                'absence de germe pathogène'
+            ];
+
+            $hasStandardOption = !empty(array_intersect($standardOptions, $this->selectedOption));
+
+            if ($hasStandardOption) {
+                $standardOption = array_values(array_intersect($standardOptions, $this->selectedOption))[0];
+                $this->selectedOption = [$standardOption];
+                $this->resetBacteriaSelection();
+                $this->showOtherInput = false;
+            } elseif (in_array('autre', $this->selectedOption)) {
+                $this->selectedOption = ['autre'];
+                $this->showOtherInput = true;
+                $this->resetBacteriaSelection();
+            } else {
+                $this->showOtherInput = false;
+                if (count($this->selectedOption) === 1) {
+                    $this->bacteries($this->selectedOption[0]);
+                }
+            }
+
+            $this->saveStateToSession();
+
+        } catch (\Exception $e) {
+            Log::error('Erreur updatedSelectedOption:', [
+                'message' => $e->getMessage(),
+                'value' => $value
+            ]);
+        }
+    }
+
+    private function resetBacteriaSelection()
     {
         $this->showAntibiotics = false;
         $this->antibiotics_name = null;
         $this->currentBacteria = null;
         $this->selectedBacteriaResults = [];
+        $this->saveStateToSession();
     }
 
-    public function bacteries($bactery_name)
+    public function hasRequiredFields($analyseId)
     {
-        try {
-            // Réinitialiser les options spéciales
-            $this->selectedOption = [$bactery_name];
-            $this->showOtherInput = false;
-            $this->currentBacteria = $bactery_name;
+        $result = Resultat::where([
+            'prescription_id' => $this->prescription->id,
+            'analyse_id' => $analyseId
+        ])->first();
 
-            $bactery_familly = BacteryFamily::all();
-            $bactery_familly_name = null;
+        if (!$result) return false;
 
-            foreach ($bactery_familly as $bactery) {
-                $bacteriaArray = is_string($bactery->bacteries) ?
-                    json_decode($bactery->bacteries) :
-                    $bactery->bacteries;
+        $analyse = Analyse::findOrFail($analyseId);
 
-                if (in_array($bactery_name, $bacteriaArray)) {
-                    $bactery_familly_name = $bactery->name;
-                    break;
+        switch ($analyse->analyseType->name) {
+            case 'INPUT':
+            case 'INPUT_SUFFIXE':
+            case 'DOSAGE':
+            case 'COMPTAGE':
+                return !empty($result->valeur);
+
+            case 'SELECT':
+            case 'TEST':
+                return !empty($result->resultats);
+
+            case 'SELECT_MULTIPLE':
+                return !empty($result->resultats) && is_array($result->resultats);
+
+            case 'GERME':
+                $resultats = is_string($result->resultats)
+                    ? json_decode($result->resultats, true)
+                    : $result->resultats;
+
+                if (empty($resultats)) return false;
+
+                $standardOptions = ['non-rechercher', 'en-cours', 'culture-sterile', 'absence de germe pathogène'];
+                if (isset($resultats['option_speciale']) &&
+                    array_intersect($standardOptions, $resultats['option_speciale'])) {
+                    return true;
                 }
-            }
 
-            if ($bactery_familly_name) {
-                $antibiotics = BacteryFamily::where('name', $bactery_familly_name)
-                    ->value('antibiotics');
-
-                $this->antibiotics_name = is_string($antibiotics) ?
-                    json_decode($antibiotics, true) :
-                    $antibiotics;
-
-                $this->showAntibiotics = true;
-
-                if (!isset($this->selectedBacteriaResults[$bactery_name])) {
-                    $this->selectedBacteriaResults[$bactery_name] = [
-                        'name' => $bactery_name,
-                        'antibiotics' => []
-                    ];
+                if (isset($resultats['option_speciale']) &&
+                    in_array('autre', $resultats['option_speciale'])) {
+                    return !empty($resultats['autre_valeur']);
                 }
-            }
-        } catch (\Exception $e) {
-            session()->flash('error', "Erreur lors de la sélection de la bactérie: " . $e->getMessage());
-        }
-    }
 
-    public function updateAntibiogramResult($antibiotic, $sensitivity)
-    {
-        if ($this->currentBacteria) {
-            $this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'][$antibiotic] = $sensitivity;
+                return isset($resultats['bacteries']) && !empty($resultats['bacteries']);
+
+            case 'LEUCOCYTES':
+                $valeur = is_string($result->valeur)
+                    ? json_decode($result->valeur, true)
+                    : $result->valeur;
+                return isset($valeur['polynucleaires']) && isset($valeur['lymphocytes']);
+
+            case 'NEGATIF_POSITIF_1':
+            case 'NEGATIF_POSITIF_2':
+            case 'NEGATIF_POSITIF_3':
+                if (empty($result->resultats)) return false;
+                if ($result->resultats === 'Presence' && empty($result->valeur)) {
+                    return false;
+                }
+                return true;
+
+            default:
+                return true;
         }
     }
 
     public function validateAnalyse()
     {
         try {
-            Resultat::where('prescription_id', $this->prescription->id)
-                ->update(['validated_at' => Carbon::now()]);
+            if (!$this->hasRequiredFields($this->selectedAnalyse->id)) {
+                session()->flash('error', 'Veuillez remplir tous les champs requis avant de terminer l\'analyse');
+                return false;
+            }
 
-            $this->prescription->update(['status' => Prescription::STATUS_TERMINE]);
-            session()->flash('success', 'Analyse validée avec succès');
+            DB::beginTransaction();
+
+            $allAnalyses = collect([$this->selectedAnalyse->id])
+                ->merge($this->getChildAnalyses($this->selectedAnalyse));
+
+            // Mise à jour des résultats
+            Resultat::where('prescription_id', $this->prescription->id)
+                ->whereIn('analyse_id', $allAnalyses)
+                ->update([
+                    'validated_at' => Carbon::now(),
+                    'status' => Resultat::STATUS_TERMINE
+                ]);
+
+            // Mise à jour des analyses-prescriptions
+            foreach ($allAnalyses as $analyseId) {
+                AnalysePrescription::where([
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId
+                ])->update([
+                    'status' => Resultat::STATUS_TERMINE,
+                    'updated_at' => now()
+                ]);
+            }
+
+            // Vérification de l'état global de la prescription
+            $totalAnalyses = $this->prescription->analyses()->count();
+            $analysesWithResults = Resultat::where('prescription_id', $this->prescription->id)
+                ->where(function ($query) {
+                    $query->whereNotNull('resultats')
+                          ->orWhereNotNull('valeur');
+                })
+                ->count();
+
+            if ($analysesWithResults === $totalAnalyses) {
+                $completedAnalyses = AnalysePrescription::where([
+                    'prescription_id' => $this->prescription->id,
+                    'status' => Resultat::STATUS_TERMINE
+                ])->count();
+
+                if ($totalAnalyses === $completedAnalyses) {
+                    // Mise à jour du statut de la prescription
+                    $this->prescription->update([
+                        'status' => Resultat::STATUS_TERMINE,
+                        'updated_at' => now()
+                    ]);
+
+                    DB::commit();
+                    $this->alert('success', 'Toutes les analyses sont terminées');
+                    $this->dispatch('prescriptionComplete');
+                    return redirect()->route('technicien.traitement.index');
+                }
+            }
+
+            DB::commit();
+            $this->alert('success', 'Analyse validée avec succès');
+            $this->dispatch('analysisValidated');
+
+            $this->selectedAnalyse->is_validated = true;
+            $this->loadResults();
+
+            return true;
+
         } catch (\Exception $e) {
+            DB::rollback();
+
+            Log::error('Erreur validation analyse:', [
+                'message' => $e->getMessage(),
+                'prescription_id' => $this->prescription->id,
+                'analyse_id' => $this->selectedAnalyse->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
             session()->flash('error', "Erreur lors de la validation: " . $e->getMessage());
+            return false;
+        }
+    }
+
+
+    private function processGermeValue()
+    {
+        if (empty($this->selectedOption)) {
+            return null;
+        }
+
+        try {
+            $germeData = [
+                'type' => 'bacterie',
+                'option_speciale' => $this->selectedOption,
+                'bacteries' => []
+            ];
+
+            if ($this->currentBacteria && isset($this->selectedBacteriaResults[$this->currentBacteria])) {
+                $antibiotics = [];
+
+                // Nettoyer et normaliser les antibiotiques
+                if (!empty($this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'])) {
+                    foreach ($this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'] as $antibiotic => $sensitivity) {
+                        // Ignorer les entrées vides
+                        if (empty($sensitivity)) {
+                            continue;
+                        }
+
+                        // Normaliser C1G Cefalotine
+                        $normalizedAntibiotic = $antibiotic;
+                        if (strpos($antibiotic, 'C1G (Cefalotine') !== false) {
+                            $normalizedAntibiotic = 'C1G (Cefalotine)';
+                        }
+
+                        // Ne pas ajouter de doublons
+                        if (!isset($antibiotics[$normalizedAntibiotic])) {
+                            $antibiotics[$normalizedAntibiotic] = $sensitivity;
+                        }
+                    }
+                }
+
+                // Seulement ajouter si nous avons des antibiotiques
+                if (!empty($antibiotics)) {
+                    $germeData['bacteries'][$this->currentBacteria] = [
+                        'name' => $this->currentBacteria,
+                        'antibiotics' => $antibiotics
+                    ];
+                }
+            }
+
+            return json_encode($germeData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur processGermeValue:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return null;
+        }
+    }
+
+
+    public function resetAntibiotic($antibiotic)
+    {
+        if (isset($this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'][$antibiotic])) {
+            unset($this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'][$antibiotic]);
+            $this->saveStateToSession();
+        }
+    }
+
+    public function resetAllAntibiotics()
+    {
+        if (isset($this->selectedBacteriaResults[$this->currentBacteria])) {
+            $this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'] = [];
+            $this->saveStateToSession();
         }
     }
 
     public function render()
     {
-        $topLevelAnalyses = $this->prescription->analyses()
-            ->orderBy('ordre')
-            ->get()
-            ->groupBy('parent_code');
+        try {
+            $topLevelAnalyses = $this->prescription->analyses()
+                ->with(['children', 'analyseType'])
+                ->orderBy('ordre')
+                ->get()
+                ->groupBy('parent_code');
 
-        return view('livewire.technicien.details-prescription', [
-            'topLevelAnalyses' => $topLevelAnalyses[0] ?? collect(),
-            'childAnalyses' => $topLevelAnalyses->forget(0) ?? collect()
-        ]);
+            $analyses = $topLevelAnalyses[0] ?? collect();
+
+            $analyses->each(function ($analyse) {
+                $analyse->is_validated = $this->isAnalyseValidated($analyse->id);
+                $analyse->has_results = Resultat::where([
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyse->id
+                ])->exists();
+            });
+
+            return view('livewire.technicien.details-prescription', [
+                'topLevelAnalyses' => $analyses,
+                'childAnalyses' => $topLevelAnalyses->forget(0) ?? collect(),
+                'showValidateButton' => $this->selectedAnalyse &&
+                                        !$this->isAnalyseValidated($this->selectedAnalyse->id) &&
+                                        $this->hasResults
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur render:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            session()->flash('error', 'Une erreur est survenue lors du chargement de la page');
+            return view('livewire.technicien.details-prescription', [
+                'topLevelAnalyses' => collect(),
+                'childAnalyses' => collect(),
+                'showValidateButton' => false
+            ]);
+        }
     }
 
-
+    private function processResultatsValue($resultats)
+    {
+        if (is_array($resultats)) {
+            // Convertir le tableau en texte simple
+            return implode(', ', $resultats);
+        }
+        return $resultats; // Retourner tel quel si ce n'est pas un tableau
+    }
 
     public function saveResult($analyseId)
     {
         try {
-            $analyse = Analyse::findOrFail($analyseId);
+            DB::beginTransaction();
+
+            $analyse = Analyse::with(['analyseType', 'children.analyseType'])->findOrFail($analyseId);
+
             $analyses_children = Analyse::where('parent_code', $analyse->code)->get();
             $child_ids = $analyses_children->pluck('id')->toArray();
             $id_child = [];
 
-            function searchChild($child_ids, &$id_child) {
-                foreach($child_ids as $childId) {
-                    $analyseChild = Analyse::findOrFail($childId);
-                    if($analyseChild->children->isNotEmpty()) {
-                        $analyse = Analyse::findOrFail($childId);
-                        $analyses_children = Analyse::where('parent_code', $analyse->code)->get();
-                        $child_ids = $analyses_children->pluck('id')->toArray();
-                        searchChild($child_ids, $id_child);
-                    } else {
-                        $id_child[$childId] = $childId;
-                    }
-                }
+            $this->findChildAnalyses($child_ids, $id_child);
+
+            if ($analyse->analyseType->name === 'CULTURE') {
+                $mainResultData = [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId,
+                    'resultats' => $this->results[$analyseId]['resultats'] ?? null, // Sélection principale
+                    'valeur' => $this->results[$analyseId]['valeur'] ?? null,       // Précision additionnelle si nécessaire
+                    'interpretation' => null,
+                    'conclusion' => $this->conclusion
+                ];
+            }
+            elseif ($analyse->analyseType->name === 'NEGATIF_POSITIF_1') {
+                $mainResultData = [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId,
+                    'resultats' => null,
+                    'valeur' => $this->results[$analyseId]['valeur'] ?? null,       // Précision additionnelle si nécessaire
+                    'interpretation' => $this->results[$analyseId]['interpretation'] ?? null,
+                    'conclusion' => $this->conclusion
+                ];
+            }
+            elseif ($analyse->analyseType->name === 'GERME') {
+                $germeData = $this->processGermeValue(true);
+                $mainResultData = [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId,
+                    'resultats' => json_encode($germeData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                    'valeur' => null,
+                    'interpretation' => null,
+                    'conclusion' => $this->conclusion
+                ];
+            } elseif ($analyse->analyseType->name === 'DOSAGE') {
+                $mainResultData = [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId,
+                    'valeur' => $this->results[$analyseId]['valeur'] ?? null,
+                    'interpretation' => $this->results[$analyseId]['interpretation'] ?? null,
+                    'conclusion' => $this->conclusion
+                ];
+            } else {
+                $mainResultData = [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId,
+                    'conclusion' => $this->conclusion,
+                    'valeur' => null,
+                    'interpretation' => null,
+                    'resultats' => null
+                ];
             }
 
-            searchChild($child_ids, $id_child);
 
-            DB::beginTransaction();
+            foreach ($id_child as $childId) {
+                $analyseChild = Analyse::with(['analyseType'])->find($childId);
+                if (!$analyseChild || !$analyseChild->analyseType) continue;
 
-            try {
-                // Sauvegarde du résultat parent
-
-                $mainResultData = [
-                    'option_speciale' => $this->selectedOption,
-                    'autre_valeur' => $this->otherBacteriaValue,
+                $childResultData = [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $childId,
+                    'conclusion' => null,
+                    'valeur' => null,
+                    'resultats' => null,
+                    'interpretation' => null
                 ];
 
-                if (!empty($this->selectedBacteriaResults)) {
-                    $mainResultData['bacteries'] = $this->selectedBacteriaResults;
-                }
+                switch ($analyseChild->analyseType->name) {
 
-                // Pour chaque analyse enfant
-                foreach ($id_child as $childId) {
-                    if (isset($this->results[$childId])) {
-                        $analyseChild = Analyse::find($childId);
-                        if (!$analyseChild || !$analyseChild->analyseType) continue;
+                    case 'LEUCOCYTES':
+                        if (isset($this->results[$childId])) {
+                            $leucocytesValue = [
+                                'valeur' => $this->results[$childId]['valeur'] ?? null,
+                                'polynucleaires' => $this->results[$childId]['polynucleaires'] ?? null,
+                                'lymphocytes' => $this->results[$childId]['lymphocytes'] ?? null
+                            ];
 
-                        $resultData = [
-                            'prescription_id' => $this->prescription->id,
-                            'analyse_id' => $childId
+                            // Vérification que toutes les valeurs requises sont présentes
+                        if ($leucocytesValue['valeur'] !== null ||
+                                $leucocytesValue['polynucleaires'] !== null ||
+                                $leucocytesValue['lymphocytes'] !== null) {
+                                $childResultData['valeur'] = json_encode($leucocytesValue, JSON_UNESCAPED_UNICODE);
+                            } else {
+                                throw new \Exception("Certaines valeurs des leucocytes ou de ses enfants sont manquantes pour l'analyse ID " . $childId);
+                            }
+                        }
+                    break;
+
+                    case 'GERME':
+                        // Construit le JSON avec les données déjà nettoyées
+                        $germeData = [
+                            'type' => 'bacterie',
+                            'option_speciale' => $this->selectedOption,
+                            'bacteries' => []
                         ];
 
-                        if ($analyseChild->analyseType->name === 'GERME') {
-                            $germeValue = $this->processGermeValue();
-                            $resultData['valeur'] = json_encode($germeValue, JSON_UNESCAPED_UNICODE);
-                            $resultData['interpretation'] = null;
-                        } else {
-
-                            // Traitement des autres types d'analyses
-                            $value = $this->results[$childId]['valeur'] ?? null;
-                            $interpretation = $this->results[$childId]['interpretation'] ?? null;
-
-
-                            switch ($analyseChild->analyseType->name) {
-                                case 'DOSAGE':
-                                case 'COMPTAGE':
-                                case 'NEGATIF_POSITIF_1':
-                                    // Si la valeur est NORMAL ou PATHOLOGIQUE, c'est l'interprétation
-                                    if (in_array($value, ['NORMAL', 'PATHOLOGIQUE'])) {
-                                        $interpretation = $value;
-                                        $value = $this->results[$childId]['valeur'] ?? null;
+                        if ($this->currentBacteria && isset($this->selectedBacteriaResults[$this->currentBacteria])) {
+                            // Utiliser les données déjà nettoyées de selectedBacteriaResults
+                            $antibiotics = [];
+                            if (!empty($this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'])) {
+                                foreach ($this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'] as $antibiotic => $sensitivity) {
+                                    // Normaliser le nom de C1G Cefalotine
+                                    if (strpos($antibiotic, 'C1G (Cefalotine') !== false) {
+                                        $antibiotic = 'C1G (Cefalotine)';
                                     }
-                                    break;
-
-                                case 'TEST':
-                                    $interpretation = $value === 'POSITIF' ? 'PATHOLOGIQUE' : 'NORMAL';
-                                    break;
+                                    // Ne garder que les antibiotiques avec une sensibilité
+                                    if (!empty($sensitivity)) {
+                                        $antibiotics[$antibiotic] = $sensitivity;
+                                    }
+                                }
                             }
 
-                            $resultData['valeur'] = $value;
-                            $resultData['interpretation'] = $interpretation;
+                            // N'ajouter que si nous avons des antibiotiques
+                            if (!empty($antibiotics)) {
+                                $germeData['bacteries'][$this->currentBacteria] = [
+                                    'name' => $this->currentBacteria,
+                                    'antibiotics' => $antibiotics
+                                ];
+                            }
                         }
 
-                        $resultData['conclusion'] = null;
+                        // Si "autre" est sélectionné
+                        if (in_array('autre', $this->selectedOption)) {
+                            $childResultData['valeur'] = $this->otherBacteriaValue;
+                        }
 
-                        Resultat::updateOrCreate(
-                            [
-                                'prescription_id' => $this->prescription->id,
-                                'analyse_id' => $childId
-                            ],
-                            $resultData
-                        );
-                    }
+                        // Encoder le JSON final
+                        $childResultData['resultats'] = json_encode($germeData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    break;
+
+                    case 'INPUT':
+                        if (isset($this->results[$childId]['valeur'])) {
+                            $childResultData['valeur'] = $this->results[$childId]['valeur'];
+                            // Ajouter l'interprétation pour les analyses avec input numérique
+                            if (isset($this->results[$childId]['interpretation'])) {
+                                $childResultData['interpretation'] = $this->results[$childId]['interpretation'];
+                            }
+                            // Pour les analyses numériques, nous voulons aussi stocker la valeur dans resultats
+                            $childResultData['resultats'] = $this->results[$childId]['valeur'];
+                        }
+                    break;
+
+                    case 'SELECT_MULTIPLE':
+                        if (isset($this->results[$childId]['resultats']) && is_array($this->results[$childId]['resultats'])) {
+                            $childResultData['resultats'] = implode(', ', $this->results[$childId]['resultats']);
+                            // $childResultData['resultats'] = json_encode($this->results[$childId]['resultats'], JSON_UNESCAPED_UNICODE);
+                        }
+                        break;
+
+                    case 'NEGATIF_POSITIF_3':
+                        $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
+                        if (($this->results[$childId]['resultats'] ?? '') === 'Presence') {
+                            $childResultData['valeur'] = $this->results[$childId]['valeur'] ?? null;
+                        }
+                        break;
+
+                    case 'TEST':
+                        // Les champs ne sont pas obligatoires, donc on accepte des valeurs nulles
+                        $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
+                        // L'interprétation est calculée seulement si un résultat existe
+                        $childResultData['interpretation'] = isset($this->results[$childId]['resultats']) && $this->results[$childId]['resultats'] === 'POSITIF'
+                            ? 'PATHOLOGIQUE'
+                            : 'NORMAL';
+                        break;
+
+                    default:
+                        $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
+                        $childResultData['valeur'] = $this->results[$childId]['valeur'] ?? null;
+                        $childResultData['interpretation'] = $this->results[$childId]['interpretation'] ?? null;
                 }
 
-                // Sauvegarde de l'analyse parent
-                Resultat::updateOrCreate(
+                $childResult = Resultat::updateOrCreate(
                     [
                         'prescription_id' => $this->prescription->id,
-                        'analyse_id' => $analyseId
+                        'analyse_id' => $childId
                     ],
-                    [
-                        'valeur' => json_encode($mainResultData, JSON_UNESCAPED_UNICODE),
-                        'interpretation' => null,
-                        'conclusion' => $this->conclusion
-                    ]
+                    $childResultData
                 );
 
-                $this->prescription->update(['status' => Prescription::STATUS_TERMINE]);
-                DB::commit();
+                if (!$childResult) {
+                    throw new \Exception("Erreur lors de la sauvegarde de l'analyse enfant: {$childId}");
+                }
 
-                $this->validation = true;
-                $this->showForm = false;
-                $this->dispatch('resultSaved');
-                session()->flash('success', 'Résultats enregistrés avec succès');
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                throw $e;
+                AnalysePrescription::where([
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $childId
+                ])->update(['status' => 'TERMINE']);
             }
+
+            $mainResult = Resultat::updateOrCreate(
+                [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId
+                ],
+                $mainResultData
+            );
+
+            if (!$mainResult) {
+                throw new \Exception("Erreur lors de la sauvegarde de l'analyse principale");
+            }
+
+            AnalysePrescription::where([
+                'prescription_id' => $this->prescription->id,
+                'analyse_id' => $analyseId
+            ])->update(['status' => 'TERMINE']);
+
+            $totalAnalyses = $this->prescription->analyses()->count();
+            $completedAnalyses = AnalysePrescription::where([
+                'prescription_id' => $this->prescription->id,
+                'status' => 'TERMINE'
+            ])->count();
+
+            if ($totalAnalyses === $completedAnalyses) {
+                $this->prescription->update(['status' => Prescription::STATUS_TERMINE]);
+            }
+
+            DB::commit();
+
+            $this->validation = true;
+            $this->showForm = false;
+            $this->dispatch('resultSaved');
+            $this->alert('success', 'Résultats enregistrés avec succès');
+            return redirect()->route('technicien.traitement.show', ['prescription' => $this->prescription->id]);
+
+            // return true;
 
         } catch (\Exception $e) {
-            session()->flash('error', "Erreur lors de l'enregistrement: " . $e->getMessage());
+            DB::rollback();
+            Log::error('Erreur saveResult:', [
+                'message' => $e->getMessage(),
+                'analyse_id' => $analyseId,
+                'trace' => $e->getTraceAsString(),
+                'data' => [
+                    'selectedOption' => $this->selectedOption,
+                    'otherBacteriaValue' => $this->otherBacteriaValue,
+                    'currentBacteria' => $this->currentBacteria,
+                    'results' => $this->results
+                ]
+            ]);
+            $this->alert('success', 'Erreur lors de l\'enregistrement: ' . $e->getMessage());
+            return redirect()->route('technicien.traitement.index');
+            //return false;
         }
     }
 
-    private function processGermeValue()
-    {
-        $germeValue = [];
-
-        if (!empty($this->selectedOption)) {
-            $firstOption = $this->selectedOption[0];
-            if (in_array($firstOption, ['non-rechercher', 'en-cours', 'culture-sterile', 'absence'])) {
-                $germeValue = [
-                    'status' => $firstOption
-                ];
-            } elseif ($this->currentBacteria) {
-                $germeValue = [
-                    'status' => 'bacterie',
-                    'bacterie' => [
-                        'nom' => $this->currentBacteria,
-                        'antibiogramme' => $this->selectedBacteriaResults[$this->currentBacteria]['antibiotics'] ?? []
-                    ]
-                ];
-            }
-        }
-
-        if (in_array('autre', $this->selectedOption)) {
-            $germeValue['status'] = 'autre';
-            $germeValue['autre_valeur'] = $this->otherBacteriaValue;
-        }
-
-        return $germeValue;
-    }
 
 }

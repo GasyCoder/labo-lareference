@@ -45,7 +45,7 @@
         @error('unite_age') <div class="text-danger">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4">
-        <label for="poids" class="form-label">Poids (kg) <span class="text-danger">*</span></label>
+        <label for="poids" class="form-label">Poids (kg)</label>
         <input type="number" step="0.01" id="poids" wire:model.defer="poids" class="form-control @error('poids') is-invalid @enderror">
         @error('poids') <div class="text-danger">{{ $message }}</div> @enderror
     </div>
