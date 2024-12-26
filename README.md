@@ -7,60 +7,106 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+## À propos de ce projet
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Ce projet est une application web construite avec le framework Laravel pour la gestion des analyses de laboratoire. Il est conçu pour optimiser les flux de travail, améliorer l'efficacité et fournir des rapports détaillés aux professionnels du laboratoire. Les principales fonctionnalités incluent :
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+-   Gestion des patients et de leurs analyses.
+-   Suivi en temps réel de l'avancement des analyses.
+-   Rapports détaillés des revenus et activités du laboratoire.
+-   Contrôle d'accès basé sur les rôles pour les administrateurs, biologistes et autres membres du personnel.
+-   Intégration avec des composants UI modernes pour une interface propre et professionnelle.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Fonctionnalités
 
-## Learning Laravel
+-   **Gestion des patients :**
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+    -   Ajouter, visualiser et gérer les informations des patients.
+    -   Assigner des analyses aux patients.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+-   **Gestion des analyses :**
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+    -   Catégoriser et gérer différents types d'analyses (hématologie, biochimie, etc.).
+    -   Suivre les états (en attente, terminé).
 
-## Laravel Sponsors
+-   **Suivi des revenus :**
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+    -   Surveiller les revenus quotidiens, hebdomadaires et mensuels.
 
-### Premium Partners
+-   **Journaux d'activités :**
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+    -   Suivre les activités du laboratoire telles que la collecte d'échantillons, la complétion des analyses et la génération de rapports.
 
-## Contributing
+-   **Rapports :**
+    -   Exporter des rapports détaillés sur les patients, les analyses et les revenus dans divers formats (PDF, Excel).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Stack technologique
 
-## Code of Conduct
+Ce projet utilise les technologies suivantes :
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+-   **Backend :** Framework Laravel - Livewire
+-   **Frontend :** Templates Blade et Bootstrap pour un design réactif
+-   **Base de données :** MySQL
+-   **Bibliothèque de graphiques :** ApexCharts pour des visualisations interactives
 
-## Security Vulnerabilities
+## Installation
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Pour configurer ce projet en local, suivez ces étapes :
 
-## License
+1. Clonez le dépôt :
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+git clone https://github.com/GasyCoder/labo-lareference
+```
+
+2. Naviguez dans le répertoire du projet :
+
+```bash
+cd votre-repertoire
+```
+
+3. Installez les dépendances :
+
+```bash
+composer install
+npm install
+```
+
+4. Configurez votre environnement :
+
+-   Dupliquez le fichier `.env.example` et renommez-le en `.env`.
+-   Mettez à jour les informations de connexion à la base de données et les autres variables d'environnement dans le fichier `.env`.
+
+5. Lancez les migrations :
+
+```bash
+php artisan migrate
+```
+
+6. Démarrez le serveur de développement :
+
+```bash
+php artisan serve
+```
+
+## Utilisation
+
+-   Accédez à l'application dans votre navigateur à l'adresse `http://localhost:8000`.
+-   Connectez-vous avec les identifiants admin par défaut (définis dans le seeder ou configurés manuellement).
+-   Explorez le tableau de bord, gérez les patients, les analyses et les revenus.
+
+## Contribution
+
+Ce projet est privé et sous la propriété intellectuelle de son propriétaire. Toute contribution est soumise à autorisation préalable. Si vous êtes un collaborateur autorisé, pour contribuer :
+
+1. Forkez le dépôt.
+2. Créez une nouvelle branche pour votre fonctionnalité ou correction de bug.
+3. Soumettez une pull request avec une description détaillée de vos modifications.
+
+## Vulnérabilités de sécurité
+
+Si vous découvrez des problèmes de sécurité, veuillez les signaler immédiatement aux responsables du projet.
+
+## Licence
+
+Ce projet est un logiciel propriétaire et n'est pas sous licence open-source. Tous droits réservés au propriétaire du projet.
