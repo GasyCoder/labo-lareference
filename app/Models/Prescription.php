@@ -101,7 +101,7 @@ class Prescription extends Model
     {
         return $this->belongsToMany(Analyse::class, 'analyse_prescriptions')
                     ->using(AnalysePrescription::class)
-                    ->withPivot(['prix', 'status', 'resultat'])
+                    ->withPivot(['prix', 'status', 'resultat', 'is_payer'])
                     ->withTimestamps();
     }
 
@@ -115,7 +115,7 @@ class Prescription extends Model
     public function prelevements()
     {
         return $this->belongsToMany(Prelevement::class)
-                    ->withPivot('prix_unitaire', 'quantite')
+                    ->withPivot('prix_unitaire', 'quantite', 'is_payer')
                     ->withTimestamps();
     }
 
@@ -126,6 +126,14 @@ class Prescription extends Model
             ->whereNotNull('validated_by')
             ->whereNotNull('validated_at')
             ->exists();
+    }
+
+    public function analyses()
+    {
+        return $this->belongsToMany(Analyse::class, 'analyse_prescriptions')
+                    ->using(AnalysePrescription::class)
+                    ->withPivot(['prix', 'is_payer', 'status'])
+                    ->withTimestamps();
     }
 
     public function hasValidatedResultsByBiologiste()
@@ -175,13 +183,6 @@ class Prescription extends Model
         return $this->belongsTo(User::class, 'secretaire_id');
     }
 
-    public function analyses()
-    {
-        return $this->belongsToMany(Analyse::class, 'analyse_prescriptions')
-                    ->using(AnalysePrescription::class)
-                    ->withPivot('prix', 'status')
-                    ->withTimestamps();
-    }
 
     public function archivePrescription()
     {

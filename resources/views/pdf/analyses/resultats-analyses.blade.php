@@ -339,6 +339,22 @@
                             @include('pdf.analyses.analyse-children', ['children' => $analyse->children, 'level' => +2])
                         @endif
                     @endif
+
+                @if(!empty($analyse->description))
+                    <tr>
+                        <td colspan="4" style="padding:3px 0;">
+                            <div style="
+                                margin-top: 3px;
+                                padding-top: 3px;
+                                font-weight: normal;
+                                font-size: 8pt;
+                                color: #6c757d;">
+                                ({!! $analyse->description !!})
+                            </div>
+                        </td>
+                    </tr>
+                    @endif
+
                 @endforeach
             </table>
 
@@ -353,7 +369,7 @@
                     <tr>
                         <td colspan="4" style="padding: 5px 0;">
                             <div style="border-bottom: 2px dotted #8f8a8a; margin-bottom: 10px; font-weight: normal; font-size: 10pt;">
-                                Commentaire :
+                                Conclussion :
                                 @foreach($conclusionsExamen as $conclusion)
                                     <b>{!! nl2br(e($conclusion)) !!}</b>
                                     @if(!$loop->last)<br>@endif

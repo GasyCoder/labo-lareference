@@ -19,7 +19,7 @@
         </div>
         </div>
 
-        <livewire:admin.data-counter />
+            <livewire:admin.data-counter />
 
         @if(auth()->user()->hasRole('superadmin') || auth()->user()->can('superadmin'))
             <livewire:admin.data-state />

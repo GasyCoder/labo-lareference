@@ -2,15 +2,19 @@
 
 namespace App\Livewire\Secretaire;
 
-use App\Services\ResultatPdfShow;
 use Livewire\Component;
+use App\Models\Paiement;
 use App\Models\Resultat;
-use App\Models\Prescription;
 use App\Models\Prelevement;
+use App\Models\Prescription;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Services\ResultatPdfService;
+use App\Services\ResultatPdfShow;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\ResultatPdfService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 class ProfilePrescription extends Component
@@ -23,9 +27,10 @@ class ProfilePrescription extends Component
     public $totalPrelevements = 0;
     public $prelevements = [];
     public $selectedPrelevements = [];
-    public $totalPrice = 0;
+    public $totalGeneral = 0;
     public $basePrelevementPrice = 2000;
     public $elevatedPrelevementPrice = 3500;
+    public $modePaiement = 'ESPECES';
 
     // Services injectés
     protected $pdfService;
@@ -49,11 +54,14 @@ class ProfilePrescription extends Component
         $this->prescription = Prescription::with([
             'patient',
             'prescripteur',
+            'analyses' => function($query) {
+                $query->withPivot(['prix', 'is_payer', 'status']);
+            },
             'analyses.resultats',
             'analyses.examen',
             'resultats',
             'prelevements' => function($query) {
-                $query->withPivot(['prix_unitaire', 'quantite']);
+                $query->withPivot(['prix_unitaire', 'quantite', 'is_payer']);
             }
         ])->findOrFail($id);
 
@@ -65,7 +73,6 @@ class ProfilePrescription extends Component
     /**
      * Calcule le prix d'un prélèvement en fonction de son type et de sa quantité
      */
-
     private function calculatePrelevementPrice($prelevement)
     {
         $quantite = $prelevement->pivot->quantite ?? 1;
@@ -85,39 +92,115 @@ class ProfilePrescription extends Component
      */
     private function calculateTotals()
     {
+        // Calcul du total des analyses (toutes, pas seulement non payées)
         $this->totalAnalyses = $this->prescription->analyses->sum('pivot.prix');
 
+        // Calcul du total des prélèvements (tous)
         $this->totalPrelevements = $this->prescription->prelevements->sum(function ($prelevement) {
-            return $this->calculatePrelevementPrice($prelevement);
+            $quantite = $prelevement->pivot->quantite;
+            $isTubeAiguille = $prelevement->nom === self::TUBE_AIGUILLE_NOM;
+
+            return $isTubeAiguille && $quantite > 1
+                ? $this->elevatedPrelevementPrice
+                : ($isTubeAiguille
+                    ? $this->basePrelevementPrice
+                    : $prelevement->pivot->prix_unitaire * $quantite);
         });
 
-        $this->totalPrice = $this->totalAnalyses + $this->totalPrelevements;
+        // Total général
+        $this->totalGeneral = $this->totalAnalyses + $this->totalPrelevements;
+    }
+
+
+    // Pour les montants à payer, ajoutez une nouvelle méthode
+    private function calculateUnpaidTotals()
+    {
+        // Pour les analyses non payées
+        $unpaidAnalyses = $this->prescription->analyses
+            ->where('pivot.is_payer', 'NON_PAYE')
+            ->sum('pivot.prix');
+
+        // Pour les prélèvements non payés
+        $unpaidPrelevements = $this->prescription->prelevements
+            ->where('pivot.is_payer', 'NON_PAYE')
+            ->sum(function ($prelevement) {
+                $quantite = $prelevement->pivot->quantite;
+                $isTubeAiguille = $prelevement->nom === self::TUBE_AIGUILLE_NOM;
+
+                return $isTubeAiguille && $quantite > 1
+                    ? $this->elevatedPrelevementPrice
+                    : ($isTubeAiguille
+                        ? $this->basePrelevementPrice
+                        : $prelevement->pivot->prix_unitaire * $quantite);
+            });
+
+        return [
+            'unpaidAnalyses' => $unpaidAnalyses,
+            'unpaidPrelevements' => $unpaidPrelevements,
+            'unpaidTotal' => $unpaidAnalyses + $unpaidPrelevements
+        ];
     }
 
     /**
-     * Getter pour le total des analyses
+     * Traitement du paiement
      */
-    public function getTotalAnalysesProperty()
+    public function processPaiement()
     {
-        return $this->prescription->analyses->sum('pivot.prix');
-    }
+        try {
+            DB::beginTransaction();
 
-    /**
-     * Getter pour le total des prélèvements
-     */
-    public function getTotalPrelevementsProperty()
-    {
-        return $this->prescription->prelevements->sum(function ($prelevement) {
-            return $this->calculatePrelevementPrice($prelevement);
-        });
-    }
+            // Créer le paiement
+            Paiement::create([
+                'prescription_id' => $this->prescription->id,
+                'montant' => $this->totalGeneral,
+                'mode_paiement' => $this->modePaiement,
+                'recu_par' => Auth::id()
+            ]);
 
-    /**
-     * Getter pour le total général
-     */
-    public function getTotalPriceProperty()
-    {
-        return $this->getTotalAnalysesProperty() + $this->getTotalPrelevementsProperty();
+            // Mettre à jour le statut des analyses (via Eloquent)
+            $this->prescription->analyses()
+                ->wherePivot('is_payer', 'NON_PAYE')
+                ->updateExistingPivot(null, ['is_payer' => 'PAYE']);
+
+            // Mettre à jour directement la table analyse_prescriptions
+            DB::table('analyse_prescriptions')
+                ->where('prescription_id', $this->prescription->id)
+                ->where('is_payer', 'NON_PAYE')
+                ->update([
+                    'is_payer' => 'PAYE',
+                    'updated_at' => now()
+                ]);
+
+            // Mettre à jour le statut des prélèvements
+            foreach ($this->prescription->prelevements as $prelevement) {
+                $this->prescription->prelevements()
+                    ->updateExistingPivot($prelevement->id, [
+                        'is_payer' => 'PAYE'
+                    ]);
+            }
+
+            DB::commit();
+
+            // Rafraîchir les données
+            $this->prescription->refresh();
+            $this->calculateTotals();
+
+            // Fermer la modal et afficher le succès
+            $this->dispatch('payment-processed');
+            $this->alert('success', 'Paiement effectué avec succès');
+
+            // Générer la facture
+            $this->generateFacturePDF();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors du paiement:', [
+                'message' => $e->getMessage(),
+                'prescription_id' => $this->prescription->id
+            ]);
+
+            $this->alert('error', "Une erreur est survenue lors du paiement");
+        }
     }
 
     /**
@@ -132,7 +215,6 @@ class ProfilePrescription extends Component
             }
 
             $url = $this->pdfService->generatePDF($this->prescription);
-
             $this->dispatch('openPdfInNewWindow', ['url' => $url]);
             $this->alert('success', 'PDF généré avec succès');
 
@@ -145,7 +227,7 @@ class ProfilePrescription extends Component
                 'trace' => $e->getTraceAsString()
             ]);
 
-            $this->alert('error', "Erreur lors de la génération du PDF : {$e->getMessage()}");
+            $this->alert('error', "Erreur lors de la génération du PDF");
             return null;
         }
     }
@@ -156,26 +238,38 @@ class ProfilePrescription extends Component
     public function generateFacturePDF()
     {
         try {
+            $allPaid = $this->prescription->analyses
+                ->every(function($analyse) {
+                    return $analyse->pivot->is_payer === 'PAYE';
+                }) &&
+                $this->prescription->prelevements
+                ->every(function($prelevement) {
+                    return $prelevement->pivot->is_payer === 'PAYE';
+                });
+
             $data = [
                 'prescription' => $this->prescription,
-                'totalAnalyses' => $this->getTotalAnalysesProperty(),
-                'totalPrelevements' => $this->getTotalPrelevementsProperty(),
-                'totalGeneral' => $this->getTotalPriceProperty(),
-                'totalPrice' => $this->getTotalPriceProperty(), // Ajout de cette ligne
-                // Ajout des constantes pour la vue
+                'totalAnalyses' => $this->totalAnalyses,
+                'totalPrelevements' => $this->totalPrelevements,
+                'totalGeneral' => $this->totalGeneral,
                 'TUBE_AIGUILLE_NOM' => self::TUBE_AIGUILLE_NOM,
                 'basePrelevementPrice' => $this->basePrelevementPrice,
-                'elevatedPrelevementPrice' => $this->elevatedPrelevementPrice
+                'elevatedPrelevementPrice' => $this->elevatedPrelevementPrice,
+                'modePaiement' => $this->modePaiement,
+                'allPaid' => $allPaid
             ];
 
             $pdf = PDF::loadView('pdf.invoice.facture', $data);
+            $pdf->setPaper('B5');
 
-            return response()->streamDownload(
-                function () use ($pdf) {
-                    echo $pdf->output();
-                },
-                "facture_{$this->prescription->id}.pdf"
-            );
+            // Créer un nom de fichier unique
+            $filename = 'factures/facture-' . $this->prescription->id . '-' . time() . '.pdf';
+
+            // Sauvegarder temporairement le PDF
+            Storage::disk('public')->put($filename, $pdf->output());
+
+            // Retourner l'URL temporaire
+            return Storage::disk('public')->url($filename);
 
         } catch (\Exception $e) {
             Log::error('Erreur génération facture:', [
@@ -183,7 +277,7 @@ class ProfilePrescription extends Component
                 'prescription_id' => $this->prescription->id
             ]);
 
-            $this->alert('error', "Erreur lors de la génération de la facture : {$e->getMessage()}");
+            $this->alert('error', "Erreur lors de la génération de la facture");
             return null;
         }
     }
@@ -201,9 +295,9 @@ class ProfilePrescription extends Component
 
             $data = [
                 'prescription' => $this->prescription,
-                'totalAnalyses' => $this->getTotalAnalysesProperty(),
-                'totalPrelevements' => $this->getTotalPrelevementsProperty(),
-                'totalGeneral' => $this->getTotalPriceProperty()
+                'totalAnalyses' => $this->totalAnalyses,
+                'totalPrelevements' => $this->totalPrelevements,
+                'totalGeneral' => $this->totalGeneral
             ];
 
             $pdf = PDF::loadView('pdfs.facture', $data);
@@ -211,8 +305,8 @@ class ProfilePrescription extends Component
 
             Mail::send('emails.facture', ['prescription' => $this->prescription], function ($message) use ($pdf, $filename) {
                 $message->to($this->prescription->patient->email)
-                        ->subject('Votre facture')
-                        ->attachData($pdf->output(), $filename);
+                    ->subject('Votre facture')
+                    ->attachData($pdf->output(), $filename);
             });
 
             $this->alert('success', 'La facture a été envoyée par email avec succès.');
@@ -223,7 +317,7 @@ class ProfilePrescription extends Component
                 'prescription_id' => $this->prescription->id
             ]);
 
-            $this->alert('error', "Erreur lors de l'envoi de la facture : {$e->getMessage()}");
+            $this->alert('error', "Erreur lors de l'envoi de la facture");
         }
     }
 
@@ -251,9 +345,9 @@ class ProfilePrescription extends Component
     public function render()
     {
         return view('livewire.secretaire.profile-prescription', [
-            'totalAnalyses' => $this->getTotalAnalysesProperty(),
-            'totalPrelevements' => $this->getTotalPrelevementsProperty(),
-            'totalGeneral' => $this->getTotalPriceProperty()
+            'totalAnalyses' => $this->totalAnalyses,
+            'totalPrelevements' => $this->totalPrelevements,
+            'totalGeneral' => $this->totalGeneral
         ]);
     }
 }

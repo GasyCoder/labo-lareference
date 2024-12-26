@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('prescription_id')->constrained();
             $table->decimal('montant', 10, 2);
-            $table->enum('mode_paiement', ['ESPECES', 'CARTE', 'CHEQUE']);
+            $table->enum('mode_paiement', ['ESPECES', 'CARTE', 'CHEQUE'])->default('ESPECES');
             $table->foreignId('recu_par')->constrained('users');
             $table->timestamps();
             $table->softDeletes();

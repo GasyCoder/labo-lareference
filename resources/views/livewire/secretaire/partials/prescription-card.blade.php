@@ -81,7 +81,7 @@
                     </td>
                     <td>
                         <div class="d-flex gap-2 justify-content-end">
-                            @if($prescription->trashed())
+                                @if($prescription->trashed())
                                 {{-- Actions pour les prescriptions dans la corbeille --}}
                                 <a href="{{ route('secretaire.prescriptions.profil', ['id' => $prescription->id]) }}"
                                    class="btn btn-sm btn-info"
@@ -98,14 +98,25 @@
                                         title="Supprimer définitivement">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
-                            @else
+                                @else
+                                @if($prescription->status === 'EN_ATTENTE' || $prescription->status === 'TERMINE')
                                 {{-- Actions communes pour les prescriptions actives --}}
                                 <a href="{{ route('secretaire.prescriptions.profil', ['id' => $prescription->id]) }}"
                                    class="btn btn-sm btn-info"
                                    title="Voir détails">
                                     <i class="fas fa-user"></i>
                                 </a>
-
+                                <a href="{{ route('secretaire.prescriptions.edit', ['id' => $prescription->id]) }}"
+                                    class="btn btn-sm btn-success"
+                                    title="Modifier">
+                                     <i class="fas fa-edit"></i>
+                                </a>
+                                <button wire:click="confirmDelete({{ $prescription->id }})"
+                                    class="btn btn-sm btn-danger"
+                                    title="Corbeille">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                @endif
                                 @if(!$prescription->status === 'VALIDE')
                                 <a href="{{ route('secretaire.prescriptions.edit', ['id' => $prescription->id]) }}"
                                     class="btn btn-sm btn-success"
@@ -118,21 +129,19 @@
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 @endif
-
                                 @if($prescription->status === 'VALIDE')
+                                    <a href="{{ route('secretaire.prescriptions.profil', ['id' => $prescription->id]) }}"
+                                        class="btn btn-sm btn-info"
+                                        title="Voir détails">
+                                        <i class="fas fa-user"></i>
+                                    </a>
                                     <x-pdf-download-button :prescription="$prescription" title="Aperçu en pdf" />
                                     @if(!$prescription->is_archive)
-                                        <button wire:click="confirmArchive({{ $prescription->id }})"
-                                                class="btn btn-sm btn-secondary"
-                                                title="Archiver">
-                                            <i class="fas fa-archive"></i>
-                                        </button>
-                                    @else
-                                        <button wire:click="confirmUnarchive({{ $prescription->id }})"
-                                                class="btn btn-sm btn-warning"
-                                                title="Désarchiver">
-                                            <i class="fas fa-box-open"></i>
-                                        </button>
+                                    <button wire:click="confirmArchive({{ $prescription->id }})"
+                                            class="btn btn-sm btn-secondary"
+                                            title="Archiver">
+                                        <i class="fas fa-archive"></i>
+                                    </button>
                                     @endif
                                 @endif
                             @endif

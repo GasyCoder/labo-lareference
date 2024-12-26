@@ -116,83 +116,119 @@
                                 <th>Statut</th>
                             </tr>
                         </thead>
+                        {{-- Corps du tableau --}}
                         <tbody>
                             @foreach($prescription->analyses as $analyse)
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="fw-medium">{{ $analyse->designation }}</span>
-                                            <span class="badge bg-primary">{{ $analyse->abr }}</span>
+                                            <small class="badge bg-primary">{{ $analyse->abr }}</small>
                                         </div>
                                     </td>
                                     <td>{{ number_format($analyse->pivot->prix, 0, ',', ' ') }} Ar</td>
                                     <td>{{ $analyse->pivot->created_at->format('d/m/Y') }}</td>
                                     <td>
-                                        <span class="badge" style="background-color: #34D399; font-weight: normal;">
-                                            {{$prescription->status}}
-                                        </span>
+                                        @if($analyse->pivot->is_payer === 'PAYE')
+                                            <span class="badge" style="background-color: #34D399; font-weight: normal;">
+                                                Payé
+                                            </span>
+                                        @else
+                                            <span class="badge bg-danger">
+                                                Non payé
+                                            </span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
 
                             <!-- Section des prélèvements -->
                             @if($prescription->prelevements->count() > 0)
-                            <tr>
-                                <td colspan="4" class="bg-light">
-                                    <strong>Prélèvements</strong>
-                                </td>
-                            </tr>
-                            @foreach($prescription->prelevements as $prelevement)
-                                @php
-                                    $quantite = $prelevement->pivot->quantite;
-                                    $isTubeAiguille = $prelevement->nom === 'Tube aiguille';
-                                    $prixTotal = $isTubeAiguille && $quantite > 1 ?
-                                        3500 :
-                                        ($isTubeAiguille ? 2000 : $prelevement->pivot->prix_unitaire * $quantite);
-                                @endphp
                                 <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="fw-medium">{{ $prelevement->nom }}</span>
-                                            @if($quantite > 1)
-                                                <span class="badge bg-info">Qté: {{ $quantite }}</span>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {{ number_format($prixTotal, 0, ',', ' ') }} Ar
-                                        @if($quantite > 1 && !$isTubeAiguille)
-                                            <small class="text-muted">
-                                                ({{ number_format($prelevement->pivot->prix_unitaire, 0, ',', ' ') }} × {{ $quantite }})
-                                            </small>
-                                        @endif
-                                    </td>
-                                    <td>{{ $prelevement->pivot->created_at->format('d/m/Y') }}</td>
-                                    <td>
-                                        <span class="badge bg-success">Effectué</span>
+                                    <td colspan="4" class="bg-light">
+                                        <strong>Prélèvements</strong>
                                     </td>
                                 </tr>
-                            @endforeach
+                                @foreach($prescription->prelevements as $prelevement)
+                                    @php
+                                        $quantite = $prelevement->pivot->quantite;
+                                        $isTubeAiguille = $prelevement->nom === 'Tube aiguille';
+                                        $prixTotal = $isTubeAiguille && $quantite > 1 ?
+                                            3500 :
+                                            ($isTubeAiguille ? 2000 : $prelevement->pivot->prix_unitaire * $quantite);
+                                    @endphp
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="fw-medium">{{ $prelevement->nom }}</span>
+                                                @if($quantite > 1)
+                                                    <span class="badge bg-info">Qté: {{ $quantite }}</span>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {{ number_format($prixTotal, 0, ',', ' ') }} Ar
+                                            @if($quantite > 1 && !$isTubeAiguille)
+                                                <small class="text-muted">
+                                                    ({{ number_format($prelevement->pivot->prix_unitaire, 0, ',', ' ') }} × {{ $quantite }})
+                                                </small>
+                                            @endif
+                                        </td>
+                                        <td>{{ $prelevement->pivot->created_at->format('d/m/Y') }}</td>
+                                        <td>
+                                            @if($prelevement->pivot->is_payer === 'PAYE')
+                                                <span class="badge" style="background-color: #34D399; font-weight: normal;">
+                                                    Payé
+                                                </span>
+                                            @else
+                                                <span class="badge bg-danger">
+                                                    Non payé
+                                                </span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
                             @endif
 
                             <!-- Pied de tableau -->
                             <tfoot class="table-light">
-                            <tr>
-                                <th>Total Analyses</th>
-                                <th colspan="3">{{ number_format($totalAnalyses, 0, ',', ' ') }} Ar</th>
-                            </tr>
-                            @if($prescription->prelevements->count() > 0)
                                 <tr>
-                                    <th>Total Prélèvements</th>
-                                    <th colspan="3">{{ number_format($totalPrelevements, 0, ',', ' ') }} Ar</th>
+                                    <th>Total Analyses</th>
+                                    <th colspan="3">{{ number_format($totalAnalyses, 0, ',', ' ') }} Ar</th>
                                 </tr>
-                                <tr class="table-primary">
-                                    <th>Total Général</th>
-                                    <th colspan="3">{{ number_format($totalGeneral, 0, ',', ' ') }} Ar</th>
-                                </tr>
-                            @endif
-                            </tfoot>
+                                @if($prescription->prelevements->count() > 0)
+                                    <tr>
+                                        <th>Total Prélèvements</th>
+                                        <th colspan="3">{{ number_format($totalPrelevements, 0, ',', ' ') }} Ar</th>
+                                    </tr>
+                                    <tr class="table-primary">
+                                        <th>Total Général</th>
+                                        <th colspan="3">{{ number_format($totalGeneral, 0, ',', ' ') }} Ar</th>
+                                    </tr>
+                                @endif
+                                {{-- Button paiement --}}
+                                <tr>
+                                    <th class="text-end" colspan="4">
+                                        @php
+                                            $unpaidTotals = $this->calculateUnpaidTotals();
+                                            $hasPendingPayments = $unpaidTotals['unpaidTotal'] > 0;
+                                        @endphp
 
+                                        @if($hasPendingPayments)
+                                            <button data-bs-toggle="modal"
+                                                    data-bs-target="#paymentModal"
+                                                    class="btn btn-primary">
+                                                Procéder au paiement ({{ number_format($unpaidTotals['unpaidTotal'], 0, ',', ' ') }} Ar)
+                                            </button>
+                                        @else
+                                            <button class="btn btn-secondary" disabled>
+                                                Tout est payé
+                                            </button>
+                                        @endif
+                                    </th>
+                                </tr>
+                            </tfoot>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -231,17 +267,43 @@
                 <div class="card-body">
                     <!-- Facture -->
                     <div class="d-flex align-items-center gap-2 mb-4">
-                        <button wire:click="generateFacturePDF"
-                                class="btn btn-warning text-white flex-grow-1 d-flex align-items-center justify-content-center"
-                                style="background-color: #ddb215; height: 42px;"
-                                wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="generateFacturePDF">
-                                <i class="fas fa-file-invoice-dollar me-2"></i>Générer la facture
-                            </span>
-                            <span wire:loading wire:target="generateFacturePDF">
-                                <i class="fas fa-spinner fa-spin me-2"></i>Génération en cours...
-                            </span>
+                        <!-- Button pour générer la facture -->
+                        <button
+                        x-data="{ downloading: false }"
+                        @click="
+                            downloading = true;
+                            $wire.generateFacturePDF()
+                                .then(url => {
+                                    if (url) {
+                                        window.open(url, '_blank');
+                                    } else {
+                                        alert('Erreur lors de la génération de la facture');
+                                    }
+                                    downloading = false;
+                                })
+                                .catch(error => {
+                                    console.error('Erreur:', error);
+                                    alert('Erreur lors de la génération de la facture');
+                                    downloading = false;
+                                });
+                        "
+                        :disabled="downloading"
+                        class="btn btn-warning text-white flex-grow-1 d-flex align-items-center justify-content-center"
+                        style="background-color: #ddb215; height: 42px;">
+                        <template x-if="!downloading">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file-invoice-dollar me-2"></i>
+                                <span>Générer la facture</span>
+                            </div>
+                        </template>
+                        <template x-if="downloading">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                <span>Génération en cours...</span>
+                            </div>
+                        </template>
                         </button>
+
                         <button wire:click="sendFactureEmail"
                                 class="btn btn-success d-flex align-items-center justify-content-center"
                                 style="width: 42px; height: 42px; border-radius: 21px;"
@@ -301,6 +363,22 @@
             </div>
 
         </div>
+
+        @include('livewire.secretaire.partials.payement')
+
     </div>
 </section>
+
+@push('scripts')
+<script>
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.on('openPdfInNewWindow', (data) => {
+            window.open(data.url, '_blank', 'noopener,noreferrer');
+        });
+    });
+</script>
+@endpush
+
 @include('layouts.scripts')
+
+

@@ -716,8 +716,7 @@ class TechnicianAnalysisForm extends Component
         }
     }
 
-    public function validateAnalyse()
-    {
+    public function validateAnalyse(){
         try {
             if (!$this->hasRequiredFields($this->selectedAnalyse->id)) {
                 session()->flash('error', 'Veuillez remplir tous les champs requis avant de terminer l\'analyse');
@@ -950,6 +949,17 @@ class TechnicianAnalysisForm extends Component
                     'conclusion' => $this->conclusion
                 ];
             }
+            elseif ($analyse->analyseType->name === 'NEGATIF_POSITIF_2') {
+                $mainResultData = [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId,
+                    'resultats' => $this->results[$analyseId]['resultats'] ?? null,
+                    'valeur' => $this->results[$analyseId]['resultats'] === 'Positif' ? 
+                        ($this->results[$analyseId]['valeur'] ?? null) : null,
+                    'interpretation' => null,
+                    'conclusion' => $this->conclusion
+                ];
+            }
             elseif ($analyse->analyseType->name === 'NEGATIF_POSITIF_1') {
                 $mainResultData = [
                     'prescription_id' => $this->prescription->id,
@@ -1100,7 +1110,6 @@ class TechnicianAnalysisForm extends Component
                             ? 'PATHOLOGIQUE'
                             : 'NORMAL';
                         break;
-
                     default:
                         $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
                         $childResultData['valeur'] = $this->results[$childId]['valeur'] ?? null;

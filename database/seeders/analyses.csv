@@ -201,7 +201,7 @@ Nombreux",99,1,NULL,2025-02-07 08:10:30,2025-02-07 08:10:30
 180,PARENT,176,lcrExamenApresCulture,Examen après culture,,0,0,5,1,NULL,99,1,NULL,2025-02-08 08:10:30,2025-02-08 08:10:30
 183,PARENT,0,HC,HEPATITE C,Technique ELISA,22000,1,4,6,NULL,NULL,1,NULL,2025-02-09 08:10:30,2025-02-09 08:10:30
 184,NORMAL,183,AcHVC,Anticorps anti-HVC,,22000,1,4,2,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-10 08:10:30,2025-02-10 08:10:30
-186,NORMAL,0,FR,Facteur Rhumatoïde,,16000,1,4,2,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",NULL,1,NULL,2025-02-11 08:10:30,2025-02-11 08:10:30
+186,NORMAL,0,FR,Facteur Rhumatoïde,,16000,1,4,10,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",NULL,1,NULL,2025-02-11 08:10:30,2025-02-11 08:10:30
 188,PARENT,0,Syphilis,Dépistage de la Syphilis  ,,16000,1,4,1,NULL,NULL,1,NULL,2025-02-12 08:10:30,2025-02-12 08:10:30
 189,NORMAL,188,TPHA,  TPHA,,0,1,4,2,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-13 08:10:30,2025-02-13 08:10:30
 190,NORMAL,188,RPR,  RPR ,,0,1,4,2,"[""NEGATIF"",""POSITIF_1""]",99,1,NULL,2025-02-14 08:10:30,2025-02-14 08:10:30
@@ -210,18 +210,18 @@ Nombreux",99,1,NULL,2025-02-07 08:10:30,2025-02-07 08:10:30
 193,PARENT,0,WF,Sérologie de Widal et Felix,"A titre d'information
 IgM = -
 IgG = +",16000,0,4,1,NULL,99,1,NULL,2025-02-17 08:10:30,2025-02-17 08:10:30
-194,NORMAL,193,TO,TO,,0,0,4,2,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-18 08:10:30,2025-02-18 08:10:30
-195,NORMAL,193,TH,TH,,0,0,4,2,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-19 08:10:30,2025-02-19 08:10:30
-197,NORMAL,0,SeroAmib,Sérologie amibienne,Résultat Positif si la valeur est supérieure   8 NTU.,30000,1,4,2,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",NULL,1,NULL,2025-02-20 08:10:30,2025-02-20 08:10:30
+194,NORMAL,193,TO,TO,,0,0,4,10,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-18 08:10:30,2025-02-18 08:10:30
+195,NORMAL,193,TH,TH,,0,0,4,10,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-19 08:10:30,2025-02-19 08:10:30
+197,NORMAL,0,SeroAmib,Sérologie amibienne,Résultat Positif si la valeur est supérieure   8 NTU.,30000,1,4,10,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",NULL,1,NULL,2025-02-20 08:10:30,2025-02-20 08:10:30
 198,PARENT,0,TOXO,Sérologie de la Toxoplasmose,,34000,1,4,1,NULL,NULL,1,NULL,2025-02-21 08:10:30,2025-02-21 08:10:30
-199,NORMAL,198,Toxo_IgM,IgM,,0,1,4,2,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",98,1,NULL,2025-02-22 08:10:30,2025-02-22 08:10:30
-200,NORMAL,198,Toxo_IgG,IgG,,0,1,4,2,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-23 08:10:30,2025-02-23 08:10:30
+199,NORMAL,198,Toxo_IgM,IgM,,0,1,4,10,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",98,1,NULL,2025-02-22 08:10:30,2025-02-22 08:10:30
+200,NORMAL,198,Toxo_IgG,IgG,,0,1,4,10,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-23 08:10:30,2025-02-23 08:10:30
 201,PARENT,0,RUB,Sérologie de la Rubéole,,30000,1,4,1,,NULL,1,NULL,2025-02-24 08:10:30,2025-02-24 08:10:30
-202,NORMAL,201,Rub_IgG,IgG,,0,1,4,2,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-25 08:10:30,2025-02-25 08:10:30
+202,NORMAL,201,Rub_IgG,IgG,,0,1,4,10,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-25 08:10:30,2025-02-25 08:10:30
 203,PARENT,0,Cysti,Sérologie de la Cysticercose,,34000,1,4,1,NULL,NULL,1,NULL,2025-02-26 08:10:30,2025-02-26 08:10:30
 204,NORMAL,203,CystiPrelev,Prélevement,,0,0,4,8,"Sang
 LCR",99,1,NULL,2025-02-27 08:10:30,2025-02-27 08:10:30
-205,NORMAL,203,Cysti_IgG,Recherche des Anticorps IgG,,0,0,4,2,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-28 08:10:30,2025-02-28 08:10:30
+205,NORMAL,203,Cysti_IgG,Recherche des Anticorps IgG,,0,0,4,10,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-02-28 08:10:30,2025-02-28 08:10:30
 206,PARENT,0,HIV,Sérologie à VIH,"Technique ELISA
 Test immunochromatographique",12000,1,4,1,,NULL,1,NULL,2025-03-01 08:10:30,2025-03-01 08:10:30
 207,NORMAL,206,VIH1,VIH Type 1,,0,1,4,2,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",99,1,NULL,2025-03-02 08:10:30,2025-03-02 08:10:30
@@ -535,7 +535,7 @@ Positive +",99,1,NULL,2025-09-25 08:10:30,2025-09-25 08:10:30
 465,NORMAL,464,HEMOCULTURERESULTAT,Résultat,,0,0,5,7,NULL,1,1,NULL,2025-10-01 08:10:30,2025-10-01 08:10:30
 466,NORMAL,464,HEMOCULTUREGERME,Germe Isolé,,0,0,5,15,NULL,2,1,NULL,2025-10-02 08:10:30,2025-10-02 08:10:30
 470,NORMAL,445,hémat,Hématies,,0,1,1,4,"{""val_ref"":"""",""unite"":""   \/mm3""}",2,1,NULL,2025-10-03 08:10:30,2025-10-03 08:10:30
-471,NORMAL,445,leuc,Leucocytes,La formule leucocytaire n'est pas recommandée lorsque le taux des leucocytes est inférieur à 7.,0,1,1,10,"{""unite"":""  \/mm3"",""val_min"":""9.999""}",1,1,NULL,2025-10-04 08:10:30,2025-10-04 08:10:30
+471,NORMAL,445,leuc,Leucocytes,La formule leucocytaire n'est pas recommandée lorsque le taux des leucocytes est inférieur à 10.,0,1,1,13,"{""unite"":""  \/mm3"",""val_min"":""9.999""}",1,1,NULL,2025-10-04 08:10:30,2025-10-04 08:10:30
 472,PARENT,444,lcrExamenApresCulture2,Examen après culture,,0,1,1,1,NULL,99,1,NULL,2025-10-05 08:10:30,2025-10-05 08:10:30
 473,CHILD,472,LCR_GERME2,Germe isolé,,0,0,1,15,NULL,99,1,NULL,2025-10-06 08:10:30,2025-10-06 08:10:30
 474,PARENT,0,SPERMOGRAMME,SPERMOGRAMME,,0,1,7,1,NULL,NULL,1,NULL,2025-10-07 08:10:30,2025-10-07 08:10:30
@@ -634,7 +634,7 @@ Trophozoïtes Plasmodium vivax
 Trophozoïtes de Plasmodium malariae
 Trophozoïtes de Plasmodium knowlesi",97,1,NULL,2025-11-25 08:10:30,2025-11-25 08:10:30
 525,NORMAL,209,PRELEVEMENT_PUS_ORIGINE, Origine de prélèvement,,0,0,5,7,NULL,99,1,NULL,2025-11-26 08:10:30,2025-11-26 08:10:30
-526,NORMAL,201,Rub_IgM,IgM,,0,1,4,4,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",98,1,NULL,2025-11-27 08:10:30,2025-11-27 08:10:30
+526,NORMAL,201,Rub_IgM,IgM,,0,1,4,10,"{""0"":""NEGATIF"",""1"":""POSITIF_2"",""val_ref"":""""}",98,1,NULL,2025-11-27 08:10:30,2025-11-27 08:10:30
 527,NORMAL,0,cal,Calciurie des 24h,,6000,1,1,4,"{""val_ref"":""2.50 - 7.50"",""unite"":""  mmol\/24h""}",NULL,1,NULL,2025-11-28 08:10:30,2025-11-28 08:10:30
 528,NORMAL,0,Ur,Uricurie des 24h,,0,1,1,4,"{""val_ref"":""2.37 - 4.75"",""unite"":""  mmol\/24h""}",NULL,1,NULL,2025-11-29 08:10:30,2025-11-29 08:10:30
 529,NORMAL,0,CORTISOLEMIE,CORTISOLEMIE (8h),,0,1,7,4,"{""val_ref"":""201.31 - 536.54"",""unite"":""    nmol\/l""}",NULL,1,NULL,2025-11-30 08:10:30,2025-11-30 08:10:30

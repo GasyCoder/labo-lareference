@@ -14,7 +14,8 @@ class AnalysePrescription extends Pivot
         'prescription_id',
         'analyse_id',
         'prix',
-        'status'
+        'status',
+        'is_payer',
     ];
 
     const STATUS_EN_ATTENTE = 'EN_ATTENTE';
@@ -22,6 +23,8 @@ class AnalysePrescription extends Pivot
     const STATUS_TERMINE = 'TERMINE';
     const STATUS_VALIDE = 'VALIDE';
     const STATUS_ARCHIVE = 'ARCHIVE';
+    const STATUS_PAYE = 'PAYE';
+    const STATUS_NON_PAYE = 'NON_PAYE';
 
     public function prescription()
     {

@@ -35,13 +35,13 @@ return new class extends Migration
 
             $table->decimal('prix_unitaire', 10, 2)->comment('Prix unitaire du prélèvement dans la prescription');
             $table->integer('quantite')->default(1)->comment('Quantité commandée dans la prescription');
+            $table->enum('is_payer', ['PAYE', 'NON_PAYE'])->default('NON_PAYE')->comment('Statut de paiement');
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        // Suppression des tables dans l'ordre inverse de leur création
         Schema::dropIfExists('prelevement_prescription');
         Schema::dropIfExists('prelevements');
     }

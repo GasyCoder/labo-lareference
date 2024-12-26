@@ -542,6 +542,17 @@ class BiologisteAnalysisForm extends Component
                     'conclusion' => $this->conclusion
                 ];
             }
+            elseif ($analyse->analyseType->name === 'NEGATIF_POSITIF_2') {
+                $mainResultData = [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId,
+                    'resultats' => $this->results[$analyseId]['resultats'] ?? null,
+                    'valeur' => $this->results[$analyseId]['resultats'] === 'Positif' ? 
+                        ($this->results[$analyseId]['valeur'] ?? null) : null,
+                    'interpretation' => null,
+                    'conclusion' => $this->conclusion
+                ];
+            }
             elseif ($analyse->analyseType->name === 'NEGATIF_POSITIF_1') {
                 $mainResultData = [
                     'prescription_id' => $this->prescription->id,

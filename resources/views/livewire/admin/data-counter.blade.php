@@ -9,14 +9,14 @@
                             <span class="fs-6 text-uppercase fw-semibold ls-md">Patients</span>
                         </div>
                         <div>
-                            <span class="fe fe-users fs-3 text-primary"></span>
+                            <span class="fa fa-users fs-3 text-primary"></span>
                         </div>
                     </div>
                     <div class="d-flex flex-column gap-1">
                         <h2 class="fw-bold mb-0">1,200</h2>
                         <div class="d-flex flex-row gap-2">
                             <span class="text-success fw-semibold">
-                                <i class="fe fe-trending-up me-1"></i>
+                                <i class="fa fa-trending-up me-1"></i>
                                 +50
                             </span>
                             <span class="fw-medium">Nouveaux patients</span>
@@ -34,7 +34,7 @@
                             <span class="fs-6 text-uppercase fw-semibold ls-md">Prélèvements</span>
                         </div>
                         <div>
-                            <span class="fe fe-flask fs-3 text-primary"></span>
+                            <span class="fa fa-clipboard fs-3 text-primary"></span>
                         </div>
                     </div>
                     <div class="d-flex flex-column gap-1">
@@ -56,7 +56,7 @@
                             <span class="fs-6 text-uppercase fw-semibold ls-md">Analyses</span>
                         </div>
                         <div>
-                            <span class="fe fe-clipboard fs-3 text-primary"></span>
+                            <span class="fa fa-flask fs-3 text-primary"></span>
                         </div>
                     </div>
                     <div class="d-flex flex-column gap-1">
@@ -69,6 +69,7 @@
                 </div>
             </div>
         </div>
+        @if(auth()->user()->hasRole('superadmin') || auth()->user()->can('secretaire'))
         <!-- Revenus -->
         <div class="col-xl-3 col-lg-6 col-md-12 col-12">
             <div class="card">
@@ -94,5 +95,6 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 </div>
