@@ -73,6 +73,7 @@ class Analyse extends Model
                      ->distinct('id'); // Évite les doublons
      }
 
+
     // public function allChildren()
     // {
     //          return $this->hasMany(Analyse::class, 'parent_code', 'code')

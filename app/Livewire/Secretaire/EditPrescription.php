@@ -15,313 +15,391 @@ use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 class EditPrescription extends Component
 {
-    use LivewireAlert;
+   use LivewireAlert;
 
-    public $step = 1;
-    public $totalSteps = 3;
-    public $prescriptionId;
+   public $step = 1;
+   public $totalSteps = 3;
+   public $prescriptionId;
 
-    // Patient fields
-    public $nom = '';
-    public $prenom = '';
-    public $sexe = '';
-    public $telephone = '';
-    public $email = '';
+   // Patient fields
+   public $nom = '';
+   public $prenom = '';
+   public $sexe = '';
+   public $telephone = '';
+   public $email = '';
 
-    // Prescription fields
-    public $patient_type = 'EXTERNE';
-    public $age = 0;
-    public $unite_age = 'Ans';
-    public $poids = null;
-    public $renseignement_clinique = '';
-    public $remise = 0;
+   // Prescription fields
+   public $patient_type = 'EXTERNE';
+   public $age = 0;
+   public $unite_age = 'Ans';
+   public $poids = null;
+   public $renseignement_clinique = '';
+   public $remise = 0;
 
-    public $analyses = [];
-    public $prescripteur_search = '';
-    public $prescripteur_id = null;
-    public $nouveau_prescripteur_nom = null;
-    public $suggestions = [];
-    public $showCreateOption = false;
+   public $analyses = [];
+   public $prescripteur_search = '';
+   public $prescripteur_id = null;
+   public $nouveau_prescripteur_nom = null;
+   public $suggestions = [];
+   public $showCreateOption = false;
 
-    public $selectedAnalyses = [];
-    public $analyseSearch = '';
-    public $analyseSuggestions = [];
-    public $totalPrice = 0;
-    public $analysesPrices;
+   public $selectedAnalyses = [];
+   public $analyseSearch = '';
+   public $analyseSuggestions = [];
+   public $totalPrice = 0;
+   public $analysesPrices;
 
-    public $prelevements = [];
-    public $selectedPrelevements = [];
-    public $totalPrelevementsPrice = 0;
+   public $prelevements = [];
+   public $selectedPrelevements = [];
+   public $prelevementQuantities = [];
+   public $totalPrelevementsPrice = 0;
+   public $basePrelevementPrice = 2000;
+   public $elevatedPrelevementPrice = 3500;
 
-    public function mount($id)
-    {
-        $prescription = Prescription::with(['patient', 'prescripteur', 'analyses', 'prelevements'])->find($id);
+   public function mount($id)
+   {
+       $prescription = Prescription::with(['patient', 'prescripteur', 'analyses', 'prelevements'])->find($id);
+       if (!$prescription) {
+           session()->flash('error', 'Prescription introuvable.');
+           return redirect()->route('secretaire.patients.index');
+       }
 
-        if (!$prescription) {
-            session()->flash('error', 'Prescription introuvable.');
-            return redirect()->route('secretaire.patients.index');
-        }
+       $this->prescriptionId = $prescription->id;
+       $this->loadPrescriptionData($prescription);
+       $this->loadAnalyses();
+       $this->loadPrelevements($prescription);
 
-        $this->prescriptionId = $prescription->id;
-        $this->loadPrescriptionData($prescription);
-        $this->loadAnalyses();
-        $this->loadPrelevements($prescription); // Ajoutez cette ligne
-    }
+       // Initialize quantities from existing prelevements
+       foreach ($prescription->prelevements as $prelevement) {
+           $this->prelevementQuantities[$prelevement->id] = $prelevement->pivot->quantite ?? 1;
+       }
+   }
 
+   public function loadPrelevements($prescription)
+   {
+       $this->prelevements = Prelevement::actif()
+           ->select('id', 'nom', 'description', 'prix')
+           ->orderBy('nom')
+           ->get()
+           ->toArray();
 
-    // Ajoutez cette méthode
-    public function loadPrelevements($prescription)
-    {
-        // Charger tous les prélèvements disponibles
-        $this->prelevements = Prelevement::all()->toArray();
+       $this->selectedPrelevements = $prescription->prelevements->pluck('id')->toArray();
+       $this->calculateTotalPrelevements();
+   }
 
-        // Sélectionner les prélèvements existants de la prescription
-        $this->selectedPrelevements = $prescription->prelevements->pluck('id')->toArray();
+   public function togglePrelevement($prelevementId)
+   {
+       $index = array_search($prelevementId, $this->selectedPrelevements);
 
-        $this->calculateTotalPrelevements();
-    }
+       if ($index !== false) {
+           unset($this->selectedPrelevements[$index]);
+           unset($this->prelevementQuantities[$prelevementId]);
+       } else {
+           $this->selectedPrelevements[] = $prelevementId;
+           $this->prelevementQuantities[$prelevementId] = 1;
+       }
 
-       // Ajoutez cette méthode
-    public function calculateTotalPrelevements()
-    {
-        $this->totalPrelevementsPrice = collect($this->prelevements)
-            ->whereIn('id', $this->selectedPrelevements)
-            ->sum('prix');
+       $this->selectedPrelevements = array_values($this->selectedPrelevements);
+       $this->calculateTotalPrelevements();
+       $this->dispatch('prelevementUpdated');
+   }
 
-        // Recalculer le total général
-        $this->totalPrice = $this->totalPrice + $this->totalPrelevementsPrice;
-    }
+   public function updatedPrelevementQuantities($value, $key)
+   {
+       $this->calculateTotalPrelevements();
+       $this->dispatch('prelevementUpdated');
+   }
 
+   public function getPrelevementPrice($prelevementId)
+   {
+       $prelevement = collect($this->prelevements)->firstWhere('id', $prelevementId);
+       if (!$prelevement) return 0;
 
-    public function loadPrescriptionData($prescription)
-    {
-        $prescription->load('patient', 'prescripteur', 'analyses');
+       if ($prelevement['nom'] === 'Tube aiguille') {
+           $quantity = $this->prelevementQuantities[$prelevementId] ?? 1;
+           return $quantity > 1 ? $this->elevatedPrelevementPrice : $this->basePrelevementPrice;
+       }
 
-        if ($prescription->patient) {
-            $this->nom = $prescription->patient->nom;
-            $this->prenom = $prescription->patient->prenom;
-            $this->sexe = $prescription->patient->sexe;
-            $this->telephone = $prescription->patient->telephone;
-            $this->email = $prescription->patient->email;
-        }
+       return $prelevement['prix'];
+   }
 
-        $this->patient_type = $prescription->patient_type;
-        $this->age = $prescription->age;
-        $this->unite_age = $prescription->unite_age;
-        $this->poids = $prescription->poids;
-        $this->renseignement_clinique = $prescription->renseignement_clinique;
-        $this->remise = $prescription->remise;
+   public function calculateTotalPrelevements()
+   {
+       $this->totalPrelevementsPrice = collect($this->prelevements)
+           ->whereIn('id', $this->selectedPrelevements)
+           ->sum(function ($prelevement) {
+               if ($prelevement['nom'] === 'Tube aiguille') {
+                   $quantity = $this->prelevementQuantities[$prelevement['id']] ?? 1;
+                   return $quantity > 1 ? $this->elevatedPrelevementPrice : $this->basePrelevementPrice;
+               }
+               return $prelevement['prix'];
+           });
 
-        $this->prescripteur_id = $prescription->prescripteur_id;
-        $this->prescripteur_search = $prescription->prescripteur ? $prescription->prescripteur->name : $prescription->nouveau_prescripteur_nom;
-        $this->nouveau_prescripteur_nom = $prescription->nouveau_prescripteur_nom;
+       $this->calculateTotal();
+   }
 
-        $this->selectedAnalyses = $prescription->analyses->pluck('id')->toArray();
-        $this->calculateTotal();
-    }
+   public function isPrelevementSelected($id)
+   {
+       return in_array($id, $this->selectedPrelevements);
+   }
 
-    public function render()
-    {
-        return view('livewire.secretaire.edit-prescription');
-    }
+   public function hasQuantity($prelevement)
+   {
+       return $prelevement['nom'] === 'Tube aiguille';
+   }
 
-    public function rules()
-    {
-        $rules = [
-            'nom' => 'required|string|max:255',
-            'prenom' => 'nullable|string|max:255',
-            'sexe' => 'required|string|max:255',
-            'age' => 'required|integer|min:0',
-            'unite_age' => 'required|in:Ans,Mois,Jours',
-        ];
+   private function updatePrelevements($prescription)
+   {
+       $prelevementsToSync = collect($this->selectedPrelevements)->mapWithKeys(function ($prelevementId) {
+           $prix = $this->getPrelevementPrice($prelevementId);
+           $quantity = $this->prelevementQuantities[$prelevementId] ?? 1;
 
-        if ($this->step >= 2) {
-            $rules = array_merge($rules, [
-                'patient_type' => 'required|in:HOSPITALISE,EXTERNE',
-                'poids' => 'nullable|numeric|min:0',
-                'renseignement_clinique' => 'nullable|string',
-                'prescripteur_search' => 'required|string|max:255',
-                'prescripteur_id' => 'required_without:nouveau_prescripteur_nom|nullable|integer',
-                'nouveau_prescripteur_nom' => 'required_without:prescripteur_id|nullable|string|max:255',
-            ]);
-        }
+           return [$prelevementId => [
+               'prix_unitaire' => $prix,
+               'quantite' => $quantity,
+               'created_at' => now(),
+               'updated_at' => now()
+           ]];
+       })->toArray();
 
-        if ($this->step == 3) {
-            $rules['selectedAnalyses'] = 'required|array|min:1';
-        }
+       $prescription->prelevements()->sync($prelevementsToSync);
+   }
 
-        return $rules;
-    }
+   public function calculateTotal()
+   {
+       $analysesTotal = collect($this->analyses)
+           ->whereIn('id', $this->selectedAnalyses)
+           ->sum('prix');
 
-    public function nextStep()
-    {
-        $this->validate();
+       $this->totalPrice = $analysesTotal + $this->totalPrelevementsPrice;
+   }
 
-        if ($this->step < 3) {
-            $this->step++;
-        } elseif ($this->step == 3) {
-            $this->updatePatientAndPrescription();
-        }
-    }
+   // Load prescription data method
+   public function loadPrescriptionData($prescription)
+   {
+       $prescription->load('patient', 'prescripteur', 'analyses');
 
-    public function previousStep()
-    {
-        if ($this->step > 1) {
-            $this->step--;
-        }
-    }
+       if ($prescription->patient) {
+           $this->nom = $prescription->patient->nom;
+           $this->prenom = $prescription->patient->prenom;
+           $this->sexe = $prescription->patient->sexe;
+           $this->telephone = $prescription->patient->telephone;
+           $this->email = $prescription->patient->email;
+       }
 
-    private function updatePrelevements($prescription)
-    {
-        $prescription->prelevements()->sync($this->selectedPrelevements);
-    }
+       $this->patient_type = $prescription->patient_type;
+       $this->age = $prescription->age;
+       $this->unite_age = $prescription->unite_age;
+       $this->poids = $prescription->poids;
+       $this->renseignement_clinique = $prescription->renseignement_clinique;
+       $this->remise = $prescription->remise;
 
+       $this->prescripteur_id = $prescription->prescripteur_id;
+       $this->prescripteur_search = $prescription->prescripteur ? $prescription->prescripteur->name : $prescription->nouveau_prescripteur_nom;
+       $this->nouveau_prescripteur_nom = $prescription->nouveau_prescripteur_nom;
 
-    public function updatePatientAndPrescription()
-    {
-        $this->validate();
+       $this->selectedAnalyses = $prescription->analyses->pluck('id')->toArray();
+       $this->calculateTotal();
+   }
 
-        try {
-            DB::transaction(function () {
-                $prescription = Prescription::findOrFail($this->prescriptionId);
-                $prescription->patient->update($this->getPatientData());
-                $prescription->update($this->getPrescriptionData());
-                $this->updateAnalyses($prescription);
-                $prescription->updateStatus(); // Mise à jour du statut de la prescription
-            });
+   // Step navigation methods
+   public function nextStep()
+   {
+       $this->validate();
 
-            $this->alert('success', 'Prescription mise à jour avec succès.');
-            return redirect()->route('secretaire.patients.index');
-        } catch (\Exception $e) {
-            $this->alert('error', 'Une erreur est survenue lors de la mise à jour: ' . $e->getMessage());
-        }
-    }
+       if ($this->step < 3) {
+           $this->step++;
+       } elseif ($this->step == 3) {
+           $this->updatePatientAndPrescription();
+       }
+   }
 
+   public function previousStep()
+   {
+       if ($this->step > 1) {
+           $this->step--;
+       }
+   }
 
-    private function getPatientData()
-    {
-        return [
-            'nom' => $this->nom,
-            'prenom' => $this->prenom,
-            'sexe' => $this->sexe,
-            'telephone' => $this->telephone,
-            'email' => $this->email,
-        ];
-    }
+   // Update methods
+   public function updatePatientAndPrescription()
+   {
+       $this->validate();
 
-    private function getPrescriptionData()
-    {
-        return [
-            'patient_type' => $this->patient_type,
-            'age' => $this->age,
-            'unite_age' => $this->unite_age,
-            'poids' => $this->poids,
-            'renseignement_clinique' => $this->renseignement_clinique,
-            'remise' => $this->remise,
-            'prescripteur_id' => $this->prescripteur_id,
-            'nouveau_prescripteur_nom' => $this->prescripteur_id ? null : $this->nouveau_prescripteur_nom,
-        ];
-    }
+       try {
+           DB::transaction(function () {
+               $prescription = Prescription::findOrFail($this->prescriptionId);
+               $prescription->patient->update($this->getPatientData());
+               $prescription->update($this->getPrescriptionData());
+               $this->updateAnalyses($prescription);
+               $this->updatePrelevements($prescription);
+               $prescription->updateStatus();
+           });
 
-    private function updateAnalyses($prescription)
-    {
-        $currentAnalyses = $prescription->analyses->pluck('id')->toArray();
-        $analysesToAdd = array_diff($this->selectedAnalyses, $currentAnalyses);
-        $analysesToRemove = array_diff($currentAnalyses, $this->selectedAnalyses);
+           $this->alert('success', 'Prescription mise à jour avec succès.');
+           return redirect()->route('secretaire.patients.index');
+       } catch (\Exception $e) {
+           $this->alert('error', 'Une erreur est survenue lors de la mise à jour: ' . $e->getMessage());
+       }
+   }
 
-        // Supprimer les analyses
-        $prescription->analyses()->detach($analysesToRemove);
+   private function updateAnalyses($prescription)
+   {
+       $currentAnalyses = $prescription->analyses->pluck('id')->toArray();
+       $analysesToAdd = array_diff($this->selectedAnalyses, $currentAnalyses);
+       $analysesToRemove = array_diff($currentAnalyses, $this->selectedAnalyses);
 
-        // Ajouter ou mettre à jour les analyses
-        foreach ($this->selectedAnalyses as $analyseId) {
-            $analyse = collect($this->analyses)->firstWhere('id', $analyseId);
-            $prescription->analyses()->syncWithoutDetaching([
-                $analyseId => [
-                    'prix' => $analyse['prix'],
-                    'status' => in_array($analyseId, $analysesToAdd) ? AnalysePrescription::STATUS_EN_ATTENTE : DB::raw('status'),
-                ]
-            ]);
-        }
-    }
+       $prescription->analyses()->detach($analysesToRemove);
 
-    public function loadAnalyses()
-    {
-        $this->analyses = Analyse::select('id', 'abr', 'designation', 'prix')->get()->toArray();
-        $this->analysesPrices = collect($this->analyses)->pluck('prix', 'id')->toArray();
-    }
+       foreach ($this->selectedAnalyses as $analyseId) {
+           $analyse = collect($this->analyses)->firstWhere('id', $analyseId);
+           $prescription->analyses()->syncWithoutDetaching([
+               $analyseId => [
+                   'prix' => $analyse['prix'],
+                   'status' => in_array($analyseId, $analysesToAdd) ? AnalysePrescription::STATUS_EN_ATTENTE : DB::raw('status'),
+               ]
+           ]);
+       }
+   }
 
-    public function updatedAnalyseSearch()
-    {
-        $this->analyseSuggestions = collect($this->analyses)
-            ->filter(function ($analyse) {
-                return Str::contains(Str::lower($analyse['abr']), Str::lower($this->analyseSearch)) ||
-                       Str::contains(Str::lower($analyse['designation']), Str::lower($this->analyseSearch));
-            })
-            ->take(5)
-            ->toArray();
-    }
+   // Data getters
+   private function getPatientData()
+   {
+       return [
+           'nom' => $this->nom,
+           'prenom' => $this->prenom,
+           'sexe' => $this->sexe,
+           'telephone' => $this->telephone,
+           'email' => $this->email,
+       ];
+   }
 
-    public function addAnalyse($analyseId)
-    {
-        $analyse = collect($this->analyses)->firstWhere('id', $analyseId);
-        if ($analyse && !in_array($analyseId, $this->selectedAnalyses)) {
-            $this->selectedAnalyses[] = $analyseId;
-            $this->calculateTotal();
-        }
-        $this->analyseSearch = '';
-        $this->analyseSuggestions = [];
-    }
+   private function getPrescriptionData()
+   {
+       return [
+           'patient_type' => $this->patient_type,
+           'age' => $this->age,
+           'unite_age' => $this->unite_age,
+           'poids' => $this->poids,
+           'renseignement_clinique' => $this->renseignement_clinique,
+           'remise' => $this->remise,
+           'prescripteur_id' => $this->prescripteur_id,
+           'nouveau_prescripteur_nom' => $this->prescripteur_id ? null : $this->nouveau_prescripteur_nom,
+       ];
+   }
 
-    public function removeAnalyse($analyseId)
-    {
-        $this->selectedAnalyses = array_values(array_diff($this->selectedAnalyses, [$analyseId]));
-        $this->calculateTotal();
-    }
+   // Analyse management methods
+   public function loadAnalyses()
+   {
+       $this->analyses = Analyse::select('id', 'abr', 'designation', 'prix')->get()->toArray();
+       $this->analysesPrices = collect($this->analyses)->pluck('prix', 'id')->toArray();
+   }
 
-    public function calculateTotal()
-    {
-        $this->totalPrice = collect($this->analyses)
-            ->whereIn('id', $this->selectedAnalyses)
-            ->sum('prix');
-    }
+   public function updatedAnalyseSearch()
+   {
+       $this->analyseSuggestions = collect($this->analyses)
+           ->filter(function ($analyse) {
+               return Str::contains(Str::lower($analyse['abr']), Str::lower($this->analyseSearch)) ||
+                      Str::contains(Str::lower($analyse['designation']), Str::lower($this->analyseSearch));
+           })
+           ->take(5)
+           ->toArray();
+   }
 
-    public function getSelectedAnalysesCountProperty()
-    {
-        return count($this->selectedAnalyses);
-    }
+   public function addAnalyse($analyseId)
+   {
+       $analyse = collect($this->analyses)->firstWhere('id', $analyseId);
+       if ($analyse && !in_array($analyseId, $this->selectedAnalyses)) {
+           $this->selectedAnalyses[] = $analyseId;
+           $this->calculateTotal();
+       }
+       $this->analyseSearch = '';
+       $this->analyseSuggestions = [];
+   }
 
-    public function updatedPrescripteurSearch()
-    {
-        $this->suggestions = User::role('prescripteur')
-            ->where('name', 'like', '%' . $this->prescripteur_search . '%')
-            ->take(5)
-            ->get(['id', 'name'])
-            ->toArray();
+   public function removeAnalyse($analyseId)
+   {
+       $this->selectedAnalyses = array_values(array_diff($this->selectedAnalyses, [$analyseId]));
+       $this->calculateTotal();
+   }
 
-        $this->showCreateOption = strlen($this->prescripteur_search) >= 2 && empty($this->suggestions);
+   // Prescripteur management methods
+   public function updatedPrescripteurSearch()
+   {
+       $this->suggestions = User::role('prescripteur')
+           ->where('name', 'like', '%' . $this->prescripteur_search . '%')
+           ->take(5)
+           ->get(['id', 'name'])
+           ->toArray();
 
-        if ($this->showCreateOption) {
-            $this->nouveau_prescripteur_nom = $this->prescripteur_search;
-            $this->prescripteur_id = null;
-        } else {
-            $this->nouveau_prescripteur_nom = null;
-        }
-    }
+       $this->showCreateOption = strlen($this->prescripteur_search) >= 2 && empty($this->suggestions);
 
-    public function selectPrescripteur($id, $name)
-    {
-        $this->prescripteur_id = $id;
-        $this->prescripteur_search = $name;
-        $this->nouveau_prescripteur_nom = null;
-        $this->suggestions = [];
-        $this->showCreateOption = false;
-    }
+       if ($this->showCreateOption) {
+           $this->nouveau_prescripteur_nom = $this->prescripteur_search;
+           $this->prescripteur_id = null;
+       } else {
+           $this->nouveau_prescripteur_nom = null;
+       }
+   }
 
-    public function setNewPrescripteur()
-    {
-        $this->prescripteur_id = null;
-        $this->nouveau_prescripteur_nom = $this->prescripteur_search;
-        $this->suggestions = [];
-        $this->showCreateOption = false;
-    }
+   public function selectPrescripteur($id, $name)
+   {
+       $this->prescripteur_id = $id;
+       $this->prescripteur_search = $name;
+       $this->nouveau_prescripteur_nom = null;
+       $this->suggestions = [];
+       $this->showCreateOption = false;
+   }
+
+   public function setNewPrescripteur()
+   {
+       $this->prescripteur_id = null;
+       $this->nouveau_prescripteur_nom = $this->prescripteur_search;
+       $this->suggestions = [];
+       $this->showCreateOption = false;
+   }
+
+   // Computed properties
+   public function getSelectedAnalysesCountProperty()
+   {
+       return count($this->selectedAnalyses);
+   }
+
+   public function getSelectedPrelevementsCountProperty()
+   {
+       return count($this->selectedPrelevements);
+   }
+
+   public function rules()
+   {
+       $rules = [
+           'nom' => 'required|string|max:255',
+           'prenom' => 'nullable|string|max:255',
+           'sexe' => 'required|string|max:255',
+           'age' => 'required|integer|min:0',
+           'unite_age' => 'required|in:Ans,Mois,Jours',
+       ];
+
+       if ($this->step >= 2) {
+           $rules = array_merge($rules, [
+               'patient_type' => 'required|in:HOSPITALISE,EXTERNE',
+               'poids' => 'nullable|numeric|min:0',
+               'renseignement_clinique' => 'nullable|string',
+               'prescripteur_search' => 'required|string|max:255',
+               'prescripteur_id' => 'required_without:nouveau_prescripteur_nom|nullable|integer',
+               'nouveau_prescripteur_nom' => 'required_without:prescripteur_id|nullable|string|max:255',
+           ]);
+       }
+
+       if ($this->step == 3) {
+           $rules['selectedAnalyses'] = 'required|array|min:1';
+       }
+
+       return $rules;
+   }
+
+   public function render()
+   {
+       return view('livewire.secretaire.edit-prescription');
+   }
 }

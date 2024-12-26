@@ -70,6 +70,17 @@
             transform: rotate(-10deg);
         }
 
+        .status-unpaid {
+            position: absolute;
+            top: 70px;
+            right: 0;
+            color: #d90000;
+            font-size: 24px;
+            font-weight: bold;
+            transform: rotate(-10deg);
+        }
+
+
         .patient-info {
             margin-bottom: 20px;
             padding: 10px;
@@ -160,6 +171,8 @@
 
     @if($allPaid)
         <div class="status-paid">PAYÉ</div>
+    @else
+        <div class="status-unpaid">NON PAYER</div>
     @endif
 
     <div class="patient-info">

@@ -293,13 +293,6 @@ class AddPrescriptions extends Component
         $this->suggestions = [];
     }
 
-    //Analyse :
-
-    public function loadAnalyses()
-    {
-        $this->analyses = Analyse::select('id', 'abr', 'designation', 'prix')->get()->toArray();
-    }
-
     public function updatedAnalyseSearch()
     {
         $this->analyseSuggestions = collect($this->analyses)
@@ -311,16 +304,44 @@ class AddPrescriptions extends Component
             ->toArray();
     }
 
+    public function loadAnalyses()
+    {
+        $this->analyses = Analyse::select('id', 'code', 'level', 'parent_code', 'abr', 'designation', 'prix')
+            ->where('status', 1)
+            ->orderByRaw("CASE WHEN level = 'PARENT' THEN 0 ELSE 1 END")
+            ->orderBy('ordre')
+            ->get()
+            ->toArray();
+    }
+
     public function addAnalyse($analyseId)
     {
-        $analyse = collect($this->analyses)->firstWhere('id', $analyseId);
-        if ($analyse && !in_array($analyseId, $this->selectedAnalyses)) {
+        $selectedAnalyse = collect($this->analyses)->firstWhere('id', $analyseId);
+
+        if ($selectedAnalyse['level'] === 'PARENT') {
             $this->selectedAnalyses[] = $analyseId;
-            $this->calculateTotal();
+
+            $childAnalyses = collect($this->analyses)
+                ->filter(function($analyse) use ($selectedAnalyse) {
+                    return $analyse['parent_code'] === $selectedAnalyse['code'] &&
+                           $analyse['level'] === 'NORMAL';
+                })
+                ->sortBy('ordre')
+                ->pluck('id')
+                ->toArray();
+
+            $this->selectedAnalyses = array_merge($this->selectedAnalyses, $childAnalyses);
+            $this->selectedAnalyses = array_unique($this->selectedAnalyses);
+        } elseif (!in_array($analyseId, $this->selectedAnalyses)) {
+            $this->selectedAnalyses[] = $analyseId;
         }
-        $this->analyseSearch = '';
+
+        $this->calculateTotal();
         $this->analyseSuggestions = [];
+        $this->analyseSearch = '';
     }
+
+
 
     public function removeAnalyse($analyseId)
     {
@@ -463,5 +484,9 @@ class AddPrescriptions extends Component
         return count($this->selectedPrelevements);
     }
 
+    public function hasQuantity($prelevement)
+    {
+        return $prelevement['nom'] === 'Tube aiguille';
+    }
 
 }
