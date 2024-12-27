@@ -1,25 +1,17 @@
 name: Deploy to Hostinger
 on:
   push:
-<<<<<<< HEAD
     branches: [master]
 
 permissions:
   contents: read
-=======
-    branches: [ master ]
->>>>>>> fc6240cf5b2da587ab12407c40f5d001796e3427
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> fc6240cf5b2da587ab12407c40f5d001796e3427
       - name: Deploy to Server
         uses: easingthemes/ssh-deploy@main
         env:
