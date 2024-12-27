@@ -1,0 +1,19 @@
+name: Deploy to Hostinger
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Deploy to Server
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: "147.79.103.3"
+          REMOTE_USER: "u164295405"
+          TARGET: "/home/u164295405/public_html/"
+          REMOTE_PORT: "65002"
