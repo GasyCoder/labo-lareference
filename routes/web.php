@@ -1,7 +1,6 @@
 <?php
 
 use App\Livewire\Dashboard;
-use App\Livewire\ExamenTest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PDFController;
@@ -59,33 +58,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ]);
         })->name('preview.pdf');
 
-        Route::get('/examens', ExamenTest::class)->name('showExamens');
         Route::get('/archives', ArchivedPrescriptions::class)->name('archives');
-        // Super Admin routes
-        Route::middleware(['role:superadmin'])->prefix('admin')->name('admin.')->group(function () {
-            // Add specific admin routes here
+
+        // Routes partagées avec préfixe selon le rôle de l'utilisateur
+        Route::middleware(['auth', 'role:superadmin|biologiste|technicien|secretaire'])->group(function () {
+            Route::group([], function () {
+                Route::get('/donnees/examens', IndexExamen::class)->name('donnees.examen.list');
+                Route::get('/donnees/germes', BacteryFamilyManager::class)->name('donnees.germes.list');
+
+                // Routes Analyses
+                Route::get('/donnees/types-analyse', AnalyseTypes::class)->name('donnees.types-analyse');
+                Route::get('/donnees/analyses', Analyses::class)->name('donnees.analyse.list');
+                Route::get('/donnees/analyses/{id}/view', Analyses::class)->name('donnees.analyse.view');
+                Route::get('/donnees/analyses/element/create', AnalysesElement::class)->name('donnees.analyse-element.create');
+            });
+        });
+
+        // Routes spécifiques au superadmin uniquement
+        Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')->group(function () {
             Route::get('/utilisateurs', GestionUsers::class)->name('users.list');
             Route::get('/create', CreateUsers::class)->name('users.create');
             Route::get('/edit/utilisateur/{user}', EditUsers::class)->name('users.edit');
-
-            Route::get('/examen', IndexExamen::class)->name('examen.list');
-            Route::get('/germes', BacteryFamilyManager::class)->name('germes.list');
-
-
-
-            Route::get('/types-analyse', AnalyseTypes::class)->name('types-analyse');
-            Route::get('/analyse-principal', Analyses::class)->name('analyse.list');
-            Route::get('/analyse-principal/view/{id}', Analyses::class)->name('analyse.view');
-            Route::get('/analyse-element/create', AnalysesElement::class)->name('analyse-element.create');
         });
 
-        // Biologiste routes
+        // Routes spécifiques au Biologiste uniquement
         Route::middleware(['role:biologiste'])->prefix('biologiste')->name('biologiste.')->group(function () {
             Route::get('/analyse-valide', AnalyseValide::class)->name('analyse.index');
             Route::get('/valide/{prescription}/analyse', BiologisteAnalysisForm::class)->name('valide.show');
         });
 
-        // Secrétaire routes
+        // Routes spécifiques au Secrétaire uniquement
         Route::middleware(['role:secretaire'])->prefix('secretaire')->name('secretaire.')->group(function () {
 
             Route::get('/prescriptions', PatientPrescription::class)->name('patients.index');
@@ -95,7 +97,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         });
 
-        // Technicien routes
+        // Routes spécifiques au Technicien uniquement
         Route::middleware(['auth', 'role:technicien'])->prefix('technicien')->name('technicien.')->group(function () {
             Route::get('/traitement', Traitements::class)->name('traitement.index');
             Route::get('/traitement/{prescription}/analyse', TechnicianAnalysisForm::class)->name('traitement.show');
@@ -105,7 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('analyse.pdf');
         });
 
-        // Prescripteur routes
+        // Routes spécifiques au Prescripteur routes
         Route::middleware(['role:prescripteur'])->prefix('prescripteur')->name('prescripteur.')->group(function () {
             // Add specific prescripteur routes here
         });

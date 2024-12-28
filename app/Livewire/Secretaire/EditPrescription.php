@@ -17,6 +17,7 @@ class EditPrescription extends Component
 {
    use LivewireAlert;
 
+   public $showPrelevements = false;
    public $step = 1;
    public $totalSteps = 3;
    public $prescriptionId;
@@ -291,8 +292,13 @@ class EditPrescription extends Component
    // Analyse management methods
    public function loadAnalyses()
    {
-       $this->analyses = Analyse::select('id', 'abr', 'designation', 'prix')->get()->toArray();
-       $this->analysesPrices = collect($this->analyses)->pluck('prix', 'id')->toArray();
+       // Mise à jour pour inclure tous les champs nécessaires
+       $this->analyses = Analyse::select('id', 'code', 'level', 'parent_code', 'abr', 'designation', 'prix')
+           ->where('status', 1)
+           ->orderByRaw("CASE WHEN level = 'PARENT' THEN 0 ELSE 1 END")
+           ->orderBy('ordre')
+           ->get()
+           ->toArray();
    }
 
    public function updatedAnalyseSearch()
@@ -308,19 +314,61 @@ class EditPrescription extends Component
 
    public function addAnalyse($analyseId)
    {
-       $analyse = collect($this->analyses)->firstWhere('id', $analyseId);
-       if ($analyse && !in_array($analyseId, $this->selectedAnalyses)) {
-           $this->selectedAnalyses[] = $analyseId;
-           $this->calculateTotal();
+       $selectedAnalyse = collect($this->analyses)->firstWhere('id', $analyseId);
+
+       // Vérifie si c'est HEPATITE B ou HEMOSTASE
+       if (in_array($selectedAnalyse['designation'], ['HEPATITE B', 'HEMOSTASE'])) {
+           if (!in_array($analyseId, $this->selectedAnalyses)) {
+               // Ajouter le parent
+               $this->selectedAnalyses[] = $analyseId;
+
+               // Ajouter tous les enfants automatiquement
+               $childAnalyses = collect($this->analyses)
+                   ->filter(function($analyse) use ($selectedAnalyse) {
+                       return $analyse['parent_code'] === $selectedAnalyse['code'] &&
+                              $analyse['level'] === 'NORMAL';
+                   })
+                   ->pluck('id')
+                   ->toArray();
+
+               $this->selectedAnalyses = array_merge($this->selectedAnalyses, $childAnalyses);
+           }
+       } else {
+           // Pour les autres analyses, ajouter uniquement l'analyse sélectionnée
+           if (!in_array($analyseId, $this->selectedAnalyses)) {
+               $this->selectedAnalyses[] = $analyseId;
+           }
        }
-       $this->analyseSearch = '';
+
+       $this->selectedAnalyses = array_unique($this->selectedAnalyses);
+       $this->calculateTotal();
        $this->analyseSuggestions = [];
+       $this->analyseSearch = '';
    }
 
    public function removeAnalyse($analyseId)
    {
-       $this->selectedAnalyses = array_values(array_diff($this->selectedAnalyses, [$analyseId]));
+       $analyse = collect($this->analyses)->firstWhere('id', $analyseId);
+
+       // Si c'est HEPATITE B ou HEMOSTASE
+       if (in_array($analyse['designation'], ['HEPATITE B', 'HEMOSTASE'])) {
+           // Supprimer le parent et tous ses enfants
+           $childIds = collect($this->analyses)
+               ->where('parent_code', $analyse['code'])
+               ->pluck('id')
+               ->toArray();
+
+           $this->selectedAnalyses = array_values(array_diff(
+               $this->selectedAnalyses,
+               array_merge([$analyseId], $childIds)
+           ));
+       } else {
+           // Pour les autres analyses, supprimer uniquement l'analyse
+           $this->selectedAnalyses = array_values(array_diff($this->selectedAnalyses, [$analyseId]));
+       }
+
        $this->calculateTotal();
+       $this->dispatch('analyseRemoved', analyseId: $analyseId);
    }
 
    // Prescripteur management methods

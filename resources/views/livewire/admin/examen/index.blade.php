@@ -53,12 +53,8 @@
                                 @foreach($examens as $key => $examen)
                                 <tr>
                                     <td>{{ $key + 1 }}</td>
-                                    <td>
-                                        {{ $examen->name }}
-                                    </td>
-                                    <td>
-                                        {{ $examen->abr }}
-                                    </td>
+                                    <td>{{ $examen->name }}</td>
+                                    <td>{{ $examen->abr }}</td>
                                     <td>{{ $examen->created_at->diffForHumans() }}</td>
                                     <td>
                                         @if($examen->status)
@@ -69,17 +65,22 @@
                                     </td>
                                     <td>
                                         <div class="d-flex justify-content-end gap-2">
+                                            {{-- Bouton Modifier accessible à tous les rôles autorisés --}}
                                             <button type="button" class="btn btn-sm btn-outline-primary"
                                                     wire:click="edit({{ $examen->id }})"
                                                     data-bs-toggle="modal" data-bs-target="#newExamen"
                                                     data-bs-toggle="tooltip" data-bs-placement="top" title="Modifier">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    wire:click="confirmDelete({{ $examen->id }})"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Supprimer">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+
+                                            {{-- Bouton Supprimer uniquement pour superadmin --}}
+                                            @if(auth()->user()->hasRole('superadmin'))
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        wire:click="confirmDelete({{ $examen->id }})"
+                                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Supprimer">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

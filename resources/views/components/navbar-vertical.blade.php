@@ -20,78 +20,36 @@ $count = \App\Models\Prescription::where('is_archive', true)
         </a>
       </li>
 
-      @if(auth()->user()->hasRole('superadmin') || auth()->user()->can('superadmin'))
-      <li class="nav-item">
-        <div class="navbar-heading">Super Admin</div>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
-          data-bs-target="#navAdmin" aria-expanded="false" aria-controls="navAdmin">
-          <i class="nav-icon fe fe-database me-2"></i>
-          Données
-        </a>
-        <div id="navAdmin" class="collapse" data-bs-parent="#sideNavbar">
-          <ul class="nav flex-column">
-            <li class="nav-item">
-              <a class="nav-link" href="{{route('admin.users.list')}}">
-                  <i class="nav-icon fe fe-users me-2"></i> Utilisateurs
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ route('admin.examen.list')}}">
-                <i class="nav-icon fe fe-folder me-2"></i> Gestion Examens
-              </a>
-            </li>
-             <li class="nav-item">
-              <a class="nav-link" href="{{ route('admin.germes.list')}}">
-                <i class="nav-icon fe fe-folder me-2"></i> Germes
-              </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#navAnalyse" aria-expanded="false" aria-controls="navAnalyse">
-                    <i class="nav-icon fe fe-folder me-2"></i> Analyses
-                </a>
-                <div id="navAnalyse" class="collapse" data-bs-parent="#navAnalyse" style="">
-                  <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.types-analyse')}}"><i class="nav-icon fe fe-chevron-right me-2"></i>
-                            Types</a>
-                    </li>
-                    <li class="nav-item">
-                      <a class="nav-link" href="{{route('admin.analyse.list')}}"><i class="nav-icon fe fe-chevron-right me-2"></i>
-                        Principales </a>
-                    </li>
-                  </ul>
-                </div>
-            </li>
-          </ul>
-        </div>
-      </li>
-      @endif
-
       @if(auth()->user()->can('biologiste'))
       <li class="nav-item">
         <div class="navbar-heading">Biologistes</div>
       </li>
       <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
-          data-bs-target="#navBiologiste" aria-expanded="false" aria-controls="navBiologiste">
+        <a class="nav-link"
+           href="#"
+           data-bs-toggle="collapse"
+           data-bs-target="#navBiologiste"
+           aria-expanded="true"
+           aria-controls="navBiologiste">
           <i class="fas fa-user-md me-2"></i>
           Biologiste
         </a>
-        <div id="navBiologiste" class="collapse" data-bs-parent="#sideNavbar">
+        <div id="navBiologiste" class="collapse show" data-bs-parent="#sideNavbar">
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a class="nav-link" href="{{route('biologiste.analyse.index')}}">
+              <a class="nav-link" href="{{ route('biologiste.analyse.index') }}">
                 <i class="fas fa-check-circle me-2"></i> Analyses
               </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('archives') }}">
-                    <i class="fas fa-archive me-2"></i> Archives <span class="badge rounded-pill bg-danger  ms-2">{{ $count }}</span>
-                </a>
+              <a class="nav-link" href="{{ route('archives') }}">
+                <i class="fas fa-archive me-2"></i>
+                Archives
+                <span class="badge rounded-pill bg-danger ms-2">
+                  {{ $count }}
+                </span>
+              </a>
             </li>
-
           </ul>
         </div>
       </li>
@@ -102,20 +60,29 @@ $count = \App\Models\Prescription::where('is_archive', true)
         <div class="navbar-heading">Secrétaires</div>
       </li>
       <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
-          data-bs-target="#navSec" aria-expanded="false" aria-controls="navSec">
+        <a class="nav-link"
+           href="#"
+           data-bs-toggle="collapse"
+           data-bs-target="#navSec"
+           aria-expanded="true"
+           aria-controls="navSec">
           <i class="fas fa-laptop-medical me-2"></i>
           Secrétaire
         </a>
-        <div id="navSec" class="collapse" data-bs-parent="#sideNavbar">
+        <div id="navSec" class="collapse show" data-bs-parent="#sideNavbar">
           <ul class="nav flex-column">
             <li class="nav-item">
-              <a class="nav-link" href="{{route('secretaire.patients.index')}}"><i class="fas fa-user-plus me-2"></i> Prescriptions</a>
+              <a class="nav-link" href="{{ route('secretaire.patients.index') }}">
+                <i class="fas fa-user-plus me-2"></i>
+                Prescriptions
+              </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{{ route('archives') }}">
-                <i class="fas fa-archive me-2"></i> Archives <span class="badge rounded-pill bg-danger  ms-2">{{ $count }}</span>
-                </a>
+                <i class="fas fa-archive me-2"></i>
+                Archives
+                <span class="badge rounded-pill bg-danger ms-2">{{ $count }}</span>
+              </a>
             </li>
           </ul>
         </div>
@@ -133,6 +100,64 @@ $count = \App\Models\Prescription::where('is_archive', true)
         </a>
       </li>
       @endif
+
+
+      @if(auth()->user()->hasAnyRole(['superadmin', 'biologiste', 'technicien', 'secretaire']))
+      <li class="nav-item">
+          <div class="navbar-heading">Gestion des données</div>
+      </li>
+      <li class="nav-item">
+          <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
+              data-bs-target="#navGestionDonnees" aria-expanded="false" aria-controls="navGestionDonnees">
+              <i class="nav-icon fe fe-database me-2"></i>
+              Base de données
+          </a>
+          <div id="navGestionDonnees" class="collapse" data-bs-parent="#sideNavbar">
+              <ul class="nav flex-column">
+                  @if(auth()->user()->hasRole('superadmin'))
+                  <li class="nav-item">
+                      <a class="nav-link" href="{{route('admin.users.list')}}">
+                          <i class="nav-icon fe fe-users me-2"></i> Utilisateurs
+                      </a>
+                  </li>
+                  @endif
+
+                  {{-- Accessible par superadmin, biologiste, technicien et secrétaire --}}
+                  <li class="nav-item">
+                      <a class="nav-link" href="{{ route('donnees.examen.list')}}">
+                          <i class="nav-icon fe fe-folder me-2"></i> Examens
+                      </a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" href="{{ route('donnees.germes.list')}}">
+                          <i class="nav-icon fe fe-folder me-2"></i> Germes
+                      </a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
+                          data-bs-target="#navAnalyse" aria-expanded="false" aria-controls="navAnalyse">
+                          <i class="nav-icon fe fe-folder me-2"></i> Analyses
+                      </a>
+                      <div id="navAnalyse" class="collapse" data-bs-parent="#navAnalyse">
+                          <ul class="nav flex-column">
+                              <li class="nav-item">
+                                  <a class="nav-link" href="{{ route('donnees.types-analyse')}}">
+                                      <i class="nav-icon fe fe-chevron-right me-2"></i> Types
+                                  </a>
+                              </li>
+                              <li class="nav-item">
+                                  <a class="nav-link" href="{{route('donnees.analyse.list')}}">
+                                      <i class="nav-icon fe fe-chevron-right me-2"></i> Principales
+                                  </a>
+                              </li>
+                          </ul>
+                      </div>
+                  </li>
+              </ul>
+          </div>
+      </li>
+      @endif
+
 
       @if(auth()->user()->hasRole('superadmin'))
       <li class="nav-item">

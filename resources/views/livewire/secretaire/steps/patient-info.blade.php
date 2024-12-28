@@ -32,7 +32,7 @@
         @error('sexe') <div class="text-danger">{{ $message }}</div> @enderror
     </div>
     <div class="col-md-4">
-        <label for="age" class="form-label">Âge <span class="text-danger">*</span></label>
+        <label for="age" class="form-label">Âge </label>
         <div class="input-group">
             <input type="number" id="age" wire:model.defer="age" class="form-control @error('age') is-invalid @enderror">
             <select id="unite_age" wire:model.defer="unite_age" class="form-select @error('unite_age') is-invalid @enderror">
