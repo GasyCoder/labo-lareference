@@ -16,7 +16,8 @@
                         </nav>
                     </div>
                     <div>
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#newAnalyse" class="btn btn-primary">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#newAnalyse" class="btn btn-primary"
+                           @if(!auth()->user()->hasRole('superadmin')) style="display: none;" @endif>
                             <i class="fas fa-plus-circle"></i> Ajouter nouvel analyse
                         </a>
                         <button wire:click="export" class="btn btn-secondary">
@@ -131,28 +132,45 @@
                                                 </td>
                                                 <td>
                                                     <div class="d-flex justify-content-end gap-2">
+                                                        {{-- Bouton Voir - accessible à tous --}}
                                                         <button type="button" class="btn btn-sm btn-outline-primary"
                                                             wire:click="viewDetails({{ $analyse->id }})"
                                                             data-bs-toggle="modal" data-bs-target="#viewAnalyseModal"
                                                             title="Détail">
                                                             <i class="fas fa-eye"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-success"
-                                                            wire:click="edit({{ $analyse->id }})"
-                                                            data-bs-toggle="modal" data-bs-target="#newAnalyse"
-                                                            title="Modifier">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-warning"
-                                                            wire:click="duplicate({{ $analyse->id }})"
-                                                            title="Dupliquer">
-                                                            <i class="fas fa-copy"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                                            wire:click="confirmDelete({{ $analyse->id }})"
-                                                            title="Supprimer">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
+
+                                                        @if(auth()->user()->hasRole('superadmin'))
+                                                            {{-- Boutons réservés au superadmin --}}
+                                                            <button type="button" class="btn btn-sm btn-outline-success"
+                                                                wire:click="edit({{ $analyse->id }})"
+                                                                data-bs-toggle="modal" data-bs-target="#newAnalyse"
+                                                                title="Modifier">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+
+                                                            <button type="button" class="btn btn-sm btn-outline-warning"
+                                                                wire:click="duplicate({{ $analyse->id }})"
+                                                                title="Dupliquer">
+                                                                <i class="fas fa-copy"></i>
+                                                            </button>
+
+                                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                                wire:click="confirmDelete({{ $analyse->id }})"
+                                                                title="Supprimer">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        @endif
+
+                                                        @if(auth()->user()->hasAnyRole(['biologiste', 'technicien', 'secretaire']))
+                                                            {{-- Bouton Modifier limité pour les autres rôles --}}
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                                wire:click="edit({{ $analyse->id }})"
+                                                                data-bs-toggle="modal" data-bs-target="#newAnalyse"
+                                                                title="Voir/Modifier">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                        @endif
                                                     </div>
                                                 </td>
                                             </tr>

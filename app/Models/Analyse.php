@@ -59,8 +59,9 @@ class Analyse extends Model
      */
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(Analyse::class, 'parent_code');
+        return $this->belongsTo(Analyse::class, 'parent_code', 'code');
     }
+
 
     /**
      * Obtenir les analyses enfants directes.

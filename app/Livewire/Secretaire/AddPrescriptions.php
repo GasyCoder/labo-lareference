@@ -19,6 +19,7 @@ class AddPrescriptions extends Component
 {
     use LivewireAlert;
 
+    public $showPrelevements = false; // pour contrôler l'état de l'accordéon
     public $step = 1;
     public $totalSteps = 3;
     public $isEditing = false;
@@ -69,13 +70,17 @@ class AddPrescriptions extends Component
         $this->loadPrelevements();
     }
 
+
     public function loadPrelevements()
     {
-        $this->prelevements = Prelevement::actif()
-            ->select('id', 'nom', 'description', 'prix')
-            ->orderBy('nom')
-            ->get()
-            ->toArray();
+        // Mettre en cache les prélèvements
+        $this->prelevements = cache()->remember('prelevements', 60*60, function() {
+            return Prelevement::actif()
+                ->select('id', 'nom', 'description', 'prix')
+                ->orderBy('nom')
+                ->get()
+                ->toArray();
+        });
     }
 
 
@@ -237,30 +242,32 @@ class AddPrescriptions extends Component
 
     private function getValidationRules()
     {
-        $rules = [
-            'nom' => 'required|string|max:255',
-            'prenom' => 'nullable|string|max:255',
-            'sexe' => 'required|string|max:255',
-            'age' => 'required|integer|min:0',
-            'unite_age' => 'required|in:Ans,Mois,Jours',
-        ];
+        static $rules = null;
 
-        if ($this->step >= 2) {
-            $rules = array_merge($rules, [
-                'patient_type' => 'required|in:HOSPITALISE,EXTERNE',
-                'poids' => 'nullable|numeric|min:0',
-                'renseignement_clinique' => 'nullable|string',
-                'prescripteur_search' => 'required|string|max:255',
-                'prescripteur_id' => 'required_without:nouveau_prescripteur_nom|nullable|integer',
-                'nouveau_prescripteur_nom' => 'required_without:prescripteur_id|nullable|string|max:255',
-            ]);
+        if ($rules === null) {
+            $rules = [
+                1 => [
+                    'nom' => 'required|string|max:255',
+                    'prenom' => 'nullable|string|max:255',
+                    'sexe' => 'required|string|max:255',
+                    'age' => 'required|integer|min:0',
+                    'unite_age' => 'required|in:Ans,Mois,Jours',
+                ],
+                2 => [
+                    'patient_type' => 'required|in:HOSPITALISE,EXTERNE',
+                    'poids' => 'nullable|numeric|min:0',
+                    'renseignement_clinique' => 'nullable|string',
+                    'prescripteur_search' => 'required|string|max:255',
+                    'prescripteur_id' => 'required_without:nouveau_prescripteur_nom|nullable|integer',
+                    'nouveau_prescripteur_nom' => 'required_without:prescripteur_id|nullable|string|max:255',
+                ],
+                3 => [
+                    'selectedAnalyses' => 'required|array|min:1'
+                ]
+            ];
         }
 
-        if ($this->step == 3) {
-            $rules['selectedAnalyses'] = 'required|array|min:1';
-        }
-
-        return $rules;
+        return $rules[$this->step] ?? [];
     }
 
 
@@ -297,45 +304,57 @@ class AddPrescriptions extends Component
     {
         $this->analyseSuggestions = collect($this->analyses)
             ->filter(function ($analyse) {
-                return Str::contains(Str::lower($analyse['abr']), Str::lower($this->analyseSearch)) ||
-                       Str::contains(Str::lower($analyse['designation']), Str::lower($this->analyseSearch));
+                $searchTerm = Str::lower($this->analyseSearch);
+                return Str::contains(Str::lower($analyse['abr']), $searchTerm) ||
+                       Str::contains(Str::lower($analyse['designation']), $searchTerm);
             })
             ->take(5)
+            ->values()
             ->toArray();
     }
 
     public function loadAnalyses()
     {
-        $this->analyses = Analyse::select('id', 'code', 'level', 'parent_code', 'abr', 'designation', 'prix')
-            ->where('status', 1)
-            ->orderByRaw("CASE WHEN level = 'PARENT' THEN 0 ELSE 1 END")
-            ->orderBy('ordre')
-            ->get()
-            ->toArray();
+        // Mettre en cache les analyses
+        $this->analyses = cache()->remember('analyses', 60*60, function() {
+            return Analyse::select('id', 'code', 'level', 'parent_code', 'abr', 'designation', 'prix')
+                ->where('status', 1)
+                ->orderByRaw("CASE WHEN level = 'PARENT' THEN 0 ELSE 1 END")
+                ->orderBy('ordre')
+                ->get()
+                ->toArray();
+        });
     }
 
     public function addAnalyse($analyseId)
     {
         $selectedAnalyse = collect($this->analyses)->firstWhere('id', $analyseId);
 
-        if ($selectedAnalyse['level'] === 'PARENT') {
-            $this->selectedAnalyses[] = $analyseId;
+        // Vérifie si c'est HEPATITE B ou HEMOSTASE
+        if (in_array($selectedAnalyse['designation'], ['HEPATITE B', 'HEMOSTASE'])) {
+            if (!in_array($analyseId, $this->selectedAnalyses)) {
+                // Ajouter le parent
+                $this->selectedAnalyses[] = $analyseId;
 
-            $childAnalyses = collect($this->analyses)
-                ->filter(function($analyse) use ($selectedAnalyse) {
-                    return $analyse['parent_code'] === $selectedAnalyse['code'] &&
-                           $analyse['level'] === 'NORMAL';
-                })
-                ->sortBy('ordre')
-                ->pluck('id')
-                ->toArray();
+                // Ajouter tous les enfants automatiquement
+                $childAnalyses = collect($this->analyses)
+                    ->filter(function($analyse) use ($selectedAnalyse) {
+                        return $analyse['parent_code'] === $selectedAnalyse['code'] &&
+                               $analyse['level'] === 'NORMAL';
+                    })
+                    ->pluck('id')
+                    ->toArray();
 
-            $this->selectedAnalyses = array_merge($this->selectedAnalyses, $childAnalyses);
-            $this->selectedAnalyses = array_unique($this->selectedAnalyses);
-        } elseif (!in_array($analyseId, $this->selectedAnalyses)) {
-            $this->selectedAnalyses[] = $analyseId;
+                $this->selectedAnalyses = array_merge($this->selectedAnalyses, $childAnalyses);
+            }
+        } else {
+            // Pour les autres analyses, ajouter uniquement l'analyse sélectionnée
+            if (!in_array($analyseId, $this->selectedAnalyses)) {
+                $this->selectedAnalyses[] = $analyseId;
+            }
         }
 
+        $this->selectedAnalyses = array_unique($this->selectedAnalyses);
         $this->calculateTotal();
         $this->analyseSuggestions = [];
         $this->analyseSearch = '';
@@ -345,11 +364,28 @@ class AddPrescriptions extends Component
 
     public function removeAnalyse($analyseId)
     {
-        $this->selectedAnalyses = array_values(array_diff($this->selectedAnalyses, [$analyseId]));
+        $analyse = collect($this->analyses)->firstWhere('id', $analyseId);
+
+        // Si c'est HEPATITE B ou HEMOSTASE
+        if (in_array($analyse['designation'], ['HEPATITE B', 'HEMOSTASE'])) {
+            // Supprimer le parent et tous ses enfants
+            $childIds = collect($this->analyses)
+                ->where('parent_code', $analyse['code'])
+                ->pluck('id')
+                ->toArray();
+
+            $this->selectedAnalyses = array_values(array_diff(
+                $this->selectedAnalyses,
+                array_merge([$analyseId], $childIds)
+            ));
+        } else {
+            // Pour les autres analyses, supprimer uniquement l'analyse
+            $this->selectedAnalyses = array_values(array_diff($this->selectedAnalyses, [$analyseId]));
+        }
+
         $this->calculateTotal();
         $this->dispatch('analyseRemoved', analyseId: $analyseId);
     }
-
     public function togglePrelevement($prelevementId)
     {
         $index = array_search($prelevementId, $this->selectedPrelevements);
@@ -373,30 +409,25 @@ class AddPrescriptions extends Component
     }
 
     // Dans la classe AddPrescriptions
-    public function calculateTotal()
+    private function calculateTotal()
     {
-        // Calcul du total des prélèvements
-        $this->totalPrelevementsPrice = collect($this->prelevements)
+        // Créer une seule collection
+        $prelevementsCollection = collect($this->prelevements);
+        $analysesCollection = collect($this->analyses);
+
+        $this->totalPrelevementsPrice = $prelevementsCollection
             ->whereIn('id', $this->selectedPrelevements)
             ->sum(function ($prelevement) {
-                // Si c'est un tube aiguille
                 if ($prelevement['nom'] === 'Tube aiguille') {
                     $quantity = $this->prelevementQuantities[$prelevement['id']] ?? 1;
-                    // Si la quantité est > 1, on utilise le prix élevé
-                    $price = $quantity > 1 ? 3500 : 2000;
-                    return $price;
+                    return $quantity > 1 ? 3500 : 2000;
                 }
-                // Pour les autres prélèvements, prix normal
                 return $prelevement['prix'];
             });
 
-        // Calcul du total des analyses
-        $analysesTotal = collect($this->analyses)
+        $this->totalPrice = $analysesCollection
             ->whereIn('id', $this->selectedAnalyses)
-            ->sum('prix');
-
-        // Total final
-        $this->totalPrice = $analysesTotal + $this->totalPrelevementsPrice;
+            ->sum('prix') + $this->totalPrelevementsPrice;
     }
 
     // Ajouter cette méthode pour réagir aux changements de quantité

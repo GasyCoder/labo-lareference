@@ -55,15 +55,9 @@
                                         @foreach($analyseElements as $key => $element)
                                         <tr>
                                             <td>{{ $key + 1 }}</td>
-                                            <td>
-                                                {{ $element->code }}
-                                            </td>
-                                            <td>
-                                                {{ $element->level }}
-                                            </td>
-                                            <td>
-                                                {{ $element->designation }}
-                                            </td>
+                                            <td>{{ $element->code }}</td>
+                                            <td>{{ $element->level }}</td>
+                                            <td>{{ $element->designation }}</td>
                                             <td>{{ $element->created_at->diffForHumans() }}</td>
                                             <td>
                                                 @if($element->status)
@@ -74,22 +68,33 @@
                                             </td>
                                             <td>
                                                 <div class="d-flex justify-content-end gap-2">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary"
-                                                            wire:click="edit({{ $element->id }})"
-                                                            data-bs-toggle="modal" data-bs-target="#newElement"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Modifier">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger"
-                                                            wire:click="confirmDelete({{ $element->id }})"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Supprimer">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+                                                    @if(auth()->user()->hasRole('superadmin'))
+                                                        {{-- Boutons complets pour superadmin --}}
+                                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                                wire:click="edit({{ $element->id }})"
+                                                                data-bs-toggle="modal" data-bs-target="#newElement"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Modifier">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                                wire:click="confirmDelete({{ $element->id }})"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Supprimer">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    @else
+                                                        {{-- Juste le bouton modifier pour les autres rôles --}}
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                                wire:click="edit({{ $element->id }})"
+                                                                data-bs-toggle="modal" data-bs-target="#newElement"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Voir détails">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>
                                         @endforeach
-                                    </tbody>
+                                     </tbody>
                                 </table>
                                 </div>
                             </div>
