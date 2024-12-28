@@ -15,8 +15,11 @@
     <link rel="stylesheet" href="{{ asset('assets/libs/simplebar/dist/simplebar.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/libs/bs-stepper/dist/css/bs-stepper.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/theme.min.css') }}">
+
+    <script src="https://kit.fontawesome.com/b09d10e9b2.js" crossorigin="anonymous"></script>
     <!-- Scripts -->
     <script src="{{ asset('assets/js/vendors/darkMode.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     @stack('styles')
 </head>
@@ -42,6 +45,7 @@
 
 <!-- Script -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <!-- Libs JS -->
 <script src="{{ asset('assets/libs/bs-stepper/dist/js/bs-stepper.min.js') }}"></script>
 <script src="{{ asset('assets/js/vendors/beStepper.js') }}"></script>
@@ -59,9 +63,15 @@
 <script src="{{ asset('assets/js/vendors/validation.js')}}"></script>
 <script src="{{ asset('assets/libs/choices.js/public/assets/scripts/choices.min.js')}}"></script>
 <script src="{{ asset('assets/js/vendors/choice.js')}}"></script>
+
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <x-livewire-alert::scripts />
 
+<script>
+    Livewire.on('archive-counter-updated', () => {
+        Livewire.emit('refreshArchiveCount');
+    });
+</script>
 
 @stack('scripts')
 </body>
