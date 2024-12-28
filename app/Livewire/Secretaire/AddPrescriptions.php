@@ -331,7 +331,7 @@ class AddPrescriptions extends Component
         $selectedAnalyse = collect($this->analyses)->firstWhere('id', $analyseId);
 
         // Vérifie si c'est HEPATITE B ou HEMOSTASE
-        if (in_array($selectedAnalyse['designation'], ['HEPATITE B', 'HEMOSTASE'])) {
+        if (in_array($selectedAnalyse['abr'], ['HB', 'HSTASE'])) {
             if (!in_array($analyseId, $this->selectedAnalyses)) {
                 // Ajouter le parent
                 $this->selectedAnalyses[] = $analyseId;
@@ -367,7 +367,7 @@ class AddPrescriptions extends Component
         $analyse = collect($this->analyses)->firstWhere('id', $analyseId);
 
         // Si c'est HEPATITE B ou HEMOSTASE
-        if (in_array($analyse['designation'], ['HEPATITE B', 'HEMOSTASE'])) {
+        if (in_array($analyse['abr'], ['HB', 'HSTASE'])) {
             // Supprimer le parent et tous ses enfants
             $childIds = collect($this->analyses)
                 ->where('parent_code', $analyse['code'])
