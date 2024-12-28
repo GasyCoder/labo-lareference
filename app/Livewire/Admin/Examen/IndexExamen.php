@@ -63,7 +63,7 @@ class IndexExamen extends Component
         }
 
         $this->reset();
-        return redirect()->route('admin.examen.list');
+        return redirect()->route('donnees.examen.list');
     }
 
     public function edit($id)

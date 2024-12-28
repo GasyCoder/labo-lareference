@@ -67,7 +67,7 @@ class BacteryFamilyManager extends Component
         }
 
         $this->resetForm();
-        return redirect()->route('admin.germes.list');
+        return redirect()->route('donnees.germes.list');
     }
 
     public function edit($id)

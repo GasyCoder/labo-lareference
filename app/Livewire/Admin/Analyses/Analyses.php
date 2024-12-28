@@ -151,7 +151,7 @@ class Analyses extends Component
 
             DB::commit();
             $this->reset();
-            return redirect()->route('admin.analyse.list');
+            return redirect()->route('donnees.analyse.list');
 
         } catch (\Exception $e) {
             DB::rollBack();

@@ -42,7 +42,7 @@ class AnalyseTypes extends Component
 
         $this->alert('success', ($action === 'update' ? 'Type d\'analyse mis à jour' : 'Nouveau type d\'analyse ajouté') . ' avec succès.');
         $this->resetForm();
-        return redirect()->route('admin.types-analyse');
+        return redirect()->route('donnees.types-analyse');
     }
 
     public function edit($id)
