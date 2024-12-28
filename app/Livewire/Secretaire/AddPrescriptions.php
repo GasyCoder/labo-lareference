@@ -149,20 +149,15 @@ class AddPrescriptions extends Component
 
     public function updatedPrescripteurSearch()
     {
+        // Ajout d'index sur la colonne name
         $this->suggestions = User::role('prescripteur')
-            ->where('name', 'like', '%' . $this->prescripteur_search . '%')
+            ->select(['id', 'name']) // Sélection uniquement des champs nécessaires
+            ->where('name', 'like', $this->prescripteur_search . '%') // Recherche par début de chaîne plus rapide
             ->take(5)
-            ->get(['id', 'name'])
+            ->get()
             ->toArray();
 
         $this->showCreateOption = strlen($this->prescripteur_search) >= 2 && empty($this->suggestions);
-
-        if ($this->showCreateOption) {
-            $this->nouveau_prescripteur_nom = $this->prescripteur_search;
-            $this->prescripteur_id = null;
-        } else {
-            $this->nouveau_prescripteur_nom = null;
-        }
     }
 
     public function selectPrescripteur($id, $name)
@@ -302,6 +297,11 @@ class AddPrescriptions extends Component
 
     public function updatedAnalyseSearch()
     {
+        if (strlen($this->analyseSearch) < 2) {
+            $this->analyseSuggestions = [];
+            return;
+        }
+
         $this->analyseSuggestions = collect($this->analyses)
             ->filter(function ($analyse) {
                 $searchTerm = Str::lower($this->analyseSearch);
@@ -313,10 +313,10 @@ class AddPrescriptions extends Component
             ->toArray();
     }
 
+    // Augmenter la durée de mise en cache
     public function loadAnalyses()
     {
-        // Mettre en cache les analyses
-        $this->analyses = cache()->remember('analyses', 60*60, function() {
+        $this->analyses = cache()->remember('analyses', 24*60*60, function() { // 24h au lieu de 1h
             return Analyse::select('id', 'code', 'level', 'parent_code', 'abr', 'designation', 'prix')
                 ->where('status', 1)
                 ->orderByRaw("CASE WHEN level = 'PARENT' THEN 0 ELSE 1 END")
@@ -386,6 +386,8 @@ class AddPrescriptions extends Component
         $this->calculateTotal();
         $this->dispatch('analyseRemoved', analyseId: $analyseId);
     }
+
+
     public function togglePrelevement($prelevementId)
     {
         $index = array_search($prelevementId, $this->selectedPrelevements);
@@ -409,20 +411,25 @@ class AddPrescriptions extends Component
     }
 
     // Dans la classe AddPrescriptions
-    private function calculateTotal()
+    public function calculateTotal()
     {
-        // Créer une seule collection
-        $prelevementsCollection = collect($this->prelevements);
-        $analysesCollection = collect($this->analyses);
+        // Mise en cache des collections
+        static $prelevementsCollection = null;
+        static $analysesCollection = null;
 
+        if (!$prelevementsCollection) {
+            $prelevementsCollection = collect($this->prelevements);
+        }
+
+        if (!$analysesCollection) {
+            $analysesCollection = collect($this->analyses);
+        }
+
+        // Calcul optimisé
         $this->totalPrelevementsPrice = $prelevementsCollection
             ->whereIn('id', $this->selectedPrelevements)
             ->sum(function ($prelevement) {
-                if ($prelevement['nom'] === 'Tube aiguille') {
-                    $quantity = $this->prelevementQuantities[$prelevement['id']] ?? 1;
-                    return $quantity > 1 ? 3500 : 2000;
-                }
-                return $prelevement['prix'];
+                return $this->getPrelevementPrice($prelevement['id']);
             });
 
         $this->totalPrice = $analysesCollection
@@ -519,5 +526,6 @@ class AddPrescriptions extends Component
     {
         return $prelevement['nom'] === 'Tube aiguille';
     }
+
 
 }
