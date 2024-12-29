@@ -91,4 +91,5 @@ class Patient extends Model
     {
         return $query->where('ref', $ref);
     }
+
 }

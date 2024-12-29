@@ -14,32 +14,43 @@ class Prelevement extends Model
         'nom',
         'description',
         'prix',
-        'is_active',
-        'quantite'
+        'quantite',
+        'is_active'
     ];
 
     protected $casts = [
         'prix' => 'decimal:2',
+        'quantite' => 'integer',
         'is_active' => 'boolean'
     ];
 
-    // Relation avec les prescriptions
+    // Relations
     public function prescriptions()
     {
         return $this->belongsToMany(Prescription::class)
-                    ->withPivot(['prix_unitaire', 'quantite'])
-                    ->withTimestamps();
+            ->withPivot(['prix_unitaire', 'quantite', 'is_payer'])
+            ->withTimestamps();
     }
 
-    // Scope pour les prélèvements actifs
+    // Scopes
     public function scopeActif($query)
     {
         return $query->where('is_active', true);
     }
 
-    // Méthode pour formater le prix
-    public function getPrixFormate()
+    public function scopeDisponible($query)
     {
-        return number_format($this->prix, 2, ',', ' ') . ' Ariary';
+        return $query->where('quantite', '>', 0);
+    }
+
+    // Accessors & Mutators
+    public function getPrixFormateAttribute()
+    {
+        return number_format($this->prix, 2) . ' Ar';
+    }
+
+    public function estDisponible(): bool
+    {
+        return $this->quantite > 0 && $this->is_active;
     }
 }

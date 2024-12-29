@@ -20,7 +20,7 @@
     <!-- Scripts -->
     <script src="{{ asset('assets/js/vendors/darkMode.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
+    <!-- Dans votre layout -->
     @stack('styles')
 </head>
 <body>

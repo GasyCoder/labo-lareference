@@ -1,48 +1,115 @@
-<h4 class="card-title mb-4">Informations médicales et le prescripteur</h4>
-<div class="row g-3">
+{{-- livewire.secretaire.steps.medical-info --}}
+<div>
+    <h4 class="card-title mb-4">Informations médicales et le prescripteur</h4>
 
-    <div class="col-md-6">
-        <label for="prescripteur_search" class="form-label">Nom du prescripteur <span class="text-danger">*</span></label>
-        <div class="position-relative">
-            <input type="text" wire:model.live="prescripteur_search" id="prescripteur_search"
-            class="form-control" autocomplete="on">
-            @if(!empty($suggestions) || $showCreateOption)
-                <div class="position-absolute w-100 bg-white mt-1 rounded shadow-sm" style="z-index: 1000;">
-                    @foreach($suggestions as $prescripteur)
-                        <div class="p-2 hover-bg-light cursor-pointer" wire:click="selectPrescripteur({{ $prescripteur['id'] ?? '' }}, '{{ $prescripteur['name'] }}')">
-                            {{ $prescripteur['name'] }}
-                        </div>
-                    @endforeach
+    <div class="row g-3"
+         x-data="{
+            isSearching: false,
+            debounceSearch: function(e) {
+                clearTimeout(this.timeout);
+                this.timeout = setTimeout(() => {
+                    @this.set('prescripteur_search', e.target.value);
+                    this.isSearching = true;
+                }, 300);
+            }
+         }"
+         x-on:click.away="isSearching = false">
+
+        {{-- Prescripteur --}}
+        <div class="col-md-6" wire:key="prescripteur-field">
+            <label for="prescripteur_search" class="form-label">
+                Nom du prescripteur <span class="text-danger">*</span>
+            </label>
+            <div class="position-relative">
+                <input type="text"
+                       id="prescripteur_search"
+                       x-on:input="debounceSearch($event)"
+                       x-on:focus="isSearching = true"
+                       class="form-control @error('prescripteur_search') is-invalid @enderror"
+                       autocomplete="off"
+                       :value="$wire.prescripteur_search">
+
+                {{-- Suggestions et option de création --}}
+                <div x-show="isSearching"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 transform scale-95"
+                     x-transition:enter-end="opacity-100 transform scale-100"
+                     class="position-absolute w-100 bg-white mt-1 rounded shadow-sm"
+                     style="z-index: 1000;"
+                     wire:key="prescripteur-suggestions">
+
+                    @if(!empty($suggestions))
+                        @foreach($suggestions as $prescripteur)
+                            <div class="p-2 hover-bg-light cursor-pointer"
+                                 wire:click="selectPrescripteur({{ $prescripteur['id'] }}, '{{ $prescripteur['name'] }}')"
+                                 wire:loading.class="opacity-50"
+                                 wire:target="selectPrescripteur"
+                                 role="button"
+                                 tabindex="0">
+                                {{ $prescripteur['name'] }}
+                            </div>
+                        @endforeach
+                    @endif
+
                     @if($showCreateOption)
-                        <div class="p-2 hover-bg-light cursor-pointer shadow-xl fw-bold" wire:click="setNewPrescripteur">
+                        <div class="p-2 hover-bg-light cursor-pointer border-top"
+                             wire:click="setNewPrescripteur"
+                             wire:loading.class="opacity-50"
+                             wire:target="setNewPrescripteur"
+                             role="button"
+                             tabindex="0">
+                            <i class="fas fa-plus-circle me-2"></i>
                             Créer "{{ $prescripteur_search }}"
                         </div>
                     @endif
+
+                    <div wire:loading wire:target="prescripteur_search" class="p-2 text-muted">
+                        <i class="fas fa-spinner fa-spin me-2"></i>Recherche...
+                    </div>
                 </div>
-            @endif
+
+                {{-- Messages d'état --}}
+                @if($prescripteur_id)
+                    <div class="text-success small mt-1" wire:key="selected-prescripteur">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Prescripteur existant sélectionné : {{ $prescripteur_search }}
+                    </div>
+                @elseif($nouveau_prescripteur_nom)
+                    <div class="text-info small mt-1" wire:key="new-prescripteur">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Nouveau prescripteur : {{ $nouveau_prescripteur_nom }}
+                    </div>
+                @endif
+
+                {{-- Messages d'erreur --}}
+                @error('prescripteur_search')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @error('prescripteur_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @error('nouveau_prescripteur_nom')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
         </div>
-        @if($prescripteur_id)
-            <div class="text-success small mt-1">Prescripteur existant sélectionné : {{ $prescripteur_search }}</div>
-        @elseif($nouveau_prescripteur_nom)
-            <div class="text-info small mt-1">Prescripteur à créer : {{ $nouveau_prescripteur_nom }}</div>
-        @endif
-        @error('prescripteur_search') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-        @error('prescripteur_id') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-        @error('nouveau_prescripteur_nom') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-    </div>
 
-    <div class="col-md-6">
-        <label for="patient_type" class="form-label">Type de patient</label>
-        <select id="patient_type" wire:model.defer="patient_type" class="form-select @error('patient_type') is-invalid @enderror">
-            <option value="EXTERNE">Externe</option>
-            <option value="HOSPITALISE">Hospitalisé</option>
-        </select>
-        @error('patient_type') <div class="text-danger">{{ $message }}</div> @enderror
-    </div>
+        {{-- Type de patient --}}
+        <div class="col-md-6" wire:key="patient-type-field">
+            <label for="patient_type" class="form-label">Type de patient</label>
+            <select id="patient_type"
+                    wire:model.defer="patient_type"
+                    class="form-select @error('patient_type') is-invalid @enderror">
+                @foreach(['EXTERNE' => 'Externe', 'HOSPITALISE' => 'Hospitalisé'] as $value => $label)
+                    <option value="{{ $value }}">{{ $label }}</option>
+                @endforeach
+            </select>
+            @error('patient_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
 
-    <div class="col-12">
-        <label for="renseignement_clinique" class="form-label">Renseignement clinique</label>
-        <textarea id="renseignement_clinique" wire:model.defer="renseignement_clinique" rows="3" class="form-control @error('renseignement_clinique') is-invalid @enderror"></textarea>
-        @error('renseignement_clinique') <div class="text-danger">{{ $message }}</div> @enderror
+        {{-- Renseignement clinique --}}
+        <div class="col-12" wire:key="renseignement-field">
+            <label for="renseignement_clinique" class="form-label">Renseignement clinique</label>
+            <textarea id="renseignement_clinique"
+                      wire:model.defer="renseignement_clinique"
+                      rows="3"
+                      class="form-control @error('renseignement_clinique') is-invalid @enderror"
+                      placeholder="Entrez les renseignements cliniques"></textarea>
+            @error('renseignement_clinique')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
     </div>
 </div>

@@ -93,22 +93,41 @@ class EditPrescription extends Component
        $index = array_search($prelevementId, $this->selectedPrelevements);
 
        if ($index !== false) {
+           // Décocher le prélèvement
            unset($this->selectedPrelevements[$index]);
            unset($this->prelevementQuantities[$prelevementId]);
        } else {
+           // Cocher le prélèvement
            $this->selectedPrelevements[] = $prelevementId;
-           $this->prelevementQuantities[$prelevementId] = 1;
+
+           // Définir une quantité par défaut si nécessaire
+           $prelevement = collect($this->prelevements)->firstWhere('id', $prelevementId);
+           if ($this->hasQuantity($prelevement)) {
+               $this->prelevementQuantities[$prelevementId] = 1;
+           }
        }
 
        $this->selectedPrelevements = array_values($this->selectedPrelevements);
-       $this->calculateTotalPrelevements();
-       $this->dispatch('prelevementUpdated');
+
+       // Recalculer le total
+       $this->calculateTotal();
+       $this->dispatch('prelevement-updated');
    }
 
-   public function updatedPrelevementQuantities($value, $key)
+   public function updatedPrelevementQuantities($quantity, $prelevementId)
    {
-       $this->calculateTotalPrelevements();
-       $this->dispatch('prelevementUpdated');
+       // Forcer la conversion en entier
+       $quantity = intval($quantity);
+
+       // Assurer une quantité minimale de 1
+       if ($quantity < 1) {
+           $this->prelevementQuantities[$prelevementId] = 1;
+       } else {
+           $this->prelevementQuantities[$prelevementId] = $quantity;
+       }
+
+       // Forcer le recalcul immédiat du total
+       $this->calculateTotal();
    }
 
    public function getPrelevementPrice($prelevementId)
@@ -116,12 +135,21 @@ class EditPrescription extends Component
        $prelevement = collect($this->prelevements)->firstWhere('id', $prelevementId);
        if (!$prelevement) return 0;
 
-       if ($prelevement['nom'] === 'Tube aiguille') {
-           $quantity = $this->prelevementQuantities[$prelevementId] ?? 1;
-           return $quantity > 1 ? $this->elevatedPrelevementPrice : $this->basePrelevementPrice;
+       // Vérifier si c'est un tube aiguille
+       $isTubeAiguille = in_array(strtolower($prelevement['nom']), [
+           'tube aiguille', 'tube/aiguille', 'tube sanguin', 'tube', 'aiguille'
+       ]);
+
+       if ($isTubeAiguille) {
+           // Récupérer la quantité (par défaut 1)
+           $quantity = isset($this->prelevementQuantities[$prelevementId]) ?
+               intval($this->prelevementQuantities[$prelevementId]) : 1;
+
+           // Appliquer le prix selon la quantité
+           return $quantity >= 2 ? 3500 : 2000;
        }
 
-       return $prelevement['prix'];
+       return $prelevement['prix'] ?? 0;
    }
 
    public function calculateTotalPrelevements()
@@ -168,11 +196,26 @@ class EditPrescription extends Component
 
    public function calculateTotal()
    {
-       $analysesTotal = collect($this->analyses)
-           ->whereIn('id', $this->selectedAnalyses)
-           ->sum('prix');
+       // Calcul du total des prélèvements
+       $this->totalPrelevementsPrice = collect($this->selectedPrelevements)
+           ->reduce(function ($total, $prelevementId) {
+               return $total + $this->getPrelevementPrice($prelevementId);
+           }, 0);
 
+       // Calcul du total des analyses
+       $analysesTotal = collect($this->selectedAnalyses)
+           ->reduce(function ($total, $analyseId) {
+               $analyse = collect($this->analyses)->firstWhere('id', $analyseId);
+               return $total + ($analyse['prix'] ?? 0);
+           }, 0);
+
+       // Total général
        $this->totalPrice = $analysesTotal + $this->totalPrelevementsPrice;
+
+       // Appliquer la remise si nécessaire
+       if ($this->remise > 0) {
+           $this->totalPrice = $this->totalPrice * (1 - ($this->remise / 100));
+       }
    }
 
    // Load prescription data method

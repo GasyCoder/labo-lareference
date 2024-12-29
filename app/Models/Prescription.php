@@ -242,5 +242,4 @@ class Prescription extends Model
         return $this->hasMany(Resultat::class);
     }
 
-
 }
