@@ -68,8 +68,16 @@
 <x-livewire-alert::scripts />
 
 <script>
-    Livewire.on('archive-counter-updated', () => {
-        Livewire.emit('refreshArchiveCount');
+    document.addEventListener('DOMContentLoaded', function () {
+        const anchor = window.location.hash.substring(1); // Récupère l'ancre (ex : 'actives')
+        if (anchor) {
+            Livewire.emit('switchTab', anchor);
+        }
+    });
+
+    window.addEventListener('hashchange', function () {
+        const anchor = window.location.hash.substring(1); // Met à jour l'état si l'ancre change
+        Livewire.emit('switchTab', anchor);
     });
 </script>
 

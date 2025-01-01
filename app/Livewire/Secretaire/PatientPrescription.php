@@ -21,15 +21,33 @@ class PatientPrescription extends Component
     public ?Prescription $prescription = null;
     protected $paginationTheme = 'bootstrap';
 
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'tab' => ['except' => 'actives'], // Onglet par défaut
+    ];
+
+    public $tab = 'actives';
+
     public $prescriptionId;
 
     protected $pdfService;
+
+    public function mount()
+    {
+        $this->tab = request()->query('tab', 'actives'); // Par défaut : 'actives'
+    }
+
 
     public function boot(ResultatPdfService $pdfService)
     {
         $this->pdfService = $pdfService;
     }
 
+    public function switchTab($tab)
+    {
+        $this->tab = $tab;
+        $this->resetPage(); // Réinitialiser la pagination pour chaque onglet
+    }
 
     protected $listeners = [
         'prescriptionAdded' => '$refresh',
@@ -40,8 +58,6 @@ class PatientPrescription extends Component
     ];
 
     public $search = '';
-
-    protected $queryString = ['search'];
 
     public function updatingSearch()
     {

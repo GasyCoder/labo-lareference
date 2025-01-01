@@ -14,12 +14,12 @@ class CreateAnalysesTable extends Migration
             $table->enum('level', ['PARENT', 'CHILD', 'NORMAL']);
             $table->string('parent_code')->nullable();
             $table->string('abr')->nullable();
-            $table->string('designation');
+            $table->string('designation')->nullable();
             $table->text('description')->nullable();
             $table->decimal('prix', 10, 2)->nullable();
             $table->boolean('is_bold')->default(false);
-            $table->unsignedBigInteger('examen_id');
-            $table->unsignedBigInteger('analyse_type_id');
+            $table->unsignedBigInteger('examen_id')->nullable();
+            $table->unsignedBigInteger('analyse_type_id')->nullable();
             $table->json('result_disponible')->nullable();
             $table->unsignedInteger('ordre')->nullable();
             $table->boolean('status')->default(true);

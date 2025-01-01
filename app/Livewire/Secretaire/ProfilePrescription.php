@@ -31,6 +31,11 @@ class ProfilePrescription extends Component
     public $basePrelevementPrice = 2000;
     public $elevatedPrelevementPrice = 3500;
     public $modePaiement = 'ESPECES';
+    public $showRemise = false;
+    public $remisePercent = null;
+    public $montantAvantRemise = 0;
+    public $montantRemise = 0;
+    public $montantApresRemise = 0;
 
     // Services injectés
     protected $pdfService;
@@ -45,6 +50,41 @@ class ProfilePrescription extends Component
     {
         $this->pdfService = $pdfService;
     }
+
+    public function updatedShowRemise($value)
+    {
+        if (!$value) {
+            $this->remisePercent = null;
+            $this->resetRemiseCalculations();
+        }
+        $this->calculerMontants();
+    }
+
+    public function updatedRemisePercent($value)
+    {
+        $this->calculerMontants();
+    }
+
+    private function calculerMontants()
+    {
+        $this->montantAvantRemise = $this->totalGeneral;
+
+        if ($this->showRemise && $this->remisePercent) {
+            $this->montantRemise = $this->montantAvantRemise * ($this->remisePercent / 100);
+            $this->montantApresRemise = $this->montantAvantRemise - $this->montantRemise;
+        } else {
+            $this->resetRemiseCalculations();
+        }
+    }
+
+
+    // Méthode pour réinitialiser les calculs de remise
+    private function resetRemiseCalculations()
+    {
+        $this->montantRemise = 0;
+        $this->montantApresRemise = $this->montantAvantRemise;
+    }
+
 
     /**
      * Initialisation du composant
@@ -92,10 +132,10 @@ class ProfilePrescription extends Component
      */
     private function calculateTotals()
     {
-        // Calcul du total des analyses (toutes, pas seulement non payées)
+        // Calcul du total des analyses
         $this->totalAnalyses = $this->prescription->analyses->sum('pivot.prix');
 
-        // Calcul du total des prélèvements (tous)
+        // Calcul du total des prélèvements
         $this->totalPrelevements = $this->prescription->prelevements->sum(function ($prelevement) {
             $quantite = $prelevement->pivot->quantite;
             $isTubeAiguille = $prelevement->nom === self::TUBE_AIGUILLE_NOM;
@@ -107,8 +147,20 @@ class ProfilePrescription extends Component
                     : $prelevement->pivot->prix_unitaire * $quantite);
         });
 
-        // Total général
+        // Total avant frais d'urgence
         $this->totalGeneral = $this->totalAnalyses + $this->totalPrelevements;
+
+        // Ajout des frais d'urgence selon le type de patient
+        if ($this->prescription->patient_type === 'URGENCE-NUIT') {
+            $this->totalGeneral += 20000; // Frais supplémentaires pour urgence de nuit
+        } elseif ($this->prescription->patient_type === 'URGENCE-JOUR') {
+            $this->totalGeneral += 15000; // Frais supplémentaires pour urgence de jour
+        }
+
+        // Si une remise est appliquée
+        if ($this->prescription->remise > 0) {
+            $this->totalGeneral = $this->totalGeneral * (1 - ($this->prescription->remise / 100));
+        }
     }
 
 
@@ -134,13 +186,26 @@ class ProfilePrescription extends Component
                         : $prelevement->pivot->prix_unitaire * $quantite);
             });
 
+        $subtotal = $unpaidAnalyses + $unpaidPrelevements;
+
+        // Ajout des frais d'urgence si non payés
+        if ($this->prescription->patient_type === 'URGENCE-NUIT') {
+            $subtotal += 20000;
+        } elseif ($this->prescription->patient_type === 'URGENCE-JOUR') {
+            $subtotal += 15000;
+        }
+
+        // Appliquer la remise si elle existe
+        if ($this->prescription->remise > 0) {
+            $subtotal = $subtotal * (1 - ($this->prescription->remise / 100));
+        }
+
         return [
             'unpaidAnalyses' => $unpaidAnalyses,
             'unpaidPrelevements' => $unpaidPrelevements,
-            'unpaidTotal' => $unpaidAnalyses + $unpaidPrelevements
+            'unpaidTotal' => $subtotal
         ];
     }
-
     /**
      * Traitement du paiement
      */
@@ -149,10 +214,17 @@ class ProfilePrescription extends Component
         try {
             DB::beginTransaction();
 
+            // Mettre à jour la remise dans la prescription si nécessaire
+            if ($this->showRemise && $this->remisePercent) {
+                $this->prescription->update([
+                    'remise' => $this->remisePercent
+                ]);
+            }
+
             // Créer le paiement
             Paiement::create([
                 'prescription_id' => $this->prescription->id,
-                'montant' => $this->totalGeneral,
+                'montant' => $this->showRemise ? $this->montantApresRemise : $this->totalGeneral,
                 'mode_paiement' => $this->modePaiement,
                 'recu_par' => Auth::id()
             ]);
@@ -247,10 +319,13 @@ class ProfilePrescription extends Component
                     return $prelevement->pivot->is_payer === 'PAYE';
                 });
 
+            $totalPrelivementsEtAnalyses = $this->totalAnalyses + $this->totalPrelevements;
+
             $data = [
                 'prescription' => $this->prescription,
                 'totalAnalyses' => $this->totalAnalyses,
                 'totalPrelevements' => $this->totalPrelevements,
+                'totalPrelivementsEtAnalyses' => $totalPrelivementsEtAnalyses,
                 'totalGeneral' => $this->totalGeneral,
                 'TUBE_AIGUILLE_NOM' => self::TUBE_AIGUILLE_NOM,
                 'basePrelevementPrice' => $this->basePrelevementPrice,
@@ -262,13 +337,10 @@ class ProfilePrescription extends Component
             $pdf = PDF::loadView('pdf.invoice.facture', $data);
             $pdf->setPaper('B5');
 
-            // Créer un nom de fichier unique
             $filename = 'factures/facture-' . $this->prescription->id . '-' . time() . '.pdf';
 
-            // Sauvegarder temporairement le PDF
             Storage::disk('public')->put($filename, $pdf->output());
 
-            // Retourner l'URL temporaire
             return Storage::disk('public')->url($filename);
 
         } catch (\Exception $e) {

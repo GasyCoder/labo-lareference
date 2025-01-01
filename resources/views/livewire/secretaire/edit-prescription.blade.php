@@ -4,22 +4,19 @@
     @endpush
     <section class="container-fluid p-4">
         <div class="row">
-            <div class="col-lg-12 col-md-12 col-12">
+            <div class="col-lg-10 col-md-12 col-12 mx-auto">
                 <div class="border-bottom pb-3 mb-3">
                     <h1 class="mb-0 h2 fw-bold">Modifier la prescription</h1>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item">
-                                <a href="{{ route('secretaire.patients.index') }}">Toutes les prescriptions</a>
+                                <a href="{{ route('secretaire.patients.index') }}">Liste des prescriptions</a>
                             </li>
                             <li class="breadcrumb-item active" aria-current="page">Modifier</li>
                         </ol>
                     </nav>
                 </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-10 col-md-12 col-12 mx-auto">
+
                 <!-- Barre de progression -->
                 @include('livewire.secretaire.steps.progress-bar')
 

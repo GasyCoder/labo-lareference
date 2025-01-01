@@ -11,21 +11,20 @@
                 <!-- Onglets -->
                 <ul class="nav nav-tabs mb-4">
                     <li class="nav-item">
-                        <button class="nav-link @if($tab === 'termine') active @endif"
-                                wire:click="$set('tab', 'termine')">
+                        <a class="nav-link {{ $tab === 'termine' ? 'active' : '' }}" href="#termine"
+                           wire:click.prevent="$set('tab', 'termine')">
                             <i class="fas fa-list-ul me-2"></i> Terminé
                             <span class="badge bg-primary">{{ $analyseTermines->total() }}</span>
-                        </button>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <button class="nav-link @if($tab === 'valide') active @endif"
-                                wire:click="$set('tab', 'valide')">
+                        <a class="nav-link {{ $tab === 'valide' ? 'active' : '' }}" href="#valide"
+                           wire:click.prevent="$set('tab', 'valide')">
                             <i class="fas fa-check-circle me-2"></i> Validé
                             <span class="badge bg-success">{{ $analyseValides->total() }}</span>
-                        </button>
+                        </a>
                     </li>
                 </ul>
-
                 <!-- Inclusion des tableaux -->
                 @if($tab === 'termine')
                     @include('livewire.biologiste.partials.analyse-card', [

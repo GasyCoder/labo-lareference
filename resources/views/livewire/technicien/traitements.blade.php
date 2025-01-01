@@ -38,25 +38,29 @@
                             <!-- Tabs -->
                             <ul class="nav nav-tabs mb-4">
                                 <li class="nav-item">
-                                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#actifs" type="button">
+                                    <a class="nav-link {{ $tab === 'actifs' ? 'active' : '' }}" href="#actifs"
+                                       wire:click.prevent="switchTab('actifs')">
                                         <i class="fas fa-list-ul me-2"></i>Actives
-                                        <span class="badge bg-primary ms-1">{{$activePrescriptions->total()}}</span>
-                                    </button>
+                                        <span class="badge bg-primary ms-1">{{ $activePrescriptions->total() }}</span>
+                                    </a>
                                 </li>
                                 <li class="nav-item">
-                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#termine" type="button">
+                                    <a class="nav-link {{ $tab === 'termine' ? 'active' : '' }}" href="#termine"
+                                       wire:click.prevent="switchTab('termine')">
                                         <i class="fas fa-check-circle me-2"></i>Terminés
-                                        <span class="badge bg-success ms-1">{{$analyseTermines->total()}}</span>
-                                    </button>
+                                        <span class="badge bg-success ms-1">{{ $analyseTermines->total() }}</span>
+                                    </a>
                                 </li>
                             </ul>
+
                             <!-- Contenu des onglets -->
                             <div class="tab-content">
-                                @foreach(['actifs' => $activePrescriptions, 'termine' => $analyseTermines] as $tab => $prescriptions)
-                                    <div class="tab-pane fade {{ $tab === 'actifs' ? 'show active' : '' }}" id="{{ $tab }}">
-                                        @include('livewire.technicien.partials.prescription-card', ['prescriptions' => $prescriptions])
-                                    </div>
-                                @endforeach
+                                <div class="tab-pane fade {{ $tab === 'actifs' ? 'show active' : '' }}" id="actifs">
+                                    @include('livewire.technicien.partials.prescription-card', ['prescriptions' => $activePrescriptions])
+                                </div>
+                                <div class="tab-pane fade {{ $tab === 'termine' ? 'show active' : '' }}" id="termine">
+                                    @include('livewire.technicien.partials.prescription-card', ['prescriptions' => $analyseTermines])
+                                </div>
                             </div>
                         </div>
                     </div>

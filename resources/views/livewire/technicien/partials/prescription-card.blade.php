@@ -28,10 +28,16 @@
                             </div>
                             <div>
                                 <h6 class="mb-0">{{ $prescription->patient->nom }} {{ $prescription->patient->prenom }}</h6>
-                                @if($prescription->patient->telephone)
-                                    <small class="text-muted">
-                                        <i class="fas fa-phone-alt me-1"></i>{{ $prescription->patient->telephone }}
-                                    </small>
+                                @if($prescription->patient_type == 'URGENCE-NUIT')
+                                <small class="text-muted text-danger">
+                                    <i class="fas fa-ambulance me-1"></i>
+                                    Urgence nuit
+                                </small>
+                                @elseif($prescription->patient_type == 'URGENCE-JOUR')
+                                <small class="text-muted text-danger">
+                                    <i class="fas fa-ambulance me-1"></i>
+                                    Urgence jour
+                                </small>
                                 @endif
                             </div>
                         </div>

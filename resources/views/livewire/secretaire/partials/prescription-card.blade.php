@@ -33,6 +33,17 @@
                                         <i class="fas fa-phone-alt me-1"></i>{{ $prescription->patient->telephone }}
                                     </small>
                                 @endif
+                                @if($prescription->patient_type == 'URGENCE-NUIT')
+                                <small class="text-muted text-danger">
+                                    <i class="fas fa-ambulance me-1"></i>
+                                    Urgence nuit
+                                </small>
+                                @elseif($prescription->patient_type == 'URGENCE-JOUR')
+                                <small class="text-muted text-danger">
+                                    <i class="fas fa-ambulance me-1"></i>
+                                    Urgence jour
+                                </small>
+                                @endif
                             </div>
                         </div>
                     </td>
@@ -99,7 +110,7 @@
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                                 @else
-                                @if($prescription->status === 'EN_ATTENTE' || $prescription->status === 'TERMINE')
+                                @if($prescription->status === 'EN_ATTENTE' || $prescription->status === 'EN_COURS' || $prescription->status === 'TERMINE')
                                 {{-- Actions communes pour les prescriptions actives --}}
                                 <a href="{{ route('secretaire.prescriptions.profil', ['id' => $prescription->id]) }}"
                                    class="btn btn-sm btn-info"

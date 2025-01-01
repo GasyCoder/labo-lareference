@@ -27,6 +27,8 @@
                        x-on:focus="isSearching = true"
                        class="form-control @error('prescripteur_search') is-invalid @enderror"
                        autocomplete="off"
+                       x-on:change="$wire.nextStep()"
+                       x-on:blur="$wire.setNewPrescripteur()"
                        :value="$wire.prescripteur_search">
 
                 {{-- Suggestions et option de création --}}
@@ -94,7 +96,13 @@
             <select id="patient_type"
                     wire:model.defer="patient_type"
                     class="form-select @error('patient_type') is-invalid @enderror">
-                @foreach(['EXTERNE' => 'Externe', 'HOSPITALISE' => 'Hospitalisé'] as $value => $label)
+                @foreach(
+                        [
+                        'EXTERNE' => 'Externe',
+                        'HOSPITALISE' => 'Hospitalisé',
+                        'URGENCE-NUIT' => 'Urgence-Nuit',//20000Ar
+                        'URGENCE-JOUR' => 'Urgence-Jour',//15000Ar
+                        ] as $value => $label)
                     <option value="{{ $value }}">{{ $label }}</option>
                 @endforeach
             </select>

@@ -1,27 +1,31 @@
 {{-- views/livewire/secretaire/steps/progress-bar.blade.php --}}
 <div class="progress-wrapper mb-4">
-    {{-- Progress Bar --}}
-    <div class="progress" style="height: 25px;">
-        @for ($i = 1; $i <= $totalSteps; $i++)
-            <div class="progress-bar {{ $i < $step ? 'bg-success' : ($i == $step ? 'bg-primary' : 'bg-secondary') }}"
-                role="progressbar"
-                style="width: {{ 100 / $totalSteps }}%"
-                aria-valuenow="{{ 100 / $totalSteps }}"
+    <div class="progress mb-3" style="height: 5px;">
+        <div class="progress-bar bg-primary" role="progressbar"
+                style="width: {{ $progressPercentage }}%; transition: width 0.3s ease;"
+                aria-valuenow="{{ $progressPercentage }}"
                 aria-valuemin="0"
                 aria-valuemax="100">
-            </div>
-        @endfor
+        </div>
     </div>
-
-    {{-- Step Indicators --}}
-    <div class="progress-steps d-flex justify-content-between position-relative mt-n2">
-        @for ($i = 1; $i <= $totalSteps; $i++)
-            <div class="progress-step">
-                <span class="badge rounded-pill {{ $i <= $step ? 'bg-primary' : 'bg-secondary' }} shadow-sm">
-                    {{ $i }}
-                </span>
+    <div class="row text-center g-0">
+        @foreach(['Information Patient', 'Information Médicale', 'Analyses & Prélèvements'] as $index => $stepName)
+            <div class="col {{ $index === 1 ? 'border-start border-end' : '' }}">
+                <div class="position-relative">
+                    <div class="rounded-circle bg-{{ $step > ($index + 1) ? 'success' : ($step === ($index + 1) ? 'primary' : 'secondary') }} d-flex align-items-center justify-content-center mx-auto mb-2"
+                            style="width: 32px; height: 32px;">
+                        @if($step > ($index + 1))
+                            <i class="fas fa-check text-white small"></i>
+                        @else
+                            <span class="text-white">{{ $index + 1 }}</span>
+                        @endif
+                    </div>
+                    <span class="badge {{ $step >= ($index + 1) ? 'bg-primary' : 'bg-secondary' }} rounded-pill">
+                        {{ $stepName }}
+                    </span>
+                </div>
             </div>
-        @endfor
+        @endforeach
     </div>
 </div>
 

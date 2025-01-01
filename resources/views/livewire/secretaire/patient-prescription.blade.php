@@ -29,35 +29,48 @@
                 <!-- Tabs -->
                 <ul class="nav nav-tabs mb-4">
                     <li class="nav-item">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#actifs" type="button">
+                        <a class="nav-link {{ $tab === 'actives' ? 'active' : '' }}"
+                           href="#actives"
+                           wire:click.prevent="switchTab('actives')">
                             <i class="fas fa-list-ul me-2"></i>Actives
-                            <span class="badge bg-primary ms-1">{{$activePrescriptions->total()}}</span>
-                        </button>
+                            <span class="badge bg-primary ms-1">{{ $activePrescriptions->total() }}</span>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#valide" type="button">
+                        <a class="nav-link {{ $tab === 'valide' ? 'active' : '' }}"
+                           href="#valide"
+                           wire:click.prevent="switchTab('valide')">
                             <i class="fas fa-check-circle me-2"></i>Validées
-                            <span class="badge bg-success ms-1">{{$analyseValides->total()}}</span>
-                        </button>
+                            <span class="badge bg-success ms-1">{{ $analyseValides->total() }}</span>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#deleted" type="button">
+                        <a class="nav-link {{ $tab === 'deleted' ? 'active' : '' }}"
+                           href="#deleted"
+                           wire:click.prevent="switchTab('deleted')">
                             <i class="fas fa-trash me-2"></i>Corbeille
-                            <span class="badge bg-danger ms-1">{{$deletedPrescriptions->total()}}</span>
-                        </button>
+                            <span class="badge bg-danger ms-1">{{ $deletedPrescriptions->total() }}</span>
+                        </a>
                     </li>
                 </ul>
 
                 <!-- Content -->
                 <div class="tab-content">
-                    @foreach(['actifs' => $activePrescriptions, 'valide' => $analyseValides, 'deleted' => $deletedPrescriptions] as $tab => $prescriptions)
-                        <div class="tab-pane fade {{ $tab === 'actifs' ? 'show active' : '' }}" id="{{ $tab }}">
-                            @include('livewire.secretaire.partials.prescription-card', ['prescriptions' => $prescriptions])
-                        </div>
-                    @endforeach
+                    <div class="tab-pane fade {{ $tab === 'actives' ? 'show active' : '' }}" id="actives">
+                        @include('livewire.secretaire.partials.prescription-card', ['prescriptions' => $activePrescriptions])
+                    </div>
+                    <div class="tab-pane fade {{ $tab === 'valide' ? 'show active' : '' }}" id="valide">
+                        @include('livewire.secretaire.partials.prescription-card', ['prescriptions' => $analyseValides])
+                    </div>
+                    <div class="tab-pane fade {{ $tab === 'deleted' ? 'show active' : '' }}" id="deleted">
+                        @include('livewire.secretaire.partials.prescription-card', ['prescriptions' => $deletedPrescriptions])
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 </div>
 
+@push('scripts')
+
+@endpush

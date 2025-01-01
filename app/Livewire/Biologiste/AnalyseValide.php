@@ -12,9 +12,13 @@ class AnalyseValide extends Component
 
     protected $paginationTheme = 'bootstrap';
     public $tab = 'termine';
+
     public $search = '';
 
-    protected $queryString = ['search'];
+    protected $queryString = [
+        'search',
+        'tab' => ['except' => 'termine'],
+    ];
 
     public function updatingSearch()
     {
@@ -88,9 +92,9 @@ class AnalyseValide extends Component
             ->orderBy('created_at', 'asc')
             ->paginate(15);
 
-        return view('livewire.biologiste.analyse-valide', [
-            'analyseValides' => $analyseValides,
-            'analyseTermines' => $analyseTermines,
-        ]);
+            return view('livewire.biologiste.analyse-valide', [
+                'analyseValides' => $analyseValides,
+                'analyseTermines' => $analyseTermines,
+            ]);
     }
 }

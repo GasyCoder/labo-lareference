@@ -12,15 +12,28 @@ class Traitements extends Component
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
-
+    public $tab = 'actifs';
+    public function switchTab($tab)
+    {
+        $this->tab = $tab;
+        $this->resetPage(); // Réinitialiser la pagination pour chaque onglet
+    }
 
     public $search = '';
 
-    protected $queryString = ['search'];
+    protected $queryString = [
+        'search',
+        'tab' => ['except' => 'actifs'],
+    ];
 
     public function updatingSearch()
     {
         $this->resetPage();
+    }
+
+    public function mount()
+    {
+        $this->tab = request()->query('tab', 'actifs'); // Par défaut : 'actifs'
     }
 
     public function render()

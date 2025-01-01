@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facture #{{ str_pad($prescription->id, 5, '0', STR_PAD_LEFT) }}</title>
+    <title>Facture #{{ str_pad($prescription->id, 5, '0', STR_PAD_LEFT) }}-ref{{ $prescription->patient->formatted_ref }}-{{ $prescription->patient->nom }}</title>
     <style>
         @page {
             size: B5;
@@ -154,12 +154,6 @@
         <div class="logo-container">
             <img src="{{ public_path('assets/images/logo.png') }}" alt="LABORATOIRE LA REFERENCE" class="logo">
         </div>
-        {{-- <div class="contact-info">
-            Tél Bureau : 261 34 53 211 41<br>
-            Tél Urgences : 261 34 76 637 92<br>
-            Manjavaivola<br>
-            MAHAJANGA 401
-        </div> --}}
     </div>
 
     <div class="invoice-details">
@@ -179,11 +173,13 @@
         <h3>Informations du patient</h3>
         <table style="border: none; margin: 0;">
             <tr>
-                <td style="border: none; padding: 2px;"><strong>Réf:</strong> {{ $prescription->patient->formatted_ref }}</td>
+                <td style="border: none; padding: 2px;"><strong>Réf:</strong> #{{ $prescription->patient->formatted_ref }}</td>
                 <td style="border: none; padding: 2px;"><strong>Nom:</strong> {{ $prescription->patient->nom }}</td>
             </tr>
             <tr>
+                @if($prescription->patient->prenom)
                 <td style="border: none; padding: 2px;"><strong>Prénom:</strong> {{ $prescription->patient->prenom }}</td>
+                @endif
                 <td style="border: none; padding: 2px;">
                     @if($prescription->patient->telephone)
                         <strong>Tél:</strong> {{ $prescription->patient->telephone }}
@@ -193,65 +189,103 @@
         </table>
     </div>
 
-    <table>
-        <thead>
+    <table class="table table-bordered table-hover table-sm">
+        <thead class="thead-light">
             <tr>
-                <th width="45%">Désignation</th>
-                <th width="10%">Qté</th>
-                <th width="20%">P.U</th>
-                <th width="25%">Total</th>
+                <th width="45%">DESIGNATIONS</th>
+                <th width="20%" class="text-center">P.U</th>
+                <th width="25%" class="text-center">TOTAL</th>
             </tr>
         </thead>
         <tbody>
-                <!-- Analyses -->
-                @foreach($prescription->analyses as $analyse)
-                <tr>
-                    <td>
-                        {{ $analyse->designation }}
-                        <small>({{ $analyse->abr }})</small>
-                    </td>
-                    <td class="text-right">1</td>
-                    <td class="text-right">{{ number_format($analyse->pivot->prix, 0, ',', ' ') }} Ar</td>
-                    <td class="text-right">{{ number_format($analyse->pivot->prix, 0, ',', ' ') }} Ar</td>
-                </tr>
-                @endforeach
-                <tr class="subtotal">
-                    <td colspan="3">Sous-total Analyses</td>
-                    <td class="text-right">{{ number_format($totalAnalyses, 0, ',', ' ') }} Ar</td>
-                </tr>
+            <!-- Analyses -->
+            @foreach($prescription->analyses as $analyse)
+            <tr>
+                <td>
+                    <strong>{{ $analyse->designation }}</strong>
+                    <small class="text-muted">({{ $analyse->abr }})</small>
+                </td>
+                <td class="text-right">{{ number_format($analyse->pivot->prix, 0, ',', ' ') }} Ar</td>
+                <td class="text-right">{{ number_format($analyse->pivot->prix, 0, ',', ' ') }} Ar</td>
+            </tr>
+            @endforeach
+            <tr class="table-secondary font-weight-bold">
+                <td colspan="2" class="text-right">Sous-total Analyses</td>
+                <td class="text-right">{{ number_format($totalAnalyses, 0, ',', ' ') }} Ar</td>
+            </tr>
 
-                <!-- Prélèvements -->
-                @if($prescription->prelevements->count() > 0)
-                    @foreach($prescription->prelevements as $prelevement)
-                        @php
-                            $quantite = $prelevement->pivot->quantite;
-                            $isTubeAiguille = $prelevement->nom === $TUBE_AIGUILLE_NOM;
-                            $prixUnitaire = $isTubeAiguille ?
-                                ($quantite > 1 ? $elevatedPrelevementPrice : $basePrelevementPrice) :
-                                $prelevement->pivot->prix_unitaire;
-                            $prixTotal = $isTubeAiguille ?
-                                ($quantite > 1 ? $elevatedPrelevementPrice : $basePrelevementPrice) :
-                                ($prelevement->pivot->prix_unitaire * $quantite);
-                        @endphp
-                        <tr>
-                            <td>{{ $prelevement->nom }}</td>
-                            <td class="text-right">{{ $quantite }}</td>
-                            <td class="text-right">{{ number_format($prixUnitaire, 0, ',', ' ') }} Ar</td>
-                            <td class="text-right">{{ number_format($prixTotal, 0, ',', ' ') }} Ar</td>
-                        </tr>
-                    @endforeach
-                    <tr class="subtotal">
-                        <td colspan="3">Sous-total Prélèvements</td>
-                        <td class="text-right">{{ number_format($totalPrelevements, 0, ',', ' ') }} Ar</td>
-                    </tr>
-                @endif
+            <!-- Prélèvements -->
+            @if($prescription->prelevements->isNotEmpty())
+            @foreach($prescription->prelevements as $prelevement)
+            <tr>
+                <td>
+                    <strong>{{ $prelevement->nom }}</strong>
+                </td>
+                <td class="text-right">
+                    {{ number_format($prelevement->pivot->prix_unitaire, 0, ',', ' ') }} Ar
+                </td>
+                <td class="text-right">
+                    {{ number_format($prelevement->pivot->prix_unitaire * $prelevement->pivot->quantite, 0, ',', ' ') }} Ar
+                </td>
+            </tr>
+            @endforeach
+            <tr class="table-secondary font-weight-bold">
+                <td colspan="2" class="text-right">Sous-total Prélèvements</td>
+                <td class="text-right">{{ number_format($totalPrelevements, 0, ',', ' ') }} Ar</td>
+            </tr>
+            @endif
 
-                <tr class="total">
-                    <td colspan="3"><strong>TOTAL GÉNÉRAL</strong></td>
-                    <td class="text-right"><strong>{{ number_format($totalGeneral, 0, ',', ' ') }} Ar</strong></td>
-                </tr>
-            </tbody>
+            <!-- Frais d'urgence -->
+            @if(in_array($prescription->patient_type, ['URGENCE-NUIT', 'URGENCE-JOUR']))
+            <tr class="table-secondary font-weight-bold">
+                <td>
+                    Frais d'urgence
+                    @if($prescription->patient_type === 'URGENCE-NUIT')
+                        (Nuit)
+                    @else
+                        (Jour)
+                    @endif
+                </td>
+                <td class="text-right">
+                    {{ number_format($prescription->patient_type === 'URGENCE-NUIT' ? 20000 : 15000, 0, ',', ' ') }} Ar
+                </td>
+                <td class="text-right">
+                    {{ number_format($prescription->patient_type === 'URGENCE-NUIT' ? 20000 : 15000, 0, ',', ' ') }} Ar
+                </td>
+            </tr>
+            <tr class="table-secondary font-weight-bold">
+                <td colspan="2" class="text-right">Sous-total Frais d'urgence</td>
+                <td class="text-right">
+                    {{ number_format($prescription->patient_type === 'URGENCE-NUIT' ? 20000 : 15000, 0, ',', ' ') }} Ar
+                </td>
+            </tr>
+            @endif
+
+            <!-- Remise -->
+            @if($prescription->remise > 0)
+            <tr class="text-danger">
+                <td colspan="2" class="text-right">Montant avant remise</td>
+                <td class="text-right">
+                    {{ number_format($totalPrelivementsEtAnalyses, 0, ',', ' ') }} Ar
+                </td>
+            </tr>
+            <tr class="text-danger">
+                <td colspan="2" class="text-right">Remise appliquée ({{ $prescription->remise }}%)</td>
+                <td class="text-right">
+                    -{{ number_format($totalPrelivementsEtAnalyses * ($prescription->remise / 100), 0, ',', ' ') }} Ar
+                </td>
+            </tr>
+
+            @endif
+
+            <!-- Total Général -->
+            <tr class="table-dark text-white">
+                <td colspan="2" class="text-right"><strong>TOTAL GÉNÉRAL</strong></td>
+                <td class="text-right"><strong>{{ number_format($totalGeneral, 0, ',', ' ') }} Ar</strong></td>
+            </tr>
+        </tbody>
     </table>
+
 
     <div class="footer">
         <table style="border: none;">

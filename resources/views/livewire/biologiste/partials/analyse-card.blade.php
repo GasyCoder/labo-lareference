@@ -41,6 +41,17 @@
                             </div>
                             <span>{{ $prescription->patient->nom }} {{ $prescription->patient->prenom }}</span>
                         </div>
+                        @if($prescription->patient_type == 'URGENCE-NUIT')
+                        <small class="text-muted text-danger">
+                            <i class="fas fa-ambulance me-1"></i>
+                            Urgence nuit
+                        </small>
+                        @elseif($prescription->patient_type == 'URGENCE-JOUR')
+                        <small class="text-muted text-danger">
+                            <i class="fas fa-ambulance me-1"></i>
+                            Urgence jour
+                        </small>
+                        @endif
                     </td>
 
                     <!-- Date de création -->

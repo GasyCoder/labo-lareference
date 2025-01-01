@@ -16,26 +16,20 @@
         }">
         {{-- En-tête --}}
         <div class="row">
-            <div class="col-lg-12 col-md-12 col-12">
+            <div class="col-lg-10 col-md-12 col-12 mx-auto">
                 <div class="border-bottom pb-3 mb-3">
-                    <h1 class="mb-0 h2 fw-bold">Ajouter un patient et une prescription</h1>
+                    <h3 class="mb-0 h3 fw-bold">Ajouter un patient et une prescription</h3>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item">
                                 <a href="{{ route('secretaire.patients.index') }}" wire:navigate>
-                                    Toutes les prescriptions
+                                    Liste des prescriptions
                                 </a>
                             </li>
                             <li class="breadcrumb-item active" aria-current="page">Ajouter</li>
                         </ol>
                     </nav>
                 </div>
-            </div>
-        </div>
-
-        {{-- Contenu principal --}}
-        <div class="row">
-            <div class="col-lg-10 col-md-12 col-12 mx-auto">
                 {{-- Barre de progression --}}
                 <div wire:key="progress-bar">
                     @include('livewire.secretaire.steps.progress-bar')

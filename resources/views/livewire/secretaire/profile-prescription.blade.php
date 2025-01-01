@@ -189,23 +189,98 @@
                                     </tr>
                                 @endforeach
                             @endif
-
                             <!-- Pied de tableau -->
                             <tfoot class="table-light">
                                 <tr>
                                     <th>Total Analyses</th>
-                                    <th colspan="3">{{ number_format($totalAnalyses, 0, ',', ' ') }} Ar</th>
+                                    <th colspan="2">{{ number_format($totalAnalyses, 0, ',', ' ') }} Ar</th>
+                                    <th>
+                                        @if($prescription->analyses->every(fn($a) => $a->pivot->is_payer === 'PAYE'))
+                                            <span class="badge" style="background-color: #34D399; font-weight: normal;">
+                                                Payé
+                                            </span>
+                                        @else
+                                            <span class="badge bg-danger">
+                                                Non payé
+                                            </span>
+                                        @endif
+                                    </th>
                                 </tr>
                                 @if($prescription->prelevements->count() > 0)
                                     <tr>
                                         <th>Total Prélèvements</th>
-                                        <th colspan="3">{{ number_format($totalPrelevements, 0, ',', ' ') }} Ar</th>
-                                    </tr>
-                                    <tr class="table-primary">
-                                        <th>Total Général</th>
-                                        <th colspan="3">{{ number_format($totalGeneral, 0, ',', ' ') }} Ar</th>
+                                        <th colspan="2">{{ number_format($totalPrelevements, 0, ',', ' ') }} Ar</th>
+                                        <th>
+                                            @if($prescription->prelevements->every(fn($p) => $p->pivot->is_payer === 'PAYE'))
+                                                <span class="badge" style="background-color: #34D399; font-weight: normal;">
+                                                    Payé
+                                                </span>
+                                            @else
+                                                <span class="badge bg-danger">
+                                                    Non payé
+                                                </span>
+                                            @endif
+                                        </th>
                                     </tr>
                                 @endif
+
+                                @if(in_array($prescription->patient_type, ['URGENCE-NUIT', 'URGENCE-JOUR']))
+                                    <tr>
+                                        <th>
+                                            Frais d'urgence
+                                            @if($prescription->patient_type === 'URGENCE-NUIT')
+                                                (Nuit - 20 000 Ar)
+                                            @else
+                                                (Jour - 15 000 Ar)
+                                            @endif
+                                        </th>
+                                        <th colspan="2">
+                                            {{ number_format($prescription->patient_type === 'URGENCE-NUIT' ? 20000 : 15000, 0, ',', ' ') }} Ar
+                                        </th>
+                                        <th>
+                                            @if($prescription->analyses->every(fn($a) => $a->pivot->is_payer === 'PAYE') &&
+                                                $prescription->prelevements->every(fn($p) => $p->pivot->is_payer === 'PAYE'))
+                                                <span class="badge" style="background-color: #34D399; font-weight: normal;">
+                                                    Payé
+                                                </span>
+                                            @else
+                                                <span class="badge bg-danger">
+                                                    Non payé
+                                                </span>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                @endif
+
+                                @if($prescription->remise > 0)
+                                    <tr>
+                                        <th>Remise ({{ $prescription->remise }}%)</th>
+                                        <th colspan="3" class="text-danger">
+                                            -{{ number_format(($totalAnalyses + $totalPrelevements +
+                                                ($prescription->patient_type === 'URGENCE-NUIT' ? 20000 :
+                                                ($prescription->patient_type === 'URGENCE-JOUR' ? 15000 : 0)))
+                                                * ($prescription->remise / 100), 0, ',', ' ') }} Ar
+                                        </th>
+                                    </tr>
+                                @endif
+
+                                <tr class="table-primary">
+                                    <th>Total Général</th>
+                                    <th colspan="2">{{ number_format($totalGeneral, 0, ',', ' ') }} Ar</th>
+                                    <th>
+                                        @if($prescription->analyses->every(fn($a) => $a->pivot->is_payer === 'PAYE') &&
+                                            $prescription->prelevements->every(fn($p) => $p->pivot->is_payer === 'PAYE'))
+                                            <span class="badge" style="background-color: #34D399; font-weight: normal;">
+                                                Entièrement payé
+                                            </span>
+                                        @else
+                                            <span class="badge bg-danger">
+                                                Paiement en attente
+                                            </span>
+                                        @endif
+                                    </th>
+                                </tr>
+
                                 {{-- Button paiement --}}
                                 <tr>
                                     <th class="text-end" colspan="4">
@@ -228,7 +303,7 @@
                                     </th>
                                 </tr>
                             </tfoot>
-                        </tbody>
+                      </tbody>
                     </table>
                 </div>
             </div>
