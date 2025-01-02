@@ -7,6 +7,7 @@ use Database\Seeders\RoleSeeder;
 use Database\Seeders\UsersSeeder;
 use Database\Seeders\AnalyseSqlSeeder;
 use Database\Seeders\PermissionSeeder;
+use Database\Seeders\PrescripteurSeeder;
 
 
 class DatabaseSeeder extends Seeder
@@ -26,6 +27,7 @@ class DatabaseSeeder extends Seeder
             AnalyseSqlSeeder::class,
             BacteryFamiliesSeeder::class,
             PrelevementSeeder::class,
+            PrescripteurSeeder::class,
         ]);
     }
 }

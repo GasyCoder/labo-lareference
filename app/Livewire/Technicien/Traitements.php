@@ -57,17 +57,14 @@ class Traitements extends Component
         ->where(function ($query) use ($search) {
             $query->where('renseignement_clinique', 'like', $search)
                 ->orWhere('status', 'like', $search)
-                ->orWhere('nouveau_prescripteur_nom', 'like', $search)
                 ->orWhereHas('patient', function ($query) use ($search) {
                     $query->where('nom', 'like', $search)
                         ->orWhere('prenom', 'like', $search)
                         ->orWhere('telephone', 'like', $search);
                 })
                 ->orWhereHas('prescripteur', function ($query) use ($search) {
-                    $query->where('name', 'like', $search)
-                        ->whereHas('roles', function ($query) {
-                            $query->where('name', 'prescripteur');
-                        });
+                    $query->where('nom', 'like', $search)
+                        ->where('is_active', true);
                 });
         })
         ->orderBy('created_at', 'desc')
@@ -86,17 +83,14 @@ class Traitements extends Component
             ->where(function ($query) use ($search) {
                 $query->where('renseignement_clinique', 'like', $search)
                     ->orWhere('status', 'like', $search)
-                    ->orWhere('nouveau_prescripteur_nom', 'like', $search)
-                    ->orWhereHas('patient', function ($patientQuery) use ($search) {
-                        $patientQuery->where('nom', 'like', $search)
+                    ->orWhereHas('patient', function ($query) use ($search) {
+                        $query->where('nom', 'like', $search)
                             ->orWhere('prenom', 'like', $search)
                             ->orWhere('telephone', 'like', $search);
                     })
-                    ->orWhereHas('prescripteur', function ($prescripteurQuery) use ($search) {
-                        $prescripteurQuery->where('name', 'like', $search)
-                            ->whereHas('roles', function ($roleQuery) {
-                                $roleQuery->where('name', 'prescripteur');
-                            });
+                    ->orWhereHas('prescripteur', function ($query) use ($search) {
+                        $query->where('nom', 'like', $search)
+                            ->where('is_active', true);
                     });
             })
             ->orderBy('created_at', 'asc')

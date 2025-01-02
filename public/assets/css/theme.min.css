@@ -1035,38 +1035,48 @@ progress {
     --gk-gutter-y: 0;
     margin-left: auto;
     margin-right: auto;
-    padding-left: calc(var(--gk-gutter-x)*.5);
-    padding-right: calc(var(--gk-gutter-x)*.5);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
     width: 100%
 }
 
 @media (min-width: 576px) {
     .container,.container-sm {
         max-width:540px
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 }
 
 @media (min-width: 768px) {
     .container,.container-md,.container-sm {
         max-width:720px
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 }
 
 @media (min-width: 992px) {
     .container,.container-lg,.container-md,.container-sm {
         max-width:960px
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 }
 
 @media (min-width: 1200px) {
     .container,.container-lg,.container-md,.container-sm,.container-xl {
         max-width:1140px
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 }
 
 @media (min-width: 1400px) {
     .container,.container-lg,.container-md,.container-sm,.container-xl,.container-xxl {
         max-width:1320px
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 }
 

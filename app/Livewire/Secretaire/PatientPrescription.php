@@ -10,6 +10,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\ResultatPdfShow;
 use Illuminate\Support\Facades\DB;
 use App\Models\AnalysePrescription;
+use Illuminate\Support\Facades\Log;
 use App\Services\ResultatPdfService;
 use Illuminate\Support\Facades\Storage;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
@@ -63,131 +64,68 @@ class PatientPrescription extends Component
     {
         $this->resetPage();
     }
-
     public function render()
     {
         $search = '%' . $this->search . '%';
 
-        // Prescriptions actives (non validées et non archivées)
-        $activePrescriptions = Prescription::with([
-            'patient' => function($query) {
-                $query->select('id', 'ref', 'nom', 'prenom', 'telephone');
-            },
-            'prescripteur',
+        $baseQuery = Prescription::with([
+            'patient:id,ref,nom,prenom,telephone',
+            'prescripteur:id,nom',
             'analyses',
             'resultats'
         ])
-        ->whereHas('patient', function ($query) {
-            $query->whereNull('deleted_at');
-        })
-        ->where('is_archive', false)
-        ->where('status', '!=', Prescription::STATUS_VALIDE)
-        ->where(function ($query) use ($search) {
+        ->whereHas('patient', fn($q) => $q->whereNull('deleted_at'));
+
+        $searchCondition = function ($query) use ($search) {
             $query->where('renseignement_clinique', 'like', $search)
                 ->orWhere('status', 'like', $search)
-                ->orWhere('nouveau_prescripteur_nom', 'like', $search)
-                ->orWhereHas('patient', function ($query) use ($search) {
-                    $query->where('nom', 'like', $search)
+                ->orWhereHas('patient', function ($q) use ($search) {
+                    $q->where('nom', 'like', $search)
                         ->orWhere('prenom', 'like', $search)
                         ->orWhere('telephone', 'like', $search);
                 })
-                ->orWhereHas('prescripteur', function ($query) use ($search) {
-                    $query->where('name', 'like', $search)
-                        ->whereHas('roles', function ($query) {
-                            $query->where('name', 'prescripteur');
-                        });
+                ->orWhereHas('prescripteur', function ($q) use ($search) {
+                    $q->where('nom', 'like', $search)
+                        ->where('is_active', true);
                 });
-        })
-        ->orderBy('created_at', 'desc')
-        ->paginate(15);
+        };
 
-        // Prescriptions validées (non archivées)
-        $analyseValides = Prescription::with([
-            'patient' => function($query) {
-                $query->select('id', 'ref', 'nom', 'prenom', 'telephone');
-            },
-            'prescripteur',
-            'analyses',
-            'resultats'
-        ])
-        ->whereHas('patient', function ($query) {
-            $query->whereNull('deleted_at');
-        })
-        ->where('is_archive', false)
-        ->where('status', Prescription::STATUS_VALIDE)
-        ->whereDoesntHave('analyses', function ($query) {
-            $query->whereDoesntHave('resultats', function ($query) {
-                $query->whereNotNull('validated_by');
-            });
-        })
-        ->where(function ($query) use ($search) {
-            $query->where('renseignement_clinique', 'like', $search)
-                ->orWhere('status', 'like', $search)
-                ->orWhere('nouveau_prescripteur_nom', 'like', $search)
-                ->orWhereHas('patient', function ($query) use ($search) {
-                    $query->where('nom', 'like', $search)
-                        ->orWhere('prenom', 'like', $search)
-                        ->orWhere('telephone', 'like', $search);
-                });
-        })
-        ->orderBy('created_at', 'desc')
-        ->paginate(15, ['*'], 'valide_page');
+        $activePrescriptions = (clone $baseQuery)
+            ->where('is_archive', false)
+            ->where('status', '!=', Prescription::STATUS_VALIDE)
+            ->where($searchCondition)
+            ->latest()
+            ->paginate(15);
 
-        // Prescriptions archivées
-        $archivedPrescriptions = Prescription::with([
-            'patient' => function($query) {
-                $query->select('id', 'ref', 'nom', 'prenom', 'telephone');
-            },
-            'prescripteur',
-            'analyses',
-            'resultats'
-        ])
-        ->whereHas('patient', function ($query) {
-            $query->whereNull('deleted_at');
-        })
-        ->where('is_archive', true)
-        ->where('status', Prescription::STATUS_VALIDE)
-        ->where(function ($query) use ($search) {
-            $query->where('renseignement_clinique', 'like', $search)
-                ->orWhere('status', 'like', $search)
-                ->orWhere('nouveau_prescripteur_nom', 'like', $search)
-                ->orWhereHas('patient', function ($query) use ($search) {
-                    $query->where('nom', 'like', $search)
-                        ->orWhere('prenom', 'like', $search)
-                        ->orWhere('telephone', 'like', $search);
-                });
-        })
-        ->orderBy('created_at', 'desc')
-        ->paginate(15, ['*'], 'archive_page');
+        $analyseValides = (clone $baseQuery)
+            ->where('is_archive', false)
+            ->where('status', Prescription::STATUS_VALIDE)
+            ->whereDoesntHave('analyses', function ($q) {
+                $q->whereDoesntHave('resultats', fn($q) => $q->whereNotNull('validated_by'));
+            })
+            ->where($searchCondition)
+            ->latest()
+            ->paginate(15, ['*'], 'valide_page');
 
-        // Prescriptions dans la corbeille
-        $deletedPrescriptions = Prescription::with([
-            'patient' => function($query) {
-                $query->select('id', 'ref', 'nom', 'prenom', 'telephone');
-            },
-            'prescripteur',
-            'analyses'
-        ])
-        ->onlyTrashed()
-        ->where(function ($query) use ($search) {
-            $query->where('renseignement_clinique', 'like', $search)
-                ->orWhere('status', 'like', $search)
-                ->orWhere('nouveau_prescripteur_nom', 'like', $search)
-                ->orWhereHas('patient', function ($query) use ($search) {
-                    $query->where('nom', 'like', $search)
-                        ->orWhere('prenom', 'like', $search)
-                        ->orWhere('telephone', 'like', $search);
-                });
-        })
-        ->orderBy('created_at', 'desc')
-        ->paginate(15, ['*'], 'deleted_page');
+        $archivedPrescriptions = (clone $baseQuery)
+            ->where('is_archive', true)
+            ->where('status', Prescription::STATUS_VALIDE)
+            ->where($searchCondition)
+            ->latest()
+            ->paginate(15, ['*'], 'archive_page');
 
-        return view('livewire.secretaire.patient-prescription', [
-            'activePrescriptions' => $activePrescriptions,
-            'analyseValides' => $analyseValides,
-            'archivedPrescriptions' => $archivedPrescriptions,
-            'deletedPrescriptions' => $deletedPrescriptions,
-        ]);
+        $deletedPrescriptions = (clone $baseQuery)
+            ->onlyTrashed()
+            ->where($searchCondition)
+            ->latest()
+            ->paginate(15, ['*'], 'deleted_page');
+
+        return view('livewire.secretaire.patient-prescription', compact(
+            'activePrescriptions',
+            'analyseValides',
+            'archivedPrescriptions',
+            'deletedPrescriptions'
+        ));
     }
 
     public function edit($prescriptionId)
@@ -221,7 +159,7 @@ class PatientPrescription extends Component
             return redirect()->route('secretaire.patients.index');
 
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de la mise en corbeille de la prescription: ' . $e->getMessage());
+            Log::error('Erreur lors de la mise en corbeille de la prescription: ' . $e->getMessage());
             $this->alert('error', 'Une erreur est survenue lors de la mise en corbeille: ' . $e->getMessage());
         }
 
@@ -360,7 +298,7 @@ class PatientPrescription extends Component
             return Storage::disk('public')->url($filename);
 
         } catch (\Exception $e) {
-            \Log::error('Erreur génération PDF:', [
+            Log::error('Erreur génération PDF:', [
                 'message' => $e->getMessage(),
                 'prescription_id' => $prescriptionId,
                 'trace' => $e->getTraceAsString()

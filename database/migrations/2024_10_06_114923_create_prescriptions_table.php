@@ -14,8 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('secretaire_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
-            $table->foreignId('prescripteur_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->string('nouveau_prescripteur_nom')->nullable();
+            $table->foreignId('prescripteur_id')->nullable()->constrained('prescripteurs')->onDelete('set null');
             $table->enum('patient_type', ['HOSPITALISE', 'EXTERNE', 'URGENCE-NUIT', 'URGENCE-JOUR'])->default('EXTERNE');
             $table->integer('age');
             $table->enum('unite_age', ['Ans', 'Mois', 'Jours'])->default('Ans');

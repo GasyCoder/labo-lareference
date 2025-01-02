@@ -7,8 +7,6 @@
                 <th scope="col">#</th>
                 <th scope="col">Patient</th>
                 <th scope="col">Prescripteur</th>
-                <th scope="col">Créé</th>
-                <th scope="col">Statut</th>
                 <th scope="col">Analyses</th>
                 <th scope="col" class="text-end">Actions</th>
             </tr>
@@ -17,7 +15,7 @@
             @foreach($prescriptions as $prescription)
                 <tr>
                     <td class="fw-medium">
-                        {{ $prescription->patient->formatted_ref ?? 'Non défini' }}
+                        Réf-{{ $prescription->patient->formatted_ref ?? 'Non défini' }}
                     </td>
                     <td>
                         <div class="d-flex align-items-center gap-3">
@@ -43,20 +41,13 @@
                         </div>
                     </td>
                     <td>
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-1">
                             <i class="fas fa-user-md text-primary"></i>
-                            <span>{{ $prescription->prescripteur ? $prescription->prescripteur->name : ($prescription->nouveau_prescripteur_nom ?? 'Non assigné') }}</span>
+                            <span title="{{ $prescription->prescripteur?->nom }}">
+                                {{ Str::limit($prescription->prescripteur?->nom, 25, '...') ?? 'Non assigné' }}
+                            </span>
                         </div>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="fas fa-calendar-alt text-muted"></i>
-                            <small>{{ $prescription->created_at->diffForHumans(['parts' => 1, 'short' => true]) }}</small>
-                        </div>
-                    </td>
-                    <td>
-                        <x-prescription-status :status="$prescription->status" />
-                    </td>
+                     </td>
                     {{-- Analyses --}}
                     <td>
                         <div class="d-flex flex-wrap gap-1">
@@ -90,7 +81,7 @@
                         </div>
                     </td>
                     {{-- Actions --}}
-                    <td>
+                    <td class="text-end">
                         <button wire:click="openPrescription({{ $prescription->id }})"
                                 class="btn btn-sm btn-primary"
                                 title="Voir détails">

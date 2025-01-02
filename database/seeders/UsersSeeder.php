@@ -17,7 +17,7 @@ class UsersSeeder extends Seeder
         $superadmin = User::create([
             'name' => 'Super Admin',
             'email' => 'superadmin@labo.com',
-            'password' => Hash::make('superadmin123'),
+            'password' => Hash::make('superadmin@123'),
             'email_verified_at' => now(),
         ]);
         $superadmin->assignRole('superadmin');
@@ -48,14 +48,5 @@ class UsersSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
         $technicien->assignRole('technicien');
-
-        // Création du Prescripteur
-        $prescripteur = User::create([
-            'name' => 'Médecin Prescripteur',
-            'email' => 'prescripteur@labo.com',
-            'password' => Hash::make('prescripteur123'),
-            'email_verified_at' => now(),
-        ]);
-        $prescripteur->assignRole('prescripteur');
     }
 }

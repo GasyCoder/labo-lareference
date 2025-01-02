@@ -174,7 +174,7 @@ $count = \App\Models\Prescription::where('is_archive', true)
     <div class="mx-4 my-8 shadow-none text-start">
         <div class="py-6">
             <div class="mt-8">
-                <p class="text-white-50">version 1.3.0 - Bêta</p>
+                <p class="text-white-50">La reference - version 1.5.0 - Bêta</p>
                 <a href="https://github.com/GasyCoder" target="_blank" class="mt-0 badge bg-secondary-soft">Developed by GasyCoder</a>
             </div>
         </div>

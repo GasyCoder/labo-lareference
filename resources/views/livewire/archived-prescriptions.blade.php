@@ -58,11 +58,13 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="d-flex align-items-center gap-2">
+                                    <div class="d-flex align-items-center gap-1">
                                         <i class="fas fa-user-md text-primary"></i>
-                                        <span>{{ $prescription->prescripteur?->name ?? $prescription->nouveau_prescripteur_nom }}</span>
+                                        <span title="{{ $prescription->prescripteur?->nom }}">
+                                            {{ Str::limit($prescription->prescripteur?->nom, 25, '...') ?? 'Non assigné' }}
+                                        </span>
                                     </div>
-                                </td>
+                                 </td>
                                 <td>
                                     <div class="d-flex flex-wrap gap-1">
                                         @foreach($prescription->analyses->take(3) as $analyse)

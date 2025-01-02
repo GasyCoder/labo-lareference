@@ -8,93 +8,70 @@ use Livewire\WithPagination;
 
 class AnalyseValide extends Component
 {
-    use WithPagination;
+   use WithPagination;
 
-    protected $paginationTheme = 'bootstrap';
-    public $tab = 'termine';
+   protected $paginationTheme = 'bootstrap';
+   public $tab = 'termine';
+   public $search = '';
 
-    public $search = '';
+   protected $queryString = [
+       'search',
+       'tab' => ['except' => 'termine'],
+   ];
 
-    protected $queryString = [
-        'search',
-        'tab' => ['except' => 'termine'],
-    ];
+   public function updatingSearch()
+   {
+       $this->resetPage();
+   }
 
-    public function updatingSearch()
-    {
-        $this->resetPage();
-    }
+   public function updatedTab()
+   {
+       $this->resetPage();
+   }
 
-    public function updatedTab()
-    {
-        $this->resetPage(); // Réinitialise la pagination lors du changement d'onglet
-    }
+   public function openAnalyse($prescriptionId)
+   {
+       $prescription = Prescription::findOrFail($prescriptionId);
+       return $this->redirect(route('biologiste.valide.show', ['prescription' => $prescription]));
+   }
 
-    public function openAnalyse($prescriptionId)
-    {
-        $prescription = Prescription::findOrFail($prescriptionId);
+   public function render()
+   {
+       $search = '%' . $this->search . '%';
 
-        return $this->redirect(route('biologiste.valide.show',
-        ['prescription' => $prescription]));
-    }
+       $baseQuery = Prescription::with([
+           'patient',
+           'prescripteur:id,nom,is_active',
+           'analyses'
+       ])
+       ->whereHas('patient', fn($q) => $q->whereNull('deleted_at'));
 
-    public function render()
-    {
-        $search = '%' . $this->search . '%';
+       $searchCondition = function($query) use ($search) {
+           $query->where('renseignement_clinique', 'like', $search)
+               ->orWhere('status', 'like', $search)
+               ->orWhereHas('patient', function($q) use ($search) {
+                   $q->where('nom', 'like', $search)
+                       ->orWhere('prenom', 'like', $search)
+                       ->orWhere('telephone', 'like', $search);
+               })
+               ->orWhereHas('prescripteur', function($q) use ($search) {
+                   $q->where('nom', 'like', $search)
+                       ->where('is_active', true);
+               });
+       };
 
-        // Prescriptions valides
-        $analyseValides = Prescription::with(['patient', 'prescripteur', 'analyses'])
-            ->whereHas('patient', function ($query) {
-                $query->whereNull('deleted_at');
-            })
-            ->where('status', '=', Prescription::STATUS_VALIDE)
-            ->where(function ($query) use ($search) {
-                $query->where('renseignement_clinique', 'like', $search)
-                    ->orWhere('status', 'like', $search)
-                    ->orWhere('nouveau_prescripteur_nom', 'like', $search)
-                    ->orWhereHas('patient', function ($patientQuery) use ($search) {
-                        $patientQuery->where('nom', 'like', $search)
-                            ->orWhere('prenom', 'like', $search)
-                            ->orWhere('telephone', 'like', $search);
-                    })
-                    ->orWhereHas('prescripteur', function ($prescripteurQuery) use ($search) {
-                        $prescripteurQuery->where('name', 'like', $search)
-                            ->whereHas('roles', function ($roleQuery) {
-                                $roleQuery->where('name', 'prescripteur');
-                            });
-                    });
-            })
-            ->orderBy('created_at', 'asc')
-            ->paginate(15);
+       $analyseValides = (clone $baseQuery)
+           ->where('status', Prescription::STATUS_VALIDE)
+           ->where($searchCondition)
+           ->oldest()
+           ->paginate(15);
 
-        // Prescriptions terminées
-        $analyseTermines = Prescription::with(['patient', 'prescripteur', 'analyses'])
-            ->whereHas('patient', function ($query) {
-                $query->whereNull('deleted_at');
-            })
-            ->where('status', '=', Prescription::STATUS_TERMINE)
-            ->where(function ($query) use ($search) {
-                $query->where('renseignement_clinique', 'like', $search)
-                    ->orWhere('status', 'like', $search)
-                    ->orWhere('nouveau_prescripteur_nom', 'like', $search)
-                    ->orWhereHas('patient', function ($patientQuery) use ($search) {
-                        $patientQuery->where('nom', 'like', $search)
-                            ->orWhere('prenom', 'like', $search)
-                            ->orWhere('telephone', 'like', $search);
-                    })
-                    ->orWhereHas('prescripteur', function ($prescripteurQuery) use ($search) {
-                        $prescripteurQuery->where('name', 'like', $search)
-                            ->whereHas('roles', function ($roleQuery) {
-                                $roleQuery->where('name', 'prescripteur');
-                            });
-                    });
-            })
-            ->orderBy('created_at', 'asc')
-            ->paginate(15);
+       $analyseTermines = (clone $baseQuery)
+           ->where('status', Prescription::STATUS_TERMINE)
+           ->where($searchCondition)
+           ->oldest()
+           ->paginate(15);
 
-            return view('livewire.biologiste.analyse-valide', [
-                'analyseValides' => $analyseValides,
-                'analyseTermines' => $analyseTermines,
-            ]);
-    }
+       return view('livewire.biologiste.analyse-valide', compact('analyseValides', 'analyseTermines'));
+   }
 }

@@ -6,18 +6,17 @@
             <div class="card shadow-sm border-0">
                 <div class="card-body">
                     <div class="row align-items-center">
-                        {{-- info patient --}}
-                        @include('livewire.forms-input.patient-info', ['patient' => $prescription->patient])
+                        {{-- Informations du patient --}}
+                        <div class="col-lg-8">
+                            @include('livewire.forms-input.patient-info', ['patient' => $prescription->patient])
+                        </div>
+
                         <!-- Actions -->
-                        <div class="col-lg-4 text-end">
-                            <div class="d-flex flex-column gap-2">
-                                <a href="{{ route('biologiste.analyse.index')}}"
-                                   class="btn btn-outline-secondary">
-                                    <i class="fas fa-arrow-left me-2"></i>
-                                    Retour
-                                </a>
-                                <x-preview-button class="btn btn-primary" />
-                            </div>
+                        <div class="col-lg-4 d-flex justify-content-end align-items-center gap-3">
+                            <a href="{{ route('biologiste.analyse.index')}}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Retour
+                            </a>
+                            <x-preview-button/>
                         </div>
                     </div>
                 </div>
@@ -25,7 +24,7 @@
         </div>
 
         <!-- Liste des analyses -->
-        <div class="col-md-3">
+        <div class="col-md-3 mt-3">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white py-3">
                     <h5 class="card-title mb-0">
@@ -35,16 +34,19 @@
 
                 <div class="list-group list-group-flush">
                     @foreach($topLevelAnalyses as $analyse)
-                        <button wire:click="selectAnalyse({{ $analyse->id }})"
-                                wire:loading.attr="disabled"
-                                @class([
-                                    'list-group-item list-group-item-action d-flex justify-content-between align-items-center',
-                                    'active' => $selectedAnalyse && $selectedAnalyse->id == $analyse->id,
-                                ])>
+                         <button wire:click="selectAnalyse({{ $analyse->id }})"
+                            wire:loading.attr="disabled"
+                            @class([
+                                'list-group-item list-group-item-action d-flex justify-content-between align-items-center',
+                                'active-transparent' => $selectedAnalyse && $selectedAnalyse->id == $analyse->id,
+                            ])>
                             <div>
-                                <i class="fas fa-flask me-2"></i>
-                                <span class="fw-medium">{{ strtoupper($analyse->designation) }}</span>
-                                <span class="badge bg-secondary ms-2">{{ $analyse->abr }}</span>
+                                <span @class([
+                                    'badge',
+                                    'bg-secondary' => !$selectedAnalyse || $selectedAnalyse->id != $analyse->id,
+                                    'bg-success text-white' => $selectedAnalyse && $selectedAnalyse->id == $analyse->id
+                                ])>
+                                {{ $analyse->abr }}</span>
                             </div>
 
                             @php
@@ -55,11 +57,11 @@
                             @endphp
 
                             @if($resultat && $resultat->validated_by)
-                                <span class="badge bg-success">
+                                <span class="badge bg-success-soft text-success">
                                     <i class="fas fa-check-double me-1"></i>Validé
                                 </span>
                             @else
-                                <sup class="badge bg-warning">
+                                <span class="badge bg-warning-soft text-primary">
                                     <i class="fas fa-check me-1"></i>Terminé
                                 </sup>
                             @endif
@@ -86,7 +88,7 @@
                             class="btn btn-success w-100">
                         <span wire:loading.remove>
                             <i class="fas fa-check-circle me-2"></i>
-                            Valider toutes les analyses
+                            VALIDER
                         </span>
                         <span wire:loading>
                             <i class="fas fa-spinner fa-spin me-2"></i>
@@ -99,7 +101,7 @@
         </div>
 
         <!-- Formulaire de résultats -->
-        <div class="col-md-9">
+        <div class="col-md-9 mt-3">
             @if($showForm && $selectedAnalyse)
                 <div class="card shadow-sm">
                     <div class="card-header bg-primary text-white py-3">
@@ -133,6 +135,19 @@
     </div>
 
     @include('layouts.style-patient-info')
+
+    <style>
+        .active-transparent {
+            background-color: rgba(48, 238, 156, 0.405); /* Bleu clair transparent */
+            border-color: rgba(58, 210, 96, 0.629); /* Bordure plus opaque */
+            color: #000; /* Couleur du texte */
+        }
+
+        .active-transparent:hover {
+            background-color: rgba(100, 149, 237, 0.3); /* Accentuation au survol */
+        }
+
+    </style>
 </div>
 @include('layouts.scripts')
 

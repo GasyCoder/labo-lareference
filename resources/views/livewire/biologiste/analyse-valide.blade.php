@@ -1,13 +1,12 @@
-<div class="container-fluid py-4">
-    <section class="container-fluid p-4">
-        <div class="card shadow-sm border-0 rounded-lg">
+<div class="container-fluid py-2">
+    <section class="container-fluid p-2">
+        <div class="card rounded-lg">
             <div class="card-body">
                 <!-- Barre de recherche -->
                 <div class="mb-4">
                     <input type="text" wire:model.debounce.300ms="search" class="form-control"
                         placeholder="Rechercher par nom, prescripteur ou renseignement clinique...">
                 </div>
-
                 <!-- Onglets -->
                 <ul class="nav nav-tabs mb-4">
                     <li class="nav-item">

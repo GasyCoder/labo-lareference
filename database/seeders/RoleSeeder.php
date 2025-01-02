@@ -32,12 +32,6 @@ class RoleSeeder extends Seeder
             'description' => 'Réalisation des analyses en laboratoire'
         ]);
 
-        $prescripteur = Role::create([
-            'name' => 'prescripteur',
-            'label' => 'Prescripteur',
-            'description' => 'Prescription des analyses et interprétation des résultats'
-        ]);
-
         $superadmin->givePermissionTo([
             'superadmin',
         ]);
@@ -54,8 +48,5 @@ class RoleSeeder extends Seeder
             'technicien',
         ]);
 
-        $prescripteur->givePermissionTo([
-            'prescripteur',
-        ]);
     }
 }

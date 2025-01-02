@@ -8,6 +8,7 @@ use App\Models\Patient;
 use Livewire\Component;
 use App\Models\Prelevement;
 use Illuminate\Support\Str;
+use App\Models\Prescripteur;
 use App\Models\Prescription;
 use Livewire\Attributes\Rule;
 use Illuminate\Support\Collection;
@@ -58,7 +59,6 @@ class AddPrescriptions extends Component
   public $analyses = [];
   public $prescripteur_search = '';
   public $prescripteur_id = null;
-  public $nouveau_prescripteur_nom = null;
   public $suggestions = [];
   public $showCreateOption = false;
   public $selectedAnalyses = [];
@@ -97,39 +97,39 @@ class AddPrescriptions extends Component
 
     protected function loadExistingData()
     {
-        $patient = Patient::findOrFail($this->patientId);
-        $prescription = Prescription::where('patient_id', $this->patientId)
-            ->with(['analyses', 'prelevements'])
-            ->latest()
-            ->firstOrFail();
+    $patient = Patient::findOrFail($this->patientId);
+    $prescription = Prescription::where('patient_id', $this->patientId)
+        ->with(['analyses', 'prelevements', 'prescripteur'])
+        ->latest()
+        ->firstOrFail();
 
-        // Charger les données du patient
-        $this->nom = $patient->nom;
-        $this->prenom = $patient->prenom;
-        $this->sexe = $patient->sexe;
-        $this->telephone = $patient->telephone;
-        $this->email = $patient->email;
+    // Patient data
+    $this->nom = $patient->nom;
+    $this->prenom = $patient->prenom;
+    $this->sexe = $patient->sexe;
+    $this->telephone = $patient->telephone;
+    $this->email = $patient->email;
 
-        // Charger les données de prescription
-        $this->patient_type = $prescription->patient_type;
-        $this->age = $prescription->age;
-        $this->unite_age = $prescription->unite_age;
-        $this->poids = $prescription->poids;
-        $this->renseignement_clinique = $prescription->renseignement_clinique;
-        $this->remise = $prescription->remise;
-        $this->prescripteur_id = $prescription->prescripteur_id;
-        $this->nouveau_prescripteur_nom = $prescription->nouveau_prescripteur_nom;
+    // Prescription data
+    $this->patient_type = $prescription->patient_type;
+    $this->age = $prescription->age;
+    $this->unite_age = $prescription->unite_age;
+    $this->poids = $prescription->poids;
+    $this->renseignement_clinique = $prescription->renseignement_clinique;
+    $this->remise = $prescription->remise;
+    $this->prescripteur_id = $prescription->prescripteur_id;
+    if ($prescription->prescripteur) {
+        $this->prescripteur_search = $prescription->prescripteur->nom;
+    }
 
-        // Charger les analyses
-        $this->selectedAnalyses = $prescription->analyses->pluck('id')->toArray();
+    // Analyses and prelevements
+    $this->selectedAnalyses = $prescription->analyses->pluck('id')->toArray();
+    $this->selectedPrelevements = $prescription->prelevements->pluck('id')->toArray();
+    $this->prelevementQuantities = $prescription->prelevements
+        ->pluck('pivot.quantite', 'id')
+        ->toArray();
 
-        // Charger les prélèvements
-        $this->selectedPrelevements = $prescription->prelevements->pluck('id')->toArray();
-        $this->prelevementQuantities = $prescription->prelevements
-            ->pluck('pivot.quantite', 'id')
-            ->toArray();
-
-        $this->calculateTotal();
+    $this->calculateTotal();
     }
 
     public function loadAnalyses()
@@ -172,9 +172,8 @@ class AddPrescriptions extends Component
             'prescripteur_search_' . $this->prescripteur_search,
             now()->addMinutes(10),
             function () {
-                return User::role('prescripteur')
-                    ->select(['id', 'name'])
-                    ->where('name', 'like', $this->prescripteur_search . '%')
+                return Prescripteur::where('nom', 'like', '%' . $this->prescripteur_search . '%')
+                    ->where('is_active', true)
                     ->take(5)
                     ->get()
                     ->toArray();
@@ -257,25 +256,31 @@ class AddPrescriptions extends Component
     }
 
 
-    public function selectPrescripteur($id, $name)
+    public function selectPrescripteur($id, $nom)
     {
         $this->prescripteur_id = $id;
-        $this->prescripteur_search = $name;
-        $this->nouveau_prescripteur_nom = null;
+        $this->prescripteur_search = $nom;
         $this->suggestions = [];
         $this->showCreateOption = false;
     }
+
 
     public function setNewPrescripteur()
     {
-        if (empty($this->prescripteur_id) && !empty($this->prescripteur_search)) {
-            $this->nouveau_prescripteur_nom = $this->prescripteur_search;
-            $this->prescripteur_id = null; // Réinitialiser l'ID
-        }
-        $this->suggestions = [];
-        $this->showCreateOption = false;
+    if (!empty($this->prescripteur_search)) {
+        $prescripteur = Prescripteur::create([
+            'nom' => $this->prescripteur_search,
+            'is_active' => true
+        ]);
+
+        $this->prescripteur_id = $prescripteur->id;
+        $this->prescripteur_search = $prescripteur->nom;
     }
 
+
+    $this->suggestions = [];
+    $this->showCreateOption = false;
+    }
 
     public function selectSuggestion($nom, $prenom)
     {
@@ -465,25 +470,22 @@ class AddPrescriptions extends Component
     public function nextStep()
     {
         if ($this->isValidAction()) {
-            // Valider uniquement les règles de l'étape actuelle
             $currentRules = $this->getValidationRules()[$this->step] ?? [];
             $this->validate($currentRules);
 
-            // Vérifiez et définissez un nouveau prescripteur si aucun ID n'est fourni
             if ($this->step === 1) {
-                if (empty($this->prescripteur_id) && !empty($this->prescripteur_search)) {
-                    $this->nouveau_prescripteur_nom = $this->prescripteur_search;
+                if (!empty($this->prescripteur_search) && empty($this->prescripteur_id)) {
+                    $prescripteur = Prescripteur::create([
+                        'nom' => $this->prescripteur_search,
+                        'is_active' => true
+                    ]);
+                    $this->prescripteur_id = $prescripteur->id;
                 }
-            }
-
-            // Charger les données nécessaires pour l'étape suivante
-            if ($this->step === 1) {
                 $this->loadAnalyses();
             } elseif ($this->step === 2) {
                 $this->loadPrelevements();
             }
 
-            // Passez à l'étape suivante ou enregistrez les données
             if ($this->step < $this->totalSteps) {
                 $this->step++;
                 $this->dispatch('stepUpdated', step: $this->step);
@@ -586,7 +588,6 @@ class AddPrescriptions extends Component
             'renseignement_clinique' => $this->renseignement_clinique,
             'remise' => $this->remise,
             'prescripteur_id' => $this->prescripteur_id,
-            'nouveau_prescripteur_nom' => $this->prescripteur_id ? null : $this->nouveau_prescripteur_nom,
         ];
     }
 
@@ -596,29 +597,23 @@ class AddPrescriptions extends Component
             return;
         }
 
-        // Initialisez $this->analysesCollection si elle n'est pas déjà définie
-        if (!isset($this->analysesCollection)) {
-            $this->analysesCollection = collect($this->analyses);
-        }
+        $priceMap = collect($this->analyses)->pluck('prix', 'id')->toArray();
 
-        // Mappez les analyses sélectionnées pour les synchroniser
-        $analysesToSync = collect($this->selectedAnalyses)->mapWithKeys(function ($analyseId) {
-            $analyse = $this->analysesCollection->firstWhere('id', $analyseId);
+        $analysesToSync = collect($this->selectedAnalyses)->mapWithKeys(function ($analyseId) use ($priceMap) {
             return [$analyseId => [
-                'prix' => $analyse['prix'],
+                'prix' => $priceMap[$analyseId] ?? 0,
                 'status' => AnalysePrescription::STATUS_EN_ATTENTE,
                 'created_at' => now(),
                 'updated_at' => now()
             ]];
         })->toArray();
 
-        // Synchronisez les analyses avec la prescription
         $prescription->analyses()->sync($analysesToSync);
         $prescription->updateStatus();
 
-        // Invalidez le cache
         Cache::forget('analyses_list_v2');
     }
+
     protected function savePrelevements($prescription)
     {
         if (empty($this->selectedPrelevements)) {
@@ -654,7 +649,6 @@ class AddPrescriptions extends Component
                 'renseignement_clinique' => 'nullable|string',
                 'prescripteur_search' => 'nullable|string|max:255|regex:/^[\pL\s\-]+$/u',
                 'prescripteur_id' => 'required_without:nouveau_prescripteur_nom|nullable|integer',
-                'nouveau_prescripteur_nom' => 'required_without:prescripteur_id|nullable|string|max:255',
             ],
             3 => [
                 'selectedAnalyses' => 'required|array|min:1',

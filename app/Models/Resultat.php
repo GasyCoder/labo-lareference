@@ -29,15 +29,6 @@ class Resultat extends Model
     const STATUS_VALIDE = 'VALIDE';
     const STATUS_ARCHIVE = 'ARCHIVE';
 
-    // public function getFormattedResultatsAttribute(): string
-    // {
-    //     if (!$this->analyse || $this->analyse->analyseType->name !== 'GERME') {
-    //         return $this->resultats;
-    //     }
-
-    //     return $this->formatGermeForDisplay($this->resultats);
-    // }
-
     /**
      * Les attributs qui sont mass assignable.
      */

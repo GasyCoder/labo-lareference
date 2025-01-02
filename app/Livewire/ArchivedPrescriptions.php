@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Prescription;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Log;
 use App\Services\ResultatPdfService;
 use Illuminate\Support\Facades\Storage;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
@@ -12,12 +13,12 @@ use Jantinnerezo\LivewireAlert\LivewireAlert;
 class ArchivedPrescriptions extends Component
 {
     use WithPagination, LivewireAlert;
+
     protected $paginationTheme = 'bootstrap';
     public $prescriptionId;
     public $search = '';
     public $count;
     protected $queryString = ['search'];
-
     protected $pdfService;
 
     public function boot(ResultatPdfService $pdfService)
@@ -64,15 +65,15 @@ class ArchivedPrescriptions extends Component
                   ->orWhere('telephone', 'like', $search);
             })
             ->orWhereHas('prescripteur', function($q) use ($search) {
-                $q->where('name', 'like', $search);
+                $q->where('nom', 'like', $search)
+                  ->where('is_active', true);
             })
-            ->orWhere('nouveau_prescripteur_nom', 'like', $search)
             ->orWhereHas('analyses', function($q) use ($search) {
                 $q->where('abr', 'like', $search)
                   ->orWhere('designation', 'like', $search);
             });
         })
-        ->orderBy('created_at', 'desc')
+        ->latest()
         ->paginate(15);
 
         return view('livewire.archived-prescriptions', [
@@ -105,31 +106,20 @@ class ArchivedPrescriptions extends Component
         }
     }
 
-
     public function generateResultatsPDF($prescriptionId)
     {
         try {
             $prescription = Prescription::findOrFail($prescriptionId);
-
-            // Utiliser le service pour générer le PDF
             $pdf = $this->pdfService->generatePDF($prescription);
-
-            // Créer un nom de fichier unique
             $filename = 'resultats/prescription-' . $prescriptionId . '-' . time() . '.pdf';
-
-            // Sauvegarder temporairement le PDF
             Storage::disk('public')->put($filename, $pdf->output());
-
-            // Retourner l'URL temporaire
             return Storage::disk('public')->url($filename);
-
         } catch (\Exception $e) {
-            \Log::error('Erreur génération PDF:', [
+            Log::error('Erreur génération PDF:', [
                 'message' => $e->getMessage(),
                 'prescription_id' => $prescriptionId,
                 'trace' => $e->getTraceAsString()
             ]);
-
             $this->alert('error', "Erreur lors de la génération du PDF : {$e->getMessage()}");
             return null;
         }

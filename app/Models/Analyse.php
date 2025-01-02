@@ -67,20 +67,14 @@ class Analyse extends Model
      * Obtenir les analyses enfants directes.
      */
 
-     public function children()
-     {
-         return $this->hasMany(Analyse::class, 'parent_code', 'code')
-                     ->orderBy('ordre')
-                     ->distinct('id'); // Évite les doublons
-     }
-
-
-    // public function allChildren()
-    // {
-    //          return $this->hasMany(Analyse::class, 'parent_code', 'code')
-    //                 ->with('allChildren')
-    //                 ->orderBy('ordre');
-    // }
+    public function children()
+    {
+        return $this->hasMany(Analyse::class, 'parent_code', 'code')
+            ->orderBy('analyses.ordre', 'asc')          // Spécifier la table
+            ->orderBy('analyses.created_at', 'asc')     // Spécifier la table
+            ->orderBy('analyses.id', 'asc')             // Spécifier la table
+            ->distinct('analyses.id');
+    }
 
     public function getLevelValueAttribute(): string
     {
@@ -153,6 +147,14 @@ class Analyse extends Model
                 $analyse->code = self::generateUniqueCode();
             }
         });
+
+        // Le scope global
+        static::addGlobalScope('order', function ($builder) {
+            $builder->orderBy('analyses.ordre', 'asc')
+                   ->orderBy('analyses.created_at', 'asc')
+                   ->orderBy('analyses.id', 'asc');
+        });
+
     }
 
     public static function generateUniqueCode()
@@ -225,22 +227,36 @@ class Analyse extends Model
             return [];
         }
 
-        $data = is_array($value) ? $value : json_decode($value, true);
+        // Première décodage pour gérer le double encodage JSON
+        $data = is_string($value) ? json_decode($value, true) : $value;
 
-        // Format pour les unités
-        if (isset($data['value'][0]) && is_string($data['value'][0])) {
-            $innerData = json_decode($data['value'][0], true);
-            return [
-                'val_ref' => $innerData['val_ref'] ?? null,
-                'unite' => $innerData['unite'] ?? null,
-                'suffixe' => $innerData['suffixe'] ?? null
-            ];
+        // Deuxième décodage si nécessaire
+        if (is_string($data)) {
+            $data = json_decode($data, true);
         }
 
-        return $data;
+        // Si les données sont dans une structure avec 'value'
+        if (isset($data['value']) && is_array($data['value'])) {
+            if (isset($data['value'][0]) && is_string($data['value'][0])) {
+                $innerData = json_decode($data['value'][0], true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    return [
+                        'val_ref' => $innerData['val_ref'] ?? null,
+                        'unite' => $innerData['unite'] ?? null,
+                        'suffixe' => $innerData['suffixe'] ?? null
+                    ];
+                }
+            }
+            return $data;
+        }
+
+        // Pour le format direct avec val_ref, unite et suffixe
+        return [
+            'val_ref' => $data['val_ref'] ?? null,
+            'unite' => $data['unite'] ?? null,
+            'suffixe' => $data['suffixe'] ?? null
+        ];
     }
-
-
 
 
     private function extractOptions($value)
@@ -367,5 +383,7 @@ class Analyse extends Model
 
         return false;
     }
+
+
 
 }

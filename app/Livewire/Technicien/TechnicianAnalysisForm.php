@@ -110,7 +110,13 @@ class TechnicianAnalysisForm extends Component
     private function loadResults()
     {
         try {
-            $results = Resultat::where('prescription_id', $this->prescription->id)->get();
+             $results = Resultat::where('prescription_id', $this->prescription->id)
+            ->join('analyses', 'resultats.analyse_id', '=', 'analyses.id')
+            ->orderBy('analyses.ordre', 'asc')
+            ->orderBy('analyses.created_at', 'asc')
+            ->orderBy('analyses.id', 'asc')
+            ->select('resultats.*')
+            ->get();
 
             foreach ($results as $result) {
                 $analyse = Analyse::find($result->analyse_id);
@@ -878,11 +884,14 @@ class TechnicianAnalysisForm extends Component
     public function render()
     {
         try {
+
             $topLevelAnalyses = $this->prescription->analyses()
-                ->with(['children', 'analyseType'])
-                ->orderBy('ordre')
-                ->get()
-                ->groupBy('parent_code');
+                    ->with(['children', 'analyseType'])
+                    ->orderBy('ordre', 'asc')
+                    ->orderBy('created_at', 'asc')  // Ajout d'un tri secondaire par date de création
+                    ->orderBy('id', 'asc')          // Ajout d'un tri tertiaire par id
+                    ->get()
+                    ->groupBy('parent_code');
 
             $analyses = $topLevelAnalyses[0] ?? collect();
 
@@ -949,24 +958,25 @@ class TechnicianAnalysisForm extends Component
                     'conclusion' => $this->conclusion
                 ];
             }
+            elseif ($analyse->analyseType->name === 'NEGATIF_POSITIF_1') {
+                $value = $this->results[$analyseId]['valeur'] ?? null;
+                $mainResultData = [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId,
+                    'resultats' => $value, // Utiliser la même valeur que 'valeur'
+                    'valeur' => $value,    // Utiliser la même valeur
+                    'interpretation' => $this->results[$analyseId]['interpretation'] ?? null,
+                    'conclusion' => $this->conclusion
+                ];
+            }
             elseif ($analyse->analyseType->name === 'NEGATIF_POSITIF_2') {
                 $mainResultData = [
                     'prescription_id' => $this->prescription->id,
                     'analyse_id' => $analyseId,
                     'resultats' => $this->results[$analyseId]['resultats'] ?? null,
-                    'valeur' => $this->results[$analyseId]['resultats'] === 'Positif' ? 
+                    'valeur' => $this->results[$analyseId]['resultats'] === 'Positif' ?
                         ($this->results[$analyseId]['valeur'] ?? null) : null,
                     'interpretation' => null,
-                    'conclusion' => $this->conclusion
-                ];
-            }
-            elseif ($analyse->analyseType->name === 'NEGATIF_POSITIF_1') {
-                $mainResultData = [
-                    'prescription_id' => $this->prescription->id,
-                    'analyse_id' => $analyseId,
-                    'resultats' => null,
-                    'valeur' => $this->results[$analyseId]['valeur'] ?? null,       // Précision additionnelle si nécessaire
-                    'interpretation' => $this->results[$analyseId]['interpretation'] ?? null,
                     'conclusion' => $this->conclusion
                 ];
             }
@@ -1093,14 +1103,21 @@ class TechnicianAnalysisForm extends Component
                             $childResultData['resultats'] = implode(', ', $this->results[$childId]['resultats']);
                             // $childResultData['resultats'] = json_encode($this->results[$childId]['resultats'], JSON_UNESCAPED_UNICODE);
                         }
-                        break;
+                    break;
+
+                    case 'NEGATIF_POSITIF_1':
+                        $value = $this->results[$childId]['valeur'] ?? null;
+                        $childResultData['resultats'] = $value; // Même valeur
+                        $childResultData['valeur'] = $value;    // Même valeur
+                        $childResultData['interpretation'] = $this->results[$childId]['interpretation'] ?? null;
+                    break;
 
                     case 'NEGATIF_POSITIF_3':
                         $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
                         if (($this->results[$childId]['resultats'] ?? '') === 'Presence') {
                             $childResultData['valeur'] = $this->results[$childId]['valeur'] ?? null;
                         }
-                        break;
+                    break;
 
                     case 'TEST':
                         // Les champs ne sont pas obligatoires, donc on accepte des valeurs nulles
@@ -1190,5 +1207,68 @@ class TechnicianAnalysisForm extends Component
         }
     }
 
+    private function resetTypeSpecificProperties()
+    {
+        try {
+            // Si aucune analyse n'est sélectionnée, rien à faire
+            if (!$this->selectedAnalyse) {
+                return;
+            }
+
+            // Réinitialisation selon le type d'analyse
+            switch ($this->selectedAnalyse->analyseType->name) {
+                case 'GERME':
+                    $this->selectedOption = [];
+                    $this->showOtherInput = false;
+                    $this->otherBacteriaValue = '';
+                    $this->selectedBacteriaResults = [];
+                    $this->currentBacteria = null;
+                    $this->showAntibiotics = false;
+                    $this->antibiotics_name = null;
+                    break;
+
+                case 'SELECT_MULTIPLE':
+                    if (isset($this->results[$this->selectedAnalyse->id])) {
+                        $this->results[$this->selectedAnalyse->id]['resultats'] = [];
+                    }
+                    break;
+
+                case 'LEUCOCYTES':
+                    if (isset($this->results[$this->selectedAnalyse->id])) {
+                        $this->results[$this->selectedAnalyse->id] = [
+                            'valeur' => null,
+                            'polynucleaires' => null,
+                            'lymphocytes' => null
+                        ];
+                    }
+                    break;
+
+                case 'NEGATIF_POSITIF_3':
+                    $this->showPresenceInputs = [];
+                    break;
+
+                default:
+                    // Pour les autres types, réinitialiser les valeurs de base
+                    if (isset($this->results[$this->selectedAnalyse->id])) {
+                        $this->results[$this->selectedAnalyse->id] = [
+                            'valeur' => null,
+                            'resultats' => null,
+                            'interpretation' => null
+                        ];
+                    }
+            }
+
+            $this->conclusion = '';
+            $this->hasResults = false;
+
+        } catch (\Exception $e) {
+            Log::error('Erreur resetTypeSpecificProperties:', [
+                'message' => $e->getMessage(),
+                'analyse_id' => $this->selectedAnalyse->id ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
 
 }

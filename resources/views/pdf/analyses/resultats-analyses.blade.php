@@ -16,7 +16,7 @@
             font-family: Arial, sans-serif;
             font-size: 11pt;
             color: black;
-            line-height: 1.3;
+            line-height: 1.1;
         }
 
         /* En-tête */
@@ -194,7 +194,7 @@
 
         /* Pied de page */
         .footer {
-            margin-top: 30px;
+            margin-top: 10px;
             font-size: 10pt;
             text-align: center;
             color: #6c757d;
@@ -202,7 +202,7 @@
 
         /* Signature */
         .signature {
-            margin-top: 40px;
+            margin-top: 20px;
             text-align: right;
             padding-right: 40px;
         }
@@ -218,7 +218,7 @@
 
         /* Espacement */
         .spacing {
-            height: 5px;
+            height: 3px;
         }
 
         /* Impression */
@@ -246,7 +246,7 @@
         }
         .antibiogramme-header {
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 5px;
         }
 
         .antibiogramme-group {
@@ -308,7 +308,7 @@
             Résultats de : <b>{{ $prescription->patient->sexe }} {{ $prescription->patient->nom. ' ' .$prescription->patient->prenom }}</b><br>
             Age: {{ $prescription->age }} {{ $prescription->unite_age }}<br>
             Réf n° {{ $prescription->patient->formatted_ref ?? 'N/A' }} du {{ $prescription->created_at->format('d/m/Y') }}<br>
-            Prescripteur: <b>{{ $prescription->nouveau_prescripteur_nom ?? $prescription->prescripteur->name }}</b>
+            Prescripteur: <b>{{ $prescription->prescripteur->nom ?? 'Non assigné' }}</b>
         </div>
 
         @foreach($examens as $examen)
@@ -342,13 +342,13 @@
 
                 @if(!empty($analyse->description))
                     <tr>
-                        <td colspan="4" style="padding:3px 0;">
+                        <td colspan="4" style="padding:2px 0;">
                             <div style="
-                                margin-top: 3px;
-                                padding-top: 3px;
+                                margin-top: 2px;
+                                padding-top: 2px;
                                 font-weight: normal;
                                 font-size: 8pt;
-                                color: #6c757d;">
+                                color: #333537;">
                                 ({!! $analyse->description !!})
                             </div>
                         </td>
@@ -364,10 +364,10 @@
             })->filter()->unique()->values();
         @endphp
             @if($conclusionsExamen->isNotEmpty())
-            <div style="margin-top: 4px; margin-bottom: 4px;">
+            <div style="margin-top: 4px; margin-bottom: 2px;">
                 <table class="main-table">
                     <tr>
-                        <td colspan="4" style="padding: 5px 0;">
+                        <td colspan="4" style="padding: 2px 0;">
                             <div style="border-bottom: 2px dotted #8f8a8a; margin-bottom: 10px; font-weight: normal; font-size: 10pt;">
                                 Conclussion :
                                 @foreach($conclusionsExamen as $conclusion)
@@ -380,13 +380,13 @@
                 </table>
             </div>
             @else
-            <div style="margin-top: 4px; margin-bottom: 4px;">
+            <div style="margin-top: 2px; margin-bottom: 2px;">
             </div>
         @endif
 
     @endforeach
         <!-- Signature en bas à droite -->
-        <div style="margin-top: 50px; text-align: right; padding-right: 40px;">
+        <div style="margin-top: 20px; text-align: right; padding-right: 40px;">
             <img src="{{ public_path('assets/images/signature.png') }}" alt="Signature" style="max-width: 180px;">
         </div>
         <!-- Ajout d'un pied de page pour les résultats non validés -->

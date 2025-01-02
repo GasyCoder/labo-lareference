@@ -8,6 +8,7 @@ use App\Models\Patient;
 use Livewire\Component;
 use App\Models\Prelevement;
 use Illuminate\Support\Str;
+use App\Models\Prescripteur;
 use App\Models\Prescription;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -54,7 +55,6 @@ class EditPrescription extends Component
     public $analyses = [];
     public $prescripteur_search = '';
     public $prescripteur_id = null;
-    public $nouveau_prescripteur_nom = null;
     public $suggestions = [];
     public $showCreateOption = false;
     public $selectedAnalyses = [];
@@ -100,6 +100,7 @@ class EditPrescription extends Component
     // Chargement des données
     public function loadPrescriptionData($prescription)
     {
+        // Patient data
         if ($prescription->patient) {
             $this->nom = $prescription->patient->nom;
             $this->prenom = $prescription->patient->prenom;
@@ -108,6 +109,7 @@ class EditPrescription extends Component
             $this->email = $prescription->patient->email;
         }
 
+        // Prescription data
         $this->patient_type = $prescription->patient_type;
         $this->age = $prescription->age;
         $this->unite_age = $prescription->unite_age;
@@ -115,10 +117,11 @@ class EditPrescription extends Component
         $this->renseignement_clinique = $prescription->renseignement_clinique;
         $this->remise = $prescription->remise;
 
+        // Prescripteur data
         $this->prescripteur_id = $prescription->prescripteur_id;
-        $this->prescripteur_search = $prescription->prescripteur ? $prescription->prescripteur->name : $prescription->nouveau_prescripteur_nom;
-        $this->nouveau_prescripteur_nom = $prescription->nouveau_prescripteur_nom;
+        $this->prescripteur_search = $prescription->prescripteur?->nom ?? '';
 
+        // Autres données
         $this->selectedAnalyses = $prescription->analyses->pluck('id')->toArray();
         $this->calculateTotal();
     }
@@ -392,7 +395,6 @@ class EditPrescription extends Component
             'renseignement_clinique' => $this->renseignement_clinique,
             'remise' => $this->remise,
             'prescripteur_id' => $this->prescripteur_id,
-            'nouveau_prescripteur_nom' => $this->prescripteur_id ? null : $this->nouveau_prescripteur_nom,
             'montant_total' => $this->totalPrice
         ];
     }
@@ -447,9 +449,8 @@ class EditPrescription extends Component
             'prescripteur_search_' . $this->prescripteur_search,
             now()->addMinutes(30),
             function () {
-                return User::role('prescripteur')
-                    ->select(['id', 'name'])
-                    ->where('name', 'like', '%' . $this->prescripteur_search . '%')
+                return Prescripteur::where('nom', 'like', '%' . $this->prescripteur_search . '%')
+                    ->where('is_active', true)
                     ->take(5)
                     ->get()
                     ->toArray();
@@ -459,23 +460,28 @@ class EditPrescription extends Component
         $this->showCreateOption = empty($this->suggestions);
     }
 
-    public function selectPrescripteur($id, $name)
+    public function selectPrescripteur($id, $nom)
     {
-        $this->prescripteur_id = $id;
-        $this->prescripteur_search = $name;
-        $this->nouveau_prescripteur_nom = null;
-        $this->suggestions = [];
-        $this->showCreateOption = false;
+    $this->prescripteur_id = $id;
+    $this->prescripteur_search = $nom;
+    $this->suggestions = [];
+    $this->showCreateOption = false;
     }
 
     public function setNewPrescripteur()
     {
-        $this->prescripteur_id = null;
-        $this->nouveau_prescripteur_nom = $this->prescripteur_search;
+        if (!empty($this->prescripteur_search)) {
+            $prescripteur = Prescripteur::create([
+                'nom' => $this->prescripteur_search,
+                'is_active' => true
+            ]);
+
+            $this->prescripteur_id = $prescripteur->id;
+            $this->prescripteur_search = $prescripteur->nom;
+        }
         $this->suggestions = [];
         $this->showCreateOption = false;
     }
-
     // Règles de validation
     protected function getValidationRules()
     {
@@ -492,8 +498,7 @@ class EditPrescription extends Component
                 'poids' => 'nullable|numeric|min:0',
                 'renseignement_clinique' => 'nullable|string',
                 'prescripteur_search' => 'required|string|max:255',
-                'prescripteur_id' => 'required_without:nouveau_prescripteur_nom|nullable|integer',
-                'nouveau_prescripteur_nom' => 'required_without:prescripteur_id|nullable|string|max:255',
+                 'prescripteur_id' => 'required|exists:prescripteurs,id',
             ],
             3 => [
                 'selectedAnalyses' => 'required|array|min:1',

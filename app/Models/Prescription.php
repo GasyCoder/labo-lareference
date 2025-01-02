@@ -175,7 +175,7 @@ class Prescription extends Model
 
     public function prescripteur()
     {
-        return $this->belongsTo(User::class, 'prescripteur_id');
+        return $this->belongsTo(Prescripteur::class);
     }
 
     public function secretaire()

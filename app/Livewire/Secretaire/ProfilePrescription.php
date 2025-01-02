@@ -253,16 +253,15 @@ class ProfilePrescription extends Component
 
             DB::commit();
 
-            // Rafraîchir les données
-            $this->prescription->refresh();
             $this->calculateTotals();
 
             // Fermer la modal et afficher le succès
             $this->dispatch('payment-processed');
             $this->alert('success', 'Paiement effectué avec succès');
-
             // Générer la facture
             $this->generateFacturePDF();
+
+            return redirect()->route('secretaire.prescriptions.profil', $this->prescription->id);
 
         } catch (\Exception $e) {
             DB::rollBack();

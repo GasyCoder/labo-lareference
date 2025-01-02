@@ -1,10 +1,13 @@
 <?php
 
 use App\Livewire\Dashboard;
+use App\Models\Prescription;
+use App\Services\ResultatPdfService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PDFController;
 use App\Livewire\Admin\Users\EditUsers;
+use App\Livewire\ArchivedPrescriptions;
 use App\Livewire\Technicien\Traitements;
 use App\Livewire\Admin\Analyses\Analyses;
 use App\Livewire\Admin\Users\CreateUsers;
@@ -17,7 +20,6 @@ use App\Livewire\Secretaire\EditPrescription;
 use App\Livewire\Admin\Analyses\AnalysesElement;
 use App\Livewire\Secretaire\PatientPrescription;
 use App\Livewire\Secretaire\ProfilePrescription;
-use App\Livewire\ArchivedPrescriptions;
 use App\Livewire\Admin\Germes\BacteryFamilyManager;
 use App\Livewire\Biologiste\BiologisteAnalysisForm;
 use App\Livewire\Technicien\TechnicianAnalysisForm;
@@ -38,25 +40,25 @@ Route::get('/', function () {
     return Auth::check() ? redirect('/dashboard') : redirect('/login');
 });
 
+// Routes publiques avant les routes protégées
+Route::get('/resultats/public/{prescription}/{hash}', function (Prescription $prescription, $hash) {
+    if ($hash !== md5($prescription->created_at->timestamp)) {
+        abort(404, 'Lien invalide');
+    }
+
+    $pdfService = app(ResultatPdfService::class);
+    $pdf = $pdfService->generatePDF($prescription);
+
+    return $pdf->stream('resultats.pdf');
+})->name('resultats.public-view');
+
+
 // Protected routes
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Role-specific routes
     Route::group(['middleware' => ['role:superadmin|biologiste|secretaire|technicien|prescripteur']], function () {
         Route::get('/dashboard', Dashboard::class)->name('dashboard');
-
-        Route::get('/preview-pdf/{filename}', function ($filename) {
-            $path = storage_path('app/public/temp/' . $filename);
-
-            if (!file_exists($path)) {
-                abort(404, 'PDF non trouvé');
-            }
-
-            return response()->file($path, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $filename . '"',
-            ]);
-        })->name('preview.pdf');
 
         Route::get('/archives', ArchivedPrescriptions::class)->name('archives');
 

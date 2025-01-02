@@ -54,9 +54,9 @@ class User extends Authenticatable
         return $this->hasOne(Profile::class);
     }
 
-    public function prescriptions()
+    public function prescripteur()
     {
-        return $this->hasMany(Prescription::class, 'prescripteur_id');
+        return $this->hasMany(Prescripteur::class);
     }
 
     public function paiementsRecus()

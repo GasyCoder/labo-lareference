@@ -14,23 +14,13 @@ class PermissionSeeder extends Seeder
             'biologiste',
             'secretaire',
             'technicien',
-            'prescripteur'
         ];
-
-        /*
-        Super admin
-        Biologiste
-        Technicien
-        Secretaire
-        Prescripteur
-        */
 
         $label_permissions = [
             'Super Admin',
             'Biologiste',
             'Secretaire',
             'Technicien',
-            'Prescripteur'
         ];
 
         $descriptions_permissions = [
@@ -38,7 +28,6 @@ class PermissionSeeder extends Seeder
             'Permissions spécifiques au biologiste',
             'Permissions spécifiques au secrétaire',
             'Permissions spécifiques au technicien',
-            'Permissions spécifiques au prescripteur'
         ];
 
         // Loop through the permissions and create them using Spatie

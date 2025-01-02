@@ -1,4 +1,3 @@
-{{-- livewire.secretaire.steps.medical-info --}}
 <div>
     <h4 class="card-title mb-4">Informations médicales et le prescripteur</h4>
 
@@ -43,12 +42,12 @@
                     @if(!empty($suggestions))
                         @foreach($suggestions as $prescripteur)
                             <div class="p-2 hover-bg-light cursor-pointer"
-                                 wire:click="selectPrescripteur({{ $prescripteur['id'] }}, '{{ $prescripteur['name'] }}')"
+                                 wire:click="selectPrescripteur({{ $prescripteur['id'] }}, '{{ $prescripteur['nom'] }}')"
                                  wire:loading.class="opacity-50"
                                  wire:target="selectPrescripteur"
                                  role="button"
                                  tabindex="0">
-                                {{ $prescripteur['name'] }}
+                                {{ $prescripteur['nom'] }}
                             </div>
                         @endforeach
                     @endif
@@ -74,35 +73,29 @@
                 @if($prescripteur_id)
                     <div class="text-success small mt-1" wire:key="selected-prescripteur">
                         <i class="fas fa-check-circle me-1"></i>
-                        Prescripteur existant sélectionné : {{ $prescripteur_search }}
-                    </div>
-                @elseif($nouveau_prescripteur_nom)
-                    <div class="text-info small mt-1" wire:key="new-prescripteur">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Nouveau prescripteur : {{ $nouveau_prescripteur_nom }}
+                        Prescripteur sélectionné : {{ $prescripteur_search }}
                     </div>
                 @endif
 
                 {{-- Messages d'erreur --}}
                 @error('prescripteur_search')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 @error('prescripteur_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                @error('nouveau_prescripteur_nom')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
         </div>
 
+        {{-- Reste du code inchangé --}}
         {{-- Type de patient --}}
         <div class="col-md-6" wire:key="patient-type-field">
             <label for="patient_type" class="form-label">Type de patient</label>
             <select id="patient_type"
                     wire:model.defer="patient_type"
                     class="form-select @error('patient_type') is-invalid @enderror">
-                @foreach(
-                        [
-                        'EXTERNE' => 'Externe',
-                        'HOSPITALISE' => 'Hospitalisé',
-                        'URGENCE-NUIT' => 'Urgence-Nuit',//20000Ar
-                        'URGENCE-JOUR' => 'Urgence-Jour',//15000Ar
-                        ] as $value => $label)
+                @foreach([
+                    'EXTERNE' => 'Externe',
+                    'HOSPITALISE' => 'Hospitalisé',
+                    'URGENCE-NUIT' => 'Urgence-Nuit',
+                    'URGENCE-JOUR' => 'Urgence-Jour',
+                ] as $value => $label)
                     <option value="{{ $value }}">{{ $label }}</option>
                 @endforeach
             </select>

@@ -15,12 +15,12 @@
     "
     :disabled="downloading"
     class="btn flex-grow-1 text-white"
-    style="background-color: #8B5CF6"
+    style="background-color: #198f37"
 >
     <div class="d-flex align-items-center justify-content-center">
         <template x-if="!downloading">
             <span>
-                <i class="fas fa-file-medical me-2"></i>
+                <i class="fas fa-file-pdf me-2"></i>
                 Aperçu analyse
             </span>
         </template>
