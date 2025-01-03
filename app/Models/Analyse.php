@@ -62,11 +62,9 @@ class Analyse extends Model
         return $this->belongsTo(Analyse::class, 'parent_code', 'code');
     }
 
-
     /**
      * Obtenir les analyses enfants directes.
      */
-
     public function children()
     {
         return $this->hasMany(Analyse::class, 'parent_code', 'code')

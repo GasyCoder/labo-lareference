@@ -234,12 +234,18 @@ class TechnicianAnalysisForm extends Component
                         break;
 
                     case 'NEGATIF_POSITIF_3':
-                        // Charger une valeur booléenne ou textuelle
-                        $this->results[$result->analyse_id] = [
-                            'resultats' => $result->resultats,
-                            'valeur' => $result->resultats === 'Presence' ? $result->valeur : null
-                        ];
-                        break;
+                        if ($result->resultats === 'Positif') {
+                            $this->results[$result->analyse_id] = [
+                                'resultats' => $result->resultats,
+                                'valeur' => $result->valeur ? explode(', ', $result->valeur) : []
+                            ];
+                        } else {
+                            $this->results[$result->analyse_id] = [
+                                'resultats' => $result->resultats,
+                                'valeur' => null
+                            ];
+                        }
+                    break;
 
                     default:
                         // Cas générique
@@ -572,11 +578,37 @@ class TechnicianAnalysisForm extends Component
                 $analyseId = $matches[1];
                 $analyse = Analyse::find($analyseId);
 
-                if ($analyse && $analyse->analyseType->name === 'SELECT_MULTIPLE') {
-                    if (!is_array($value)) {
-                        $value = [$value];
+                if ($analyse) {
+                    // Pour SELECT_MULTIPLE
+                    if ($analyse->analyseType->name === 'SELECT_MULTIPLE') {
+                        if (!is_array($value)) {
+                            $value = [$value];
+                        }
+                        $this->results[$analyseId]['resultats'] = array_values(array_filter($value));
                     }
-                    $this->results[$analyseId]['resultats'] = array_values(array_filter($value));
+
+                    // Pour NEGATIF_POSITIF_3
+                    if ($analyse->analyseType->name === 'NEGATIF_POSITIF_3') {
+                        if (str_contains($key, 'resultats')) {
+                            if ($value === 'Positif') {
+                                // Conserver les valeurs existantes si elles existent
+                                if (!isset($this->results[$analyseId]['valeur'])) {
+                                    $this->results[$analyseId]['valeur'] = [];
+                                }
+                            } else if ($value === 'Négatif') {
+                                // Sauvegarder temporairement les anciennes valeurs
+                                $this->results[$analyseId]['previous_valeur'] = $this->results[$analyseId]['valeur'] ?? [];
+                                $this->results[$analyseId]['valeur'] = null;
+                            }
+                        } else if (str_contains($key, 'valeur')) {
+                            // Pour les changements de valeurs sélectionnées
+                            if (is_array($value)) {
+                                $this->results[$analyseId]['valeur'] = array_values(array_filter($value));
+                            } else if ($value) {
+                                $this->results[$analyseId]['valeur'] = [$value];
+                            }
+                        }
+                    }
                 }
             }
 
@@ -589,6 +621,15 @@ class TechnicianAnalysisForm extends Component
                 'key' => $key,
                 'trace' => $e->getTraceAsString()
             ]);
+        }
+    }
+
+    public function updatedResultsResultats($value, $analyseId)
+    {
+        if ($value === 'Positif' && isset($this->results[$analyseId]['previous_valeur'])) {
+            // Restaurer les valeurs précédentes
+            $this->results[$analyseId]['valeur'] = $this->results[$analyseId]['previous_valeur'];
+            unset($this->results[$analyseId]['previous_valeur']);
         }
     }
 
@@ -1113,9 +1154,23 @@ class TechnicianAnalysisForm extends Component
                     break;
 
                     case 'NEGATIF_POSITIF_3':
-                        $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
-                        if (($this->results[$childId]['resultats'] ?? '') === 'Presence') {
-                            $childResultData['valeur'] = $this->results[$childId]['valeur'] ?? null;
+                        $resultats = $this->results[$childId]['resultats'] ?? null;
+                        $childResultData['resultats'] = $resultats;
+
+                        if ($resultats === 'Positif') {
+                            // Récupérer les valeurs sélectionnées
+                            $selectedValues = $this->results[$childId]['valeur'] ?? [];
+
+                            // Si c'est un tableau, le convertir en chaîne
+                            if (is_array($selectedValues)) {
+                                $valeurString = implode(', ', $selectedValues);
+                            } else {
+                                $valeurString = $selectedValues;
+                            }
+
+                            $childResultData['valeur'] = $valeurString;
+                        } else {
+                            $childResultData['valeur'] = null;
                         }
                     break;
 

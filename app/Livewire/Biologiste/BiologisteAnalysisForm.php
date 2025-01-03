@@ -241,12 +241,18 @@ class BiologisteAnalysisForm extends Component
                         break;
 
                     case 'NEGATIF_POSITIF_3':
-                        // Charger une valeur booléenne ou textuelle
-                        $this->results[$result->analyse_id] = [
-                            'resultats' => $result->resultats,
-                            'valeur' => $result->resultats === 'Presence' ? $result->valeur : null
-                        ];
-                        break;
+                            if ($result->resultats === 'Positif') {
+                                $this->results[$result->analyse_id] = [
+                                    'resultats' => $result->resultats,
+                                    'valeur' => $result->valeur ? explode(', ', $result->valeur) : []
+                                ];
+                            } else {
+                                $this->results[$result->analyse_id] = [
+                                    'resultats' => $result->resultats,
+                                    'valeur' => null
+                                ];
+                            }
+                    break;
 
                     default:
                         // Cas générique
@@ -547,7 +553,7 @@ class BiologisteAnalysisForm extends Component
                     'prescription_id' => $this->prescription->id,
                     'analyse_id' => $analyseId,
                     'resultats' => $this->results[$analyseId]['resultats'] ?? null,
-                    'valeur' => $this->results[$analyseId]['resultats'] === 'Positif' ? 
+                    'valeur' => $this->results[$analyseId]['resultats'] === 'Positif' ?
                         ($this->results[$analyseId]['valeur'] ?? null) : null,
                     'interpretation' => null,
                     'conclusion' => $this->conclusion
@@ -688,11 +694,25 @@ class BiologisteAnalysisForm extends Component
                         break;
 
                     case 'NEGATIF_POSITIF_3':
-                        $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
-                        if (($this->results[$childId]['resultats'] ?? '') === 'Presence') {
-                            $childResultData['valeur'] = $this->results[$childId]['valeur'] ?? null;
-                        }
-                        break;
+                            $resultats = $this->results[$childId]['resultats'] ?? null;
+                            $childResultData['resultats'] = $resultats;
+
+                            if ($resultats === 'Positif') {
+                                // Récupérer les valeurs sélectionnées
+                                $selectedValues = $this->results[$childId]['valeur'] ?? [];
+
+                                // Si c'est un tableau, le convertir en chaîne
+                                if (is_array($selectedValues)) {
+                                    $valeurString = implode(', ', $selectedValues);
+                                } else {
+                                    $valeurString = $selectedValues;
+                                }
+
+                                $childResultData['valeur'] = $valeurString;
+                            } else {
+                                $childResultData['valeur'] = null;
+                            }
+                    break;
 
                     case 'TEST':
                         $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
@@ -949,24 +969,49 @@ class BiologisteAnalysisForm extends Component
     public function updatedResults($value, $key)
     {
         try {
-            // Extraire l'ID de l'analyse du chemin de la clé (ex: "results.123.resultats")
+            if (is_string($value) && str_contains($value, ',')) {
+                $value = str_replace(',', '.', $value);
+            }
+
             preg_match('/results\.(\d+)\./', $key, $matches);
             if (!empty($matches[1])) {
                 $analyseId = $matches[1];
                 $analyse = Analyse::find($analyseId);
 
-                if ($analyse && $analyse->analyseType->name === 'SELECT_MULTIPLE') {
-                    // S'assurer que la valeur est un tableau
-                    if (!is_array($value)) {
-                        $value = [$value];
+                if ($analyse) {
+                    // Pour SELECT_MULTIPLE
+                    if ($analyse->analyseType->name === 'SELECT_MULTIPLE') {
+                        if (!is_array($value)) {
+                            $value = [$value];
+                        }
+                        $this->results[$analyseId]['resultats'] = array_values(array_filter($value));
                     }
 
-                    // Mettre à jour les résultats
-                    $this->results[$analyseId]['resultats'] = array_values(array_filter($value));
+                    // Pour NEGATIF_POSITIF_3
+                    if ($analyse->analyseType->name === 'NEGATIF_POSITIF_3') {
+                        if (str_contains($key, 'resultats')) {
+                            if ($value === 'Positif') {
+                                // Conserver les valeurs existantes si elles existent
+                                if (!isset($this->results[$analyseId]['valeur'])) {
+                                    $this->results[$analyseId]['valeur'] = [];
+                                }
+                            } else if ($value === 'Négatif') {
+                                // Sauvegarder temporairement les anciennes valeurs
+                                $this->results[$analyseId]['previous_valeur'] = $this->results[$analyseId]['valeur'] ?? [];
+                                $this->results[$analyseId]['valeur'] = null;
+                            }
+                        } else if (str_contains($key, 'valeur')) {
+                            // Pour les changements de valeurs sélectionnées
+                            if (is_array($value)) {
+                                $this->results[$analyseId]['valeur'] = array_values(array_filter($value));
+                            } else if ($value) {
+                                $this->results[$analyseId]['valeur'] = [$value];
+                            }
+                        }
+                    }
                 }
             }
 
-            // Sauvegarder l'état après chaque modification
             $this->saveStateToSession();
 
         } catch (\Exception $e) {
@@ -976,6 +1021,15 @@ class BiologisteAnalysisForm extends Component
                 'key' => $key,
                 'trace' => $e->getTraceAsString()
             ]);
+        }
+    }
+
+    public function updatedResultsResultats($value, $analyseId)
+    {
+        if ($value === 'Positif' && isset($this->results[$analyseId]['previous_valeur'])) {
+            // Restaurer les valeurs précédentes
+            $this->results[$analyseId]['valeur'] = $this->results[$analyseId]['previous_valeur'];
+            unset($this->results[$analyseId]['previous_valeur']);
         }
     }
 

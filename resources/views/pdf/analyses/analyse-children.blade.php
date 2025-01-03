@@ -79,7 +79,7 @@
         }
     @endphp
 
-    @if($hasValidResult)
+    @if($hasValidResult || ($child->analyse_type_id && $child->designation))
         {{-- Partie principale --}}
         @if($bacteriaName)
             {{-- Affichage du Germe isolé --}}
@@ -93,7 +93,6 @@
                 <td class="col-valref"></td>
                 <td class="col-anteriorite"></td>
             </tr>
-
             {{-- Affichage de l'antibiogramme --}}
             @if(!empty($antibiogramData))
                 <tr>
