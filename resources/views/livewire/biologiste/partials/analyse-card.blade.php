@@ -37,26 +37,26 @@
                             </span>
                         </div>
                      </td>
-                    <td>
-                        <div class="d-flex flex-wrap gap-2">
+                     <td>
+                        <div class="d-flex flex-wrap gap-1">
                             @foreach($prescription->analyses->take(3) as $analyse)
-                                <span class="badge rounded-pill bg-info px-3 py-1">
-                                    <i class="fas fa-flask me-1"></i>{{ $analyse->abr }}
+                                <span class="badge bg-primary-soft px-2 py-1">
+                                   {{ $analyse->abr }}
                                 </span>
                             @endforeach
                             @if($prescription->analyses->count() > 3)
                                 <div class="dropdown">
-                                    <span class="badge rounded-pill bg-secondary dropdown-toggle px-3 py-1"
-                                          role="button"
-                                          data-bs-toggle="dropdown"
-                                          aria-expanded="false">
+                                    <span class="badge bg-secondary-soft dropdown-toggle px-2 py-1"
+                                        role="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
                                         +{{ $prescription->analyses->count() - 3 }}
                                     </span>
-                                    <ul class="dropdown-menu">
+                                    <ul class="dropdown-menu py-1">
                                         @foreach($prescription->analyses->skip(3) as $analyse)
                                             <li>
-                                                <span class="dropdown-item">
-                                                    <i class="fas fa-flask me-1"></i>{{ $analyse->abr }}
+                                                <span class="dropdown-item py-1">
+                                                    {{ $analyse->abr }}
                                                 </span>
                                             </li>
                                         @endforeach
@@ -65,10 +65,19 @@
                             @endif
                         </div>
                     </td>
-                    <td class="d-flex flex-wrap gap-2">
-                        <button wire:click="openAnalyse({{ $prescription->id }})" class="btn btn-sm btn-primary rounded-circle" title="Voir l'analyse">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                    <td>
+                        <div class="d-flex gap-2 align-items-center">
+                            @if($prescription->status === 'VALIDE')
+                                <x-pdf-download-button :prescription="$prescription" title="Aperçu en pdf" />
+                            @endif
+
+                            <button wire:click="openAnalyse({{ $prescription->id }})"
+                                    class="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center"
+                                    style="width: 32px; height: 32px;"
+                                    title="Voir détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             @empty

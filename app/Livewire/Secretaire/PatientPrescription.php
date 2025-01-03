@@ -285,17 +285,8 @@ class PatientPrescription extends Component
         try {
             $prescription = Prescription::findOrFail($prescriptionId);
 
-            // Utiliser le service pour générer le PDF
-            $pdf = $this->pdfService->generatePDF($prescription);
-
-            // Créer un nom de fichier unique
-            $filename = 'resultats/prescription-' . $prescriptionId . '-' . time() . '.pdf';
-
-            // Sauvegarder temporairement le PDF
-            Storage::disk('public')->put($filename, $pdf->output());
-
-            // Retourner l'URL temporaire
-            return Storage::disk('public')->url($filename);
+            // Le service retourne directement l'URL
+            return $this->pdfService->generatePDF($prescription);
 
         } catch (\Exception $e) {
             Log::error('Erreur génération PDF:', [

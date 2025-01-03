@@ -4,18 +4,18 @@
     <table class="table table-hover align-middle">
         <thead class="table-light">
             <tr>
-                <th scope="col">#</th>
-                <th scope="col">Patient</th>
-                <th scope="col">Prescripteur</th>
-                <th scope="col">Analyses</th>
-                <th scope="col" class="text-end">Actions</th>
+                <th>Réf</th>
+                <th>Patient</th>
+                <th>Prescripteur</th>
+                <th>Analyses</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach($prescriptions as $prescription)
                 <tr>
                     <td class="fw-medium">
-                        Réf-{{ $prescription->patient->formatted_ref ?? 'Non défini' }}
+                        #{{ $prescription->patient->formatted_ref ?? 'Non défini' }}
                     </td>
                     <td>
                         <div class="d-flex align-items-center gap-3">
@@ -51,17 +51,14 @@
                     {{-- Analyses --}}
                     <td>
                         <div class="d-flex flex-wrap gap-1">
-                            {{-- Premiers badges --}}
                             @foreach($prescription->analyses->take(3) as $analyse)
-                                <span class="badge rounded-pill bg-primary px-2 py-1">
-                                    <i class="fas fa-flask me-1"></i>{{ $analyse->abr }}
+                                <span class="badge bg-primary-soft px-2 py-1">
+                                   {{ $analyse->abr }}
                                 </span>
                             @endforeach
-
-                            {{-- Badge dropdown plus compact --}}
                             @if($prescription->analyses->count() > 3)
                                 <div class="dropdown">
-                                    <span class="badge rounded-pill bg-secondary dropdown-toggle px-2 py-1"
+                                    <span class="badge bg-secondary-soft dropdown-toggle px-2 py-1"
                                         role="button"
                                         data-bs-toggle="dropdown"
                                         aria-expanded="false">
@@ -71,7 +68,7 @@
                                         @foreach($prescription->analyses->skip(3) as $analyse)
                                             <li>
                                                 <span class="dropdown-item py-1">
-                                                    <i class="fas fa-flask me-1"></i>{{ $analyse->abr }}
+                                                    {{ $analyse->abr }}
                                                 </span>
                                             </li>
                                         @endforeach
@@ -81,10 +78,10 @@
                         </div>
                     </td>
                     {{-- Actions --}}
-                    <td class="text-end">
+                    <td class="d-flex gap-2 align-items-center">
                         <button wire:click="openPrescription({{ $prescription->id }})"
-                                class="btn btn-sm btn-primary"
-                                title="Voir détails">
+                                class="btn btn-sm btn-primary d-flex align-items-center justify-content-center"
+                                title="Voir détails" style="width: 32px; height: 32px;">
                             <i class="fas fa-eye text-white"></i>
                         </button>
                     </td>

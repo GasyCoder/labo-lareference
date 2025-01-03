@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\Prescription;
-use App\Models\Analyse;
 use App\Models\Examen;
+use App\Models\Analyse;
 use App\Models\Resultat;
+use App\Models\Prescription;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ResultatPdfService

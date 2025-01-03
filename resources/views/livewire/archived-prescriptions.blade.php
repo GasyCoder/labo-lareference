@@ -83,8 +83,8 @@
                                         <x-pdf-download-button :prescription="$prescription" title="Aperçu en pdf" />
                                         @if(auth()->user()->can('secretaire'))
                                         <button wire:click="confirmUnarchive({{ $prescription->id }})"
-                                                class="btn btn-sm btn-warning"
-                                                title="Désarchiver">
+                                                class="btn btn-sm btn-warning d-flex align-items-center justify-content-center"
+                                                title="Désarchiver" style="width: 32px; height: 32px;">
                                             <i class="fas fa-box-open"></i>
                                         </button>
                                         @endif

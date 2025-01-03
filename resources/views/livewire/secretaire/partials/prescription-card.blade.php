@@ -4,7 +4,7 @@
     <table class="table table-hover align-middle">
         <thead class="table-light">
             <tr>
-                <th scope="col">#</th>
+                <th scope="col">Réf</th>
                 <th scope="col">Patient</th>
                 <th scope="col">Prescripteur</th>
                 <th scope="col">Analyses</th>
@@ -17,7 +17,7 @@
             @foreach($prescriptions as $prescription)
                 <tr>
                     <td class="fw-medium">
-                        Réf#-{{ $prescription->patient->formatted_ref ?? 'Non défini' }}
+                        #{{ $prescription->patient->formatted_ref ?? 'Non défini' }}
                     </td>
                     <td>
                         <div class="d-flex align-items-center gap-3">
@@ -58,13 +58,13 @@
                     <td>
                         <div class="d-flex flex-wrap gap-1">
                             @foreach($prescription->analyses->take(3) as $analyse)
-                                <span class="badge rounded-pill bg-primary px-1 py-1">
-                                    <i class="fas fa-flask me-1"></i>{{ $analyse->abr }}
+                                <span class="badge bg-primary-soft px-2 py-1">
+                                   {{ $analyse->abr }}
                                 </span>
                             @endforeach
                             @if($prescription->analyses->count() > 3)
                                 <div class="dropdown">
-                                    <span class="badge rounded-pill bg-secondary dropdown-toggle px-2 py-1"
+                                    <span class="badge bg-secondary-soft dropdown-toggle px-2 py-1"
                                         role="button"
                                         data-bs-toggle="dropdown"
                                         aria-expanded="false">
@@ -74,7 +74,7 @@
                                         @foreach($prescription->analyses->skip(3) as $analyse)
                                             <li>
                                                 <span class="dropdown-item py-1">
-                                                    <i class="fas fa-flask me-1"></i>{{ $analyse->abr }}
+                                                    {{ $analyse->abr }}
                                                 </span>
                                             </li>
                                         @endforeach
@@ -85,7 +85,6 @@
                     </td>
                     <td>
                         <div class="d-flex align-items-center gap-1">
-                            <i class="fas fa-calendar-alt text-muted"></i>
                             <small>{{ $prescription->created_at->diffForHumans(['parts' => 1, 'short' => true]) }}</small>
                         </div>
                     </td>
@@ -97,62 +96,62 @@
                                 @if($prescription->trashed())
                                 {{-- Actions pour les prescriptions dans la corbeille --}}
                                 <a href="{{ route('secretaire.prescriptions.profil', ['id' => $prescription->id]) }}"
-                                   class="btn btn-sm btn-info"
-                                   title="Voir détails">
+                                   class="btn btn-sm btn-info d-flex align-items-center justify-content-center"
+                                   title="Voir détails" style="width: 32px; height: 32px;">
                                     <i class="fas fa-user"></i>
                                 </a>
                                 <button wire:click="confirmRestore({{ $prescription->id }})"
-                                        class="btn btn-sm btn-warning"
-                                        title="Restaurer">
+                                        class="btn btn-sm btn-warning d-flex align-items-center justify-content-center"
+                                        title="Restaurer" style="width: 32px; height: 32px;">
                                     <i class="fas fa-undo-alt"></i>
                                 </button>
                                 <button wire:click="confirmPermanentDelete({{ $prescription->id }})"
-                                        class="btn btn-sm btn-danger"
-                                        title="Supprimer définitivement">
+                                        class="btn btn-sm btn-danger d-flex align-items-center justify-content-center"
+                                        title="Supprimer définitivement" style="width: 32px; height: 32px;">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                                 @else
                                 @if($prescription->status === 'EN_ATTENTE' || $prescription->status === 'EN_COURS' || $prescription->status === 'TERMINE')
                                 {{-- Actions communes pour les prescriptions actives --}}
                                 <a href="{{ route('secretaire.prescriptions.profil', ['id' => $prescription->id]) }}"
-                                   class="btn btn-sm btn-info"
-                                   title="Voir détails">
+                                   class="btn btn-sm btn-info d-flex align-items-center justify-content-center"
+                                   title="Voir détails" style="width: 32px; height: 32px;">
                                     <i class="fas fa-user"></i>
                                 </a>
                                 <a href="{{ route('secretaire.prescriptions.edit', ['id' => $prescription->id]) }}"
-                                    class="btn btn-sm btn-success"
-                                    title="Modifier">
+                                    class="btn btn-sm btn-success d-flex align-items-center justify-content-center"
+                                    title="Modifier" style="width: 32px; height: 32px;">
                                      <i class="fas fa-edit"></i>
                                 </a>
                                 <button wire:click="confirmDelete({{ $prescription->id }})"
-                                    class="btn btn-sm btn-danger"
-                                    title="Corbeille">
+                                    class="btn btn-sm btn-danger d-flex align-items-center justify-content-center"
+                                    title="Corbeille" style="width: 32px; height: 32px;">
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 @endif
                                 @if(!$prescription->status === 'VALIDE')
                                 <a href="{{ route('secretaire.prescriptions.edit', ['id' => $prescription->id]) }}"
-                                    class="btn btn-sm btn-success"
-                                    title="Modifier">
+                                    class="btn btn-sm btn-success d-flex align-items-center justify-content-center"
+                                    title="Modifier" style="width: 32px; height: 32px;">
                                      <i class="fas fa-edit"></i>
                                  </a>
                                  <button wire:click="confirmDelete({{ $prescription->id }})"
-                                    class="btn btn-sm btn-danger"
-                                    title="Corbeille">
+                                    class="btn btn-sm btn-danger d-flex align-items-center justify-content-center"
+                                    title="Corbeille" style="width: 32px; height: 32px;">
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 @endif
                                 @if($prescription->status === 'VALIDE')
                                     <a href="{{ route('secretaire.prescriptions.profil', ['id' => $prescription->id]) }}"
-                                        class="btn btn-sm btn-info"
-                                        title="Voir détails">
+                                        class="btn btn-sm btn-info d-flex align-items-center justify-content-center"
+                                        title="Voir détails" style="width: 32px; height: 32px;">
                                         <i class="fas fa-user"></i>
                                     </a>
                                     <x-pdf-download-button :prescription="$prescription" title="Aperçu en pdf" />
                                     @if(!$prescription->is_archive)
                                     <button wire:click="confirmArchive({{ $prescription->id }})"
-                                            class="btn btn-sm btn-secondary"
-                                            title="Archiver">
+                                            class="btn btn-sm btn-secondary d-flex align-items-center justify-content-center"
+                                            title="Archiver" style="width: 32px; height: 32px;">
                                         <i class="fas fa-archive"></i>
                                     </button>
                                     @endif

@@ -20,14 +20,12 @@
             });
     "
     :disabled="downloading"
-    class="btn btn-sm btn-primary"
+    {{ $attributes->merge(['class' => 'btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center', 'style' => 'width: 32px; height: 32px;']) }}
     title="{{ $attributes->get('title', 'Aperçu en pdf') }}">
-    <div class="d-flex align-items-center justify-content-center">
-        <template x-if="!downloading">
-            <i class="fas fa-file-pdf"></i>
-        </template>
-        <template x-if="downloading">
-            <i class="fas fa-spinner fa-spin"></i>
-        </template>
-    </div>
+    <template x-if="!downloading">
+        <i class="fas fa-file-pdf"></i>
+    </template>
+    <template x-if="downloading">
+        <i class="fas fa-spinner fa-spin"></i>
+    </template>
 </button>

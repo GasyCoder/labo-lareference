@@ -5,6 +5,9 @@ namespace App\Livewire\Biologiste;
 use Livewire\Component;
 use App\Models\Prescription;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Log;
+use App\Services\ResultatPdfService;
+use Illuminate\Support\Facades\Storage;
 
 class AnalyseValide extends Component
 {
@@ -18,6 +21,13 @@ class AnalyseValide extends Component
        'search',
        'tab' => ['except' => 'termine'],
    ];
+
+   protected $pdfService;
+
+   public function boot(ResultatPdfService $pdfService)
+   {
+       $this->pdfService = $pdfService;
+   }
 
    public function updatingSearch()
    {
@@ -73,5 +83,25 @@ class AnalyseValide extends Component
            ->paginate(15);
 
        return view('livewire.biologiste.analyse-valide', compact('analyseValides', 'analyseTermines'));
+   }
+
+   public function generateResultatsPDF($prescriptionId)
+   {
+       try {
+           $prescription = Prescription::findOrFail($prescriptionId);
+
+           // Le service retourne directement l'URL
+           return $this->pdfService->generatePDF($prescription);
+
+       } catch (\Exception $e) {
+           Log::error('Erreur génération PDF:', [
+               'message' => $e->getMessage(),
+               'prescription_id' => $prescriptionId,
+               'trace' => $e->getTraceAsString()
+           ]);
+
+           $this->alert('error', "Erreur lors de la génération du PDF : {$e->getMessage()}");
+           return null;
+       }
    }
 }
