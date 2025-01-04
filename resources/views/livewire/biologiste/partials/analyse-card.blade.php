@@ -81,9 +81,9 @@
                     </td>
                 </tr>
             @empty
-                <tr>
-                    <td colspan="5" class="text-center text-muted">
-                        Aucune analyse trouvée pour cet onglet.
+                <tr class="alert alert-danger">
+                    <td colspan="5" class="text-center text-muted text-danger">
+                        Aucune analyse {{ $tab === 'actifs' ? 'active' : ($tab === 'valide' ? 'validée' : 'terminé par technicien') }} trouvée pour cet onglet.
                     </td>
                 </tr>
             @endforelse
@@ -125,7 +125,9 @@
                 </div>
             </div>
         @empty
-            <p class="text-center text-muted">Aucune analyse trouvée pour cet onglet.</p>
+            <p class="text-center text-muted text-danger">
+                Aucune analyse {{ $tab === 'actifs' ? 'active' : ($tab === 'valide' ? 'validée' : 'terminé par technicien') }} sur cet onglet.
+            </p>
         @endforelse
     </div>
 

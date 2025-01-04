@@ -7,10 +7,30 @@ $count = \App\Models\Prescription::where('is_archive', true)
 <nav class="navbar-vertical navbar">
   <div class="vh-100" data-simplebar>
     <!-- Brand logo -->
-    <a class="navbar-brand d-flex align-items-center" href="{{ route('dashboard') }}">
-        <img src="{{ asset('assets/images/logo_auth.png') }}" alt="Logo" height="40" class="me-2" />
-        La Reference
-      </a>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+        .la-reference-brand {
+            font-family: 'Orbitron', sans-serif;
+            color: #FF0000 !important; /* Rouge plus vif pour meilleur contraste */
+            font-size: 18px; /* Taille réduite */
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5); /* Ombre légère pour améliorer la lisibilité */
+            font-weight: 800;
+            padding: 8px 0;
+        }
+
+        /* Au survol */
+        .la-reference-brand:hover {
+            color: #FF3333 !important;
+            text-decoration: none;
+        }
+        </style>
+
+        <a class="navbar-brand d-flex align-items-center la-reference-brand" href="{{ route('dashboard') }}">
+            La Reference
+        </a>
     <!-- Navbar nav -->
     <ul class="navbar-nav flex-column" id="sideNavbar">
       <li class="nav-item">
