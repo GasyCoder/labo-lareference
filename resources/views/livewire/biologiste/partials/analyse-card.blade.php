@@ -17,7 +17,7 @@
                         <div class="d-flex align-items-center gap-3">
                             <div class="rounded-circle d-flex justify-content-center align-items-center bg-primary text-white"
                                 style="width: 40px; height: 40px;">
-                                {{ strtoupper(substr($prescription->patient->nom, 0, 1)) }}{{ strtoupper(substr($prescription->patient->prenom, 0, 1)) }}
+                                {{ strtoupper(substr($prescription->patient->nom, 0, 1)) }}
                             </div>
                             <div>
                                 <span class="d-block">{{ $prescription->patient->nom }} {{ $prescription->patient->prenom }}</span>

@@ -23,7 +23,7 @@
                         <div class="d-flex align-items-center gap-3">
                             <div class="rounded-circle bg-success d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                                 <span class="text-white fw-bold">
-                                    {{ strtoupper(substr($prescription->patient->nom, 0, 1) . substr($prescription->patient->prenom, 0, 1)) }}
+                                    {{ strtoupper(substr($prescription->patient->nom, 0, 1)) }}
                                 </span>
                             </div>
                             <div>
