@@ -3,8 +3,8 @@
     <select wire:model.live="results.{{ $analyse->id }}.resultats"
             class="form-select">
         <option value="">{{ __('Veuillez choisir') }}</option>
-        <option value="Négatif">{{ __('Négatif (Absence)') }}</option>
-        <option value="Positif">{{ __('Positif (Présence)') }}</option>
+        <option value="Négatif">{{ __('Négatif') }}</option>
+        <option value="Positif">{{ __('Positif') }}</option>
     </select>
 </div>
 
