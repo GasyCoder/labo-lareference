@@ -5,8 +5,14 @@
         $resultValue = null;
         $jsonString = null;
 
+        // Vérifie si c'est une ligne informative
+        $isInfoLine = !$child->result_disponible && $child->designation;
+
         // Vérifie si le résultat existe et n'est pas vide
         $hasValidResult = false;
+
+        // Ajouter cette nouvelle ligne pour les lignes informatives
+        $isInfoLine = !$child->result_disponible && $child->designation && $child->prix == 0;
 
         if ($resultat) {
             $jsonString = !empty($resultat->valeur) ? $resultat->valeur : $resultat->resultats;
@@ -77,9 +83,12 @@
                 $resultValue = '<strong>' . ($resultValue ?: 'N/A') . '</strong>';
             }
         }
+
+    // Condition finale pour l'affichage
+    $shouldDisplay = $hasValidResult || $isInfoLine;
     @endphp
 
-    @if($hasValidResult || ($child->analyse_type_id && $child->designation))
+    @if($shouldDisplay)
         {{-- Partie principale --}}
         @if($bacteriaName)
             {{-- Affichage du Germe isolé --}}

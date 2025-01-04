@@ -363,6 +363,7 @@
             return $analyse->resultats->first()->conclusion ?? null;
             })->filter()->unique()->values();
         @endphp
+
             @if($conclusionsExamen->isNotEmpty())
             <div style="margin-top: 4px; margin-bottom: 2px;">
                 <table class="main-table">

@@ -280,7 +280,7 @@
 
             <!-- Total Général -->
             <tr class="table-dark text-white">
-                <td colspan="2" class="text-right"><strong>TOTAL GÉNÉRAL</strong></td>
+                <td colspan="2" class="text-right"><strong>TOTAL</strong></td>
                 <td class="text-right"><strong>{{ number_format($totalGeneral, 0, ',', ' ') }} Ar</strong></td>
             </tr>
         </tbody>
