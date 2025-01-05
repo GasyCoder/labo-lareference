@@ -110,16 +110,17 @@ class ArchivedPrescriptions extends Component
     {
         try {
             $prescription = Prescription::findOrFail($prescriptionId);
-            $pdf = $this->pdfService->generatePDF($prescription);
-            $filename = 'resultats/prescription-' . $prescriptionId . '-' . time() . '.pdf';
-            Storage::disk('public')->put($filename, $pdf->output());
-            return Storage::disk('public')->url($filename);
+
+            // Le service retourne directement l'URL
+            return $this->pdfService->generatePDF($prescription);
+
         } catch (\Exception $e) {
             Log::error('Erreur génération PDF:', [
                 'message' => $e->getMessage(),
                 'prescription_id' => $prescriptionId,
                 'trace' => $e->getTraceAsString()
             ]);
+
             $this->alert('error', "Erreur lors de la génération du PDF : {$e->getMessage()}");
             return null;
         }
