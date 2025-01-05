@@ -131,17 +131,14 @@ class ResultatPdfShow
                 "Réf: %s\n" .
                 "Date: %s\n\n" .
                 "PRESCRIPTEUR:\n" .
-                "Dr. %s\n\n" .
-                "ANALYSES:\n" .
-                "• %s\n\n" .
-                "LIEN:\n%s",
+                "%s\n\n" .
+                "Lien des résultats d'analyse:\n%s",  // Notez qu'il y a maintenant 6 %s au total
 
                 $prescription->patient->sexe . ' ' . $prescription->patient->nom . ' ' . $prescription->patient->prenom,
                 $prescription->age . ' ' . $prescription->unite_age,
                 $prescription->patient->formatted_ref ?? 'N/A',
                 $prescription->created_at->format('d/m/Y'),
                 $prescription->prescripteur?->nom ?? 'Non assigné',
-                $designationsAnalyses,
                 $pdfUrl
             ), 'UTF-8', 'UTF-8');
 
