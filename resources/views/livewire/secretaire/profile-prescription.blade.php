@@ -13,7 +13,9 @@
                                     <li class="breadcrumb-item active">Détail</li>
                                 </ol>
                             </nav>
-                            <h1 class="h2 mb-0">Prescription #{{ str_pad($prescription->id, 5, '0', STR_PAD_LEFT) }}</h1>
+                            <h1 class="h2 mb-0">Prescription #
+                                {{ $prescription->patient->formatted_ref ?? 'Non défini' }}
+                            </h1>
                         </div>
 
                         <!-- Statut de la prescription -->
