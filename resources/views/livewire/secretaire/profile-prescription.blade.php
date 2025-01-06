@@ -93,7 +93,7 @@
                             <div class="border rounded p-3 text-center">
                                 <div class="text-muted mb-2">Préscripteur</div>
                                 <div class="h4 mb-0">
-                                    {{ $prescription->prescripteur ? $prescription->prescripteur->name : ($prescription->nouveau_prescripteur_nom ?? 'Non assigné') }}
+                                    {{ Str::limit($prescription->prescripteur?->nom, 25, '...') ?? 'Non assigné' }}
                                 </div>
                             </div>
                         </div>
