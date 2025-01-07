@@ -44,11 +44,21 @@ class PrelevementSeeder extends Seeder
                 'prix' => 1200.00,
                 'quantite' => 1,
                 'is_active' => true
+            ],
+            [
+                'nom' => 'Collecteur d\'urines',
+                'description' => 'Un flacon non stérile conçu pour le prélèvement d\'échantillons d\'urine.',
+                'prix' => 2000.00,
+                'quantite' => 1,
+                'is_active' => true
             ]
         ];
 
         foreach ($prelevements as $prelevement) {
-            Prelevement::create($prelevement);
+            Prelevement::updateOrCreate(
+                ['nom' => $prelevement['nom']], // Condition : éviter les doublons basés sur le nom
+                $prelevement // Données à insérer ou mettre à jour
+            );
         }
     }
 }

@@ -760,7 +760,7 @@ class BiologisteAnalysisForm extends Component
             AnalysePrescription::where([
                 'prescription_id' => $this->prescription->id,
                 'analyse_id' => $analyseId
-            ])->update(['status' => 'VALIDE']);
+            ])->update(['status' => 'TERMINE']);
 
             $totalAnalyses = $this->prescription->analyses()->count();
             $completedAnalyses = AnalysePrescription::where([
@@ -1190,8 +1190,8 @@ class BiologisteAnalysisForm extends Component
                 $this->collectChildAnalyseIds($parentAnalyse, $allAnalyseIds);
             }
 
-            // Mettre à jour les résultats existants
-            $updatedCount = Resultat::where('prescription_id', $this->prescription->id)
+            // Mettre à jour les résultats
+            Resultat::where('prescription_id', $this->prescription->id)
                 ->whereIn('analyse_id', $allAnalyseIds)
                 ->update([
                     'validated_by' => Auth::id(),
@@ -1199,18 +1199,47 @@ class BiologisteAnalysisForm extends Component
                     'status' => Resultat::STATUS_VALIDE
                 ]);
 
-            // Mettre à jour les statuts dans la table pivot pour toutes les analyses
-            AnalysePrescription::where('prescription_id', $this->prescription->id)
-                ->whereIn('analyse_id', $allAnalyseIds)
-                ->update([
+            // Mettre à jour les statuts des analyses pivot
+            // Les analyses déjà TERMINE restent TERMINE, seules les analyses parentes sont VALIDE
+            foreach ($parentAnalyses as $parentAnalyse) {
+                // Mettre à jour l'analyse parent en VALIDE
+                AnalysePrescription::where([
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $parentAnalyse->id
+                ])->update([
                     'status' => AnalysePrescription::STATUS_VALIDE,
                     'updated_at' => now()
                 ]);
 
-            // Mettre à jour le statut de la prescription
-            $this->prescription->update([
-                'status' => Prescription::STATUS_VALIDE
-            ]);
+                // Les analyses enfants restent en TERMINE si elles étaient déjà TERMINE
+                if ($parentAnalyse->children->isNotEmpty()) {
+                    AnalysePrescription::where('prescription_id', $this->prescription->id)
+                        ->whereIn('analyse_id', $parentAnalyse->children->pluck('id'))
+                        ->where('status', AnalysePrescription::STATUS_TERMINE)
+                        ->update([
+                            'status' => AnalysePrescription::STATUS_TERMINE,
+                            'updated_at' => now()
+                        ]);
+                }
+            }
+
+            // Vérifier si toutes les analyses principales sont validées
+            $totalParentAnalyses = $parentAnalyses->count();
+            $validatedParentAnalyses = AnalysePrescription::where([
+                'prescription_id' => $this->prescription->id,
+                'status' => AnalysePrescription::STATUS_VALIDE
+            ])->whereIn('analyse_id', $parentAnalyses->pluck('id'))->count();
+
+            // Mise à jour du statut de la prescription
+            if ($totalParentAnalyses === $validatedParentAnalyses) {
+                $this->prescription->update([
+                    'status' => Prescription::STATUS_VALIDE
+                ]);
+            } else {
+                $this->prescription->update([
+                    'status' => Prescription::STATUS_TERMINE
+                ]);
+            }
 
             DB::commit();
 

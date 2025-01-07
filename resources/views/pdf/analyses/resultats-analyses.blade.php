@@ -370,7 +370,7 @@
                     <tr>
                         <td colspan="4" style="padding: 2px 0;">
                             <div style="border-bottom: 2px dotted #8f8a8a; margin-bottom: 10px; font-weight: normal; font-size: 10pt;">
-                                Conclussion :
+                                Commentaires :
                                 @foreach($conclusionsExamen as $conclusion)
                                     <b>{!! nl2br(e($conclusion)) !!}</b>
                                     @if(!$loop->last)<br>@endif
