@@ -153,7 +153,7 @@
                                         (Score de Nugent: {!! $resultat->valeur !!})
                                     @endif
                                 @else
-                                    {!! $resultValue !!}
+                                    {{$resultValue}}
                                 @endif
                             @endif
 

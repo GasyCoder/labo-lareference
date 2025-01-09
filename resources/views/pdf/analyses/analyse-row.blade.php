@@ -10,6 +10,7 @@
                 $valeur = $resultat->valeur;
                 // Décoder la valeur JSON
                 $valeurDecodee = json_decode($valeur);
+
                 $isPathologique = $resultat->interpretation === 'PATHOLOGIQUE';
             @endphp
             @if($isPathologique)
