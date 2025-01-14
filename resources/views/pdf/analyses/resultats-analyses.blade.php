@@ -286,9 +286,9 @@
     </style>
 </head>
 <body>
-    @if(!$prescription->resultats()->whereNull('validated_by')->get()->isEmpty())
+    {{-- @if(!$prescription->resultats()->whereNull('validated_by')->get()->isEmpty())
     <div class="watermark">APERÇU</div>
-    @endif
+    @endif --}}
     <div class="header-section">
         <img src="{{ public_path('assets/images/logo.png') }}" alt="LABORATOIRE LA REFERENCE" class="header-logo">
     </div>
@@ -354,48 +354,39 @@
                         </td>
                     </tr>
                     @endif
-
                 @endforeach
             </table>
-
-        @php
+            @php
             $conclusionsExamen = $examen->analyses->map(function($analyse) {
             return $analyse->resultats->first()->conclusion ?? null;
             })->filter()->unique()->values();
         @endphp
 
-            @if($conclusionsExamen->isNotEmpty())
-            <div style="margin-top: 4px; margin-bottom: 2px;">
-                <table class="main-table">
-                    <tr>
-                        <td colspan="4" style="padding: 2px 0;">
-                            <div style="border-bottom: 2px dotted #8f8a8a; margin-bottom: 10px; font-weight: normal; font-size: 10pt;">
-                                Commentaires :
-                                @foreach($conclusionsExamen as $conclusion)
-                                    <b>{!! nl2br(e($conclusion)) !!}</b>
-                                    @if(!$loop->last)<br>@endif
-                                @endforeach
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-            </div>
+        @if($conclusionsExamen->isNotEmpty())
+        <div style="margin-top: 4px; margin-bottom: 2px;">
+            <table class="main-table">
+                <tr>
+                    <td colspan="4" style="padding: 2px 0;">
+                        <div style="border-bottom: 2px dotted #8f8a8a; margin-bottom: 10px; font-weight: normal; font-size: 10pt;">
+                            Commentaires :
+                            @foreach($conclusionsExamen as $conclusion)
+                                <b>{!! nl2br(e($conclusion)) !!}</b>
+                                @if(!$loop->last)<br>@endif
+                            @endforeach
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
             @else
             <div style="margin-top: 2px; margin-bottom: 2px;">
             </div>
         @endif
-
     @endforeach
         <!-- Signature en bas à droite -->
         <div style="margin-top: 20px; text-align: right; padding-right: 40px;">
             <img src="{{ public_path('assets/images/signature.png') }}" alt="Signature" style="max-width: 180px;">
         </div>
-        <!-- Ajout d'un pied de page pour les résultats non validés -->
-        @if(!$prescription->resultats()->whereNull('validated_by')->get()->isEmpty())
-        <div style="margin-top: 30px; font-size: 10pt; text-align: center; color: #6c757d;">
-            Document généré le {{ now()->format('d/m/Y à H:i') }} - Version préliminaire
-        </div>
-        @endif
     </div>
 </body>
 </html>

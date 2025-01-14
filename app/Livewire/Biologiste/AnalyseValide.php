@@ -3,10 +3,14 @@
 namespace App\Livewire\Biologiste;
 
 use Livewire\Component;
+use App\Models\Resultat;
 use App\Models\Prescription;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
+use App\Models\AnalysePrescription;
 use Illuminate\Support\Facades\Log;
 use App\Services\ResultatPdfService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class AnalyseValide extends Component
@@ -102,6 +106,108 @@ class AnalyseValide extends Component
 
            $this->alert('error', "Erreur lors de la génération du PDF : {$e->getMessage()}");
            return null;
+       }
+   }
+
+   private function collectChildAnalyseIds($analyse, &$allAnalyseIds)
+   {
+       if ($analyse->children) {
+           foreach ($analyse->children as $child) {
+               $allAnalyseIds->push($child->id);
+               $this->collectChildAnalyseIds($child, $allAnalyseIds);
+           }
+       }
+   }
+
+   public function validateAnalyse($prescriptionId)
+   {
+       try {
+           DB::beginTransaction();
+   
+           $prescription = Prescription::findOrFail($prescriptionId);
+   
+           // Récupérer toutes les analyses (parents et enfants)
+           $parentAnalyses = $prescription->analyses()
+               ->with(['children'])
+               ->get();
+   
+           $allAnalyseIds = collect();
+   
+           // Collecter tous les IDs des analyses (parents et enfants)
+           foreach ($parentAnalyses as $parentAnalyse) {
+               $allAnalyseIds->push($parentAnalyse->id);
+               $this->collectChildAnalyseIds($parentAnalyse, $allAnalyseIds);
+           }
+   
+           // Mettre à jour les résultats
+           Resultat::where('prescription_id', $prescriptionId)
+               ->whereIn('analyse_id', $allAnalyseIds)
+               ->update([
+                   'validated_by' => Auth::id(),
+                   'validated_at' => now(),
+                   'status' => Resultat::STATUS_VALIDE
+               ]);
+   
+           // Mettre à jour les statuts des analyses pivot
+           // Les analyses déjà TERMINE restent TERMINE, seules les analyses parentes sont VALIDE
+           foreach ($parentAnalyses as $parentAnalyse) {
+               // Mettre à jour l'analyse parent en VALIDE
+               AnalysePrescription::where([
+                   'prescription_id' => $prescriptionId,
+                   'analyse_id' => $parentAnalyse->id
+               ])->update([
+                   'status' => AnalysePrescription::STATUS_VALIDE,
+                   'updated_at' => now()
+               ]);
+   
+               // Les analyses enfants restent en TERMINE si elles étaient déjà TERMINE
+               if ($parentAnalyse->children->isNotEmpty()) {
+                   AnalysePrescription::where('prescription_id', $prescriptionId)
+                       ->whereIn('analyse_id', $parentAnalyse->children->pluck('id'))
+                       ->where('status', AnalysePrescription::STATUS_TERMINE)
+                       ->update([
+                           'status' => AnalysePrescription::STATUS_TERMINE,
+                           'updated_at' => now()
+                       ]);
+               }
+           }
+   
+           // Vérifier si toutes les analyses principales sont validées
+           $totalParentAnalyses = $parentAnalyses->count();
+           $validatedParentAnalyses = AnalysePrescription::where([
+               'prescription_id' => $prescriptionId,
+               'status' => AnalysePrescription::STATUS_VALIDE
+           ])->whereIn('analyse_id', $parentAnalyses->pluck('id'))->count();
+   
+           // Mise à jour du statut de la prescription
+           if ($totalParentAnalyses === $validatedParentAnalyses) {
+               $prescription->update([
+                   'status' => Prescription::STATUS_VALIDE
+               ]);
+           } else {
+               $prescription->update([
+                   'status' => Prescription::STATUS_TERMINE
+               ]);
+           }
+   
+           DB::commit();
+   
+           $this->dispatch('$refresh');
+           $this->alert('success', 'Les analyses ont été validées avec succès');
+   
+           return redirect()->route('biologiste.analyse.index', ['tab' => 'valide']);
+   
+       } catch (\Exception $e) {
+           DB::rollback();
+           Log::error('Erreur validation analyses:', [
+               'message' => $e->getMessage(),
+               'trace' => $e->getTraceAsString(),
+               'prescription_id' => $prescriptionId,
+               'user_id' => Auth::id()
+           ]);
+   
+           $this->alert('error', "Une erreur s'est produite lors de la validation");
+           return false;
        }
    }
 }

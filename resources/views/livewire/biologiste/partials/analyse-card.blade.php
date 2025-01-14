@@ -91,7 +91,9 @@
     </table>
 
     <!-- Mode mobile -->
-    <div class="d-md-none">
+
+    @include('livewire.biologiste.partials.mobile')
+    {{-- <div class="d-md-none">
         @forelse($prescriptions as $key => $prescription)
             <div class="card mb-3 shadow-sm">
                 <div class="card-body">
@@ -129,7 +131,7 @@
                 Aucune analyse {{ $tab === 'actifs' ? 'active' : ($tab === 'valide' ? 'validée' : 'terminé par technicien') }} sur cet onglet.
             </p>
         @endforelse
-    </div>
+    </div> --}}
 
     <!-- Pagination -->
     <div class="mt-4 d-flex justify-content-center">
