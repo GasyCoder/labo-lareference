@@ -553,7 +553,7 @@ class BiologisteAnalysisForm extends Component
                 $mainResultData = [
                     'prescription_id' => $this->prescription->id,
                     'analyse_id' => $analyseId,
-                    'resultats' => $value, 
+                    'resultats' => $value,
                     'valeur' => $value,
                     'interpretation' => $this->results[$analyseId]['interpretation'] ?? null,
                     'conclusion' => $this->conclusion
