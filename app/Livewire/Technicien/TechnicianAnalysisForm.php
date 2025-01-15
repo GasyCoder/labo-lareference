@@ -1021,6 +1021,17 @@ class TechnicianAnalysisForm extends Component
                     'conclusion' => $this->conclusion
                 ];
             }
+            elseif ($analyse->analyseType->name === 'TEST') {
+                $value = $this->results[$analyseId]['resultats'] ?? null;
+                $mainResultData = [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId,
+                    'resultats' => $value, 
+                    'valeur' => $value,
+                    'interpretation' => $this->results[$analyseId]['interpretation'] ?? null,
+                    'conclusion' => $this->conclusion
+                ];
+            }
             elseif ($analyse->analyseType->name === 'GERME') {
                 $germeData = $this->processGermeValue(true);
                 $mainResultData = [
@@ -1174,14 +1185,12 @@ class TechnicianAnalysisForm extends Component
                         }
                     break;
 
-                    case 'TEST':
-                        // Les champs ne sont pas obligatoires, donc on accepte des valeurs nulles
-                        $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
-                        // L'interprétation est calculée seulement si un résultat existe
-                        $childResultData['interpretation'] = isset($this->results[$childId]['resultats']) && $this->results[$childId]['resultats'] === 'POSITIF'
-                            ? 'PATHOLOGIQUE'
-                            : 'NORMAL';
-                        break;
+                    // case 'TEST':
+                    //     $value = $this->results[$childId]['resultats'] ?? null;
+                    //     $childResultData['resultats'] = $value;
+                    //     $childResultData['interpretation'] = $value;
+                    //     break;
+                
                     default:
                         $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
                         $childResultData['valeur'] = $this->results[$childId]['valeur'] ?? null;

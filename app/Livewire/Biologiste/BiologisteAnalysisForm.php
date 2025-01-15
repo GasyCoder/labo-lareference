@@ -548,6 +548,17 @@ class BiologisteAnalysisForm extends Component
                     'conclusion' => $this->conclusion
                 ];
             }
+            elseif ($analyse->analyseType->name === 'TEST') {
+                $value = $this->results[$analyseId]['resultats'] ?? null;
+                $mainResultData = [
+                    'prescription_id' => $this->prescription->id,
+                    'analyse_id' => $analyseId,
+                    'resultats' => $value, 
+                    'valeur' => $value,
+                    'interpretation' => $this->results[$analyseId]['interpretation'] ?? null,
+                    'conclusion' => $this->conclusion
+                ];
+            }
             elseif ($analyse->analyseType->name === 'NEGATIF_POSITIF_2') {
                 $mainResultData = [
                     'prescription_id' => $this->prescription->id,
@@ -713,13 +724,6 @@ class BiologisteAnalysisForm extends Component
                                 $childResultData['valeur'] = null;
                             }
                     break;
-
-                    case 'TEST':
-                        $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
-                        $childResultData['interpretation'] = ($this->results[$childId]['resultats'] === 'POSITIF')
-                            ? 'PATHOLOGIQUE'
-                            : 'NORMAL';
-                        break;
 
                     default:
                         $childResultData['resultats'] = $this->results[$childId]['resultats'] ?? null;
