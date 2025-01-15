@@ -91,7 +91,7 @@ class ResultatPdfShow
                 }
             });
 
-            $examen->analyses = $analysesUniques;
+            $examen->analyses = $analysesUniques->sortBy('id');
             return $examen;
         });
     }
