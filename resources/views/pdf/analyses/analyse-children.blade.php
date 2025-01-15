@@ -80,7 +80,7 @@
             }
 
             if ($resultat && $resultat->interpretation === 'PATHOLOGIQUE') {
-                $resultValue = '<span class="bold">' . ($resultValue ?: 'N/A') . '</span>';
+                $resultValue = '<strong>' . ($resultValue ?: 'N/A') . '</strong>';
             }
         }
 
@@ -129,7 +129,7 @@
                 <td class="col-designation {{ $child->is_bold ? 'bold' : '' }}">
                     {{ $child->designation }}
                 </td>
-                < class="col-resultat">
+                <td class="col-resultat">
                     @if($child->analyse_type_id === 13 && $leucocytesData)
                         {{ $leucocytesData['valeur'] }} /mm3
                     @else
@@ -153,7 +153,7 @@
                                         (Score de Nugent: {!! $resultat->valeur !!})
                                     @endif
                                 @else
-                                {!! $resultValue !!}
+                                    {!!$resultValue!!}
                                 @endif
                             @endif
 
