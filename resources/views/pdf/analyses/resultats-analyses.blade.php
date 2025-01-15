@@ -12,6 +12,10 @@
             box-sizing: border-box;
         }
 
+        .bold {
+            font-weight: bold;
+        }
+
         body {
             font-family: Arial, sans-serif;
             font-size: 11pt;
