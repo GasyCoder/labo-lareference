@@ -184,6 +184,7 @@
                     @endif
                 </td>
             </tr>
+
             {{-- Traitement spécial pour les LEUCOCYTES --}}
             @if($child->analyse_type_id === 13 && $leucocytesData)
                 <tr class="subchild-row">
