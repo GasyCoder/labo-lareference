@@ -338,13 +338,7 @@
             <table class="main-table">
                 @foreach($examen->analyses as $analyse)
                     @if($analyse->level_value === 'PARENT' || !$analyse->parent_code)
-                        @include('pdf.analyses.analyse-row', ['analyse' => $analyse, 'level' => +1])
-                        @if($analyse->children && $analyse->children->count() > 0)
-                            @include('pdf.analyses.analyse-children', ['children' => $analyse->children, 'level' => +2])
-                        @endif
-                    @endif
-
-                @if(!empty($analyse->description))
+                    @if(!empty($analyse->description))
                     <tr>
                         <td colspan="4" style="padding:2px 0;">
                             <div style="
@@ -359,9 +353,14 @@
                     </tr>
                     @endif
 
+                    @include('pdf.analyses.analyse-row', ['analyse' => $analyse, 'level' => +1])
+                    @if($analyse->children && $analyse->children->count() > 0)
+                        @include('pdf.analyses.analyse-children', ['children' => $analyse->children, 'level' => +2])
+                    @endif
+
+                    @endif
                 @endforeach
             </table>
-
         @php
             $conclusionsExamen = $examen->analyses->map(function($analyse) {
             return $analyse->resultats->first()->conclusion ?? null;
