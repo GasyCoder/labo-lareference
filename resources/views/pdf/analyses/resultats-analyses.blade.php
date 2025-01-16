@@ -14,9 +14,7 @@
     <div class="red-line"></div>
     <div class="content-wrapper">
         {{-- En-tête reste identique --}}
-        <div class="doctor-info">...</div>
-        <div class="patient-info">...</div>
-
+        @include('pdf.analyses.header')
         @foreach($examens as $examen)
             @php
                 $hasValidResults = $examen->analyses->some(function($analyse) {
