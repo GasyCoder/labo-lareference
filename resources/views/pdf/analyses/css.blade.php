@@ -41,7 +41,7 @@
         margin: 0;
         padding: 0;
         display: block;
-        max-height: 60px;
+        max-height: 70px;
     }
 
     /* Section contenu */

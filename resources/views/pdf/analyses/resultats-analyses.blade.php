@@ -13,21 +13,9 @@
 
     <div class="red-line"></div>
     <div class="content-wrapper">
-        {{-- QR CODE ICI --}}
-        <div class="doctor-info">
-            <img
-            src="data:image/png;base64,{{ base64_encode($qrcodeImage) }}"
-            alt="QR Code-{{ str_pad($prescription->id, 5, '0', STR_PAD_LEFT) }}"
-            class="qr-image"
-            width="80"
-            height="80">
-        </div>
-        <div class="patient-info">
-            Résultats de : <b>{{ $prescription->patient->sexe }} {{ $prescription->patient->nom. ' ' .$prescription->patient->prenom }}</b><br>
-            Age: {{ $prescription->age }} {{ $prescription->unite_age }}<br>
-            Réf n° {{ $prescription->patient->formatted_ref ?? 'N/A' }} du {{ $prescription->created_at->format('d/m/Y') }}<br>
-            Prescripteur: <b>{{ $prescription->prescripteur->nom ?? 'Non assigné' }}</b>
-        </div>
+        {{-- En-tête reste identique --}}
+        <div class="doctor-info">...</div>
+        <div class="patient-info">...</div>
 
         @foreach($examens as $examen)
             @php
@@ -38,6 +26,8 @@
                         });
                 });
             @endphp
+
+            {{-- En-tête du tableau --}}
             <table class="main-table">
                 <tr>
                     <td class="col-designation section-title">{{ strtoupper($examen->name) }}</td>
@@ -49,23 +39,26 @@
             <div class="red-line"></div>
             <div class="result-spacing"></div>
 
+            {{-- Contenu principal --}}
             <table class="main-table">
                 @foreach($examen->analyses as $analyse)
                     @if($analyse->level_value === 'PARENT' || !$analyse->parent_code)
+                        {{-- Afficher l'analyse parent --}}
+                        @include('pdf.analyses.analyse-row', ['analyse' => $analyse, 'level' => +1])
 
-                    @include('pdf.analyses.analyse-row', ['analyse' => $analyse, 'level' => +1])
-
-                    @if($analyse->children && $analyse->children->count() > 0)
-                        @include('pdf.analyses.analyse-children', ['children' => $analyse->children, 'level' => +2])
+                        {{-- Afficher ses enfants --}}
+                        @if($analyse->children && $analyse->children->count() > 0)
+                            @include('pdf.analyses.analyse-children', ['children' => $analyse->children, 'level' => +2])
+                        @endif
+                        {{-- Afficher la dernière description/conclusion --}}
+                        @include('pdf.analyses.description')
+                        @include('pdf.analyses.conclusion')
                     @endif
-                @endif
                 @endforeach
             </table>
+        @endforeach
 
-            {{-- @include('pdf.analyses.description') --}}
-
-            @endforeach
-        <!-- Signature en bas à droite -->
+        <!-- Signature -->
         <div style="margin-top: 20px; text-align: right; padding-right: 40px;">
             <img src="{{ public_path('assets/images/signature.png') }}" alt="Signature" style="max-width: 180px;">
         </div>

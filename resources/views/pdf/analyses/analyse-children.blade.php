@@ -94,7 +94,7 @@
             {{-- Affichage du Germe isolé --}}
             <tr class="subchild-row">
                 <td class="col-designation {{ $child->is_bold ? 'bold' : '' }}">
-                    {{ $child->designation }}
+                    {{ $child->designation}}
                 </td>
                 <td class="col-resultat">
                     <i>{{ $bacteriaName }}</i>
@@ -127,7 +127,7 @@
             {{-- Affichage normal pour les autres types d'analyses --}}
             <tr class="subchild-row">
                 <td class="col-designation {{ $child->is_bold ? 'bold' : '' }}">
-                    {{ $child->designation }}
+                    {{ $child->designation}}
                 </td>
                 <td class="col-resultat">
                     @if($child->analyse_type_id === 13 && $leucocytesData)
@@ -202,4 +202,5 @@
             @endif
         @endif
     @endif
+
 @endforeach
