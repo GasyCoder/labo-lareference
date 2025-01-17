@@ -48,12 +48,12 @@
                         @if($analyse->children && $analyse->children->count() > 0)
                             @include('pdf.analyses.analyse-children', ['children' => $analyse->children, 'level' => +2])
                         @endif
-                        {{-- Afficher la dernière description/conclusion --}}
-                        @include('pdf.analyses.description')
-                        @include('pdf.analyses.conclusion')
                     @endif
+                    @include('pdf.analyses.description')
                 @endforeach
+
             </table>
+                  @include('pdf.analyses.conclusion')
         @endforeach
 
         <!-- Signature -->
