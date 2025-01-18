@@ -105,11 +105,13 @@
                                         title="Restaurer" style="width: 32px; height: 32px;">
                                     <i class="fas fa-undo-alt"></i>
                                 </button>
+                                @if(auth()->user()->hasRole('superadmin'))
                                 <button wire:click="confirmPermanentDelete({{ $prescription->id }})"
                                         class="btn btn-sm btn-danger d-flex align-items-center justify-content-center"
                                         title="Supprimer définitivement" style="width: 32px; height: 32px;">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
+                                @endauth
                                 @else
                                 @if($prescription->status === 'EN_ATTENTE' || $prescription->status === 'EN_COURS' || $prescription->status === 'TERMINE')
                                 {{-- Actions communes pour les prescriptions actives --}}
