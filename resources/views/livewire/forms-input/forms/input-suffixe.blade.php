@@ -9,7 +9,7 @@
         <option value="en-cours" @selected(in_array('en-cours', (array)$selectedOption))>
             {{ __('En cours') }}
         </option>
-        <option value="culture-sterile" @selected(in_array('culture-sterile', (array)$selectedOption))>
+        <option value="culture-stérile" @selected(in_array('culture-stérile', (array)$selectedOption))>
             {{ __('Culture stérile') }}
         </option>
         <option value="absence" @selected(in_array('absence', (array)$selectedOption))>

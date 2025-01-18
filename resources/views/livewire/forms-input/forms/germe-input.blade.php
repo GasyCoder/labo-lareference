@@ -19,7 +19,7 @@
                     $standardOptions = [
                         'non-rechercher' => __('Non recherché'),
                         'en-cours' => __('En cours'),
-                        'culture-sterile' => __('Culture stérile'),
+                        'culture-stérile' => __('Culture stérile'),
                         'absence de germe pathogène' => __('Absence de germe pathogène')
                     ];
                 @endphp
