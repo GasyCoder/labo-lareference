@@ -49,7 +49,7 @@
                             @include('pdf.analyses.analyse-children', ['children' => $analyse->children, 'level' => +2])
                         @endif
                     @endif
-                    @include('pdf.analyses.description')
+                    {{-- @include('pdf.analyses.description') --}}
                 @endforeach
 
             </table>
