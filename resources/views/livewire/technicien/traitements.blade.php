@@ -51,6 +51,13 @@
                                         <span class="badge bg-success ms-1">{{ $analyseTermines->total() }}</span>
                                     </a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ $tab === 'refaire' ? 'active' : '' }}" href="#refaire"
+                                       wire:click.prevent="switchTab('refaire')">
+                                        <i class="fa fa-refresh me-2"></i>A réfaire
+                                        <span class="badge bg-warning ms-1">{{ $prescriptionsARefaire->total() }}</span>
+                                    </a>
+                                </li>
                             </ul>
 
                             <!-- Contenu des onglets -->
@@ -60,6 +67,9 @@
                                 </div>
                                 <div class="tab-pane fade {{ $tab === 'termine' ? 'show active' : '' }}" id="termine">
                                     @include('livewire.technicien.partials.prescription-card', ['prescriptions' => $analyseTermines])
+                                </div>
+                                <div class="tab-pane fade {{ $tab === 'refaire' ? 'show active' : '' }}" id="refaire">
+                                    @include('livewire.technicien.partials.prescription-card', ['prescriptions' => $prescriptionsARefaire])
                                 </div>
                             </div>
                         </div>

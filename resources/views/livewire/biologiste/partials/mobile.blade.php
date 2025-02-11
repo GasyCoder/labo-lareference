@@ -34,32 +34,50 @@
                 </div>
 
                 <!-- Actions buttons -->
-                <div class="d-flex gap-2">
-                    <!-- Bouton Aperçu PDF -->
-                    <x-preview-mobile :prescription="$prescription"/>
-                    
-                    @if($prescription->status !== 'VALIDE')
-                    <!-- Bouton Valider -->
-                    <button wire:click="validateAnalyse({{ $prescription->id }})"
-                        wire:loading.attr="disabled"
-                        class="btn btn-success flex-grow-1 d-flex align-items-center justify-content-center"
-                        style="font-size: 13px; padding: 8px 0; background-color: #198754; border-radius: 6px;">
-                    <span wire:loading.remove>
-                        <i class="fas fa-check-circle"></i>
-                        Valider
-                    </span>
-                    <span wire:loading>
-                        <i class="fas fa-spinner fa-spin"></i>
-                    </span>
-                    </button>
-                    @endif
-                    <!-- Bouton Voir détails -->
-                    <button wire:click="openAnalyse({{ $prescription->id }})" 
-                        class="btn btn-primary flex-grow-1 d-flex align-items-center justify-content-center"
-                        style="font-size: 13px; padding: 8px 0; background-color: #6f42c1; border-radius: 6px;">
-                        <i class="fas fa-eye me-2"></i>
-                        Détails
-                    </button>
+                <div class="d-flex flex-column gap-2">
+                    <!-- Première ligne : Bouton Détails -->
+                    <div>
+                        <x-preview-mobile :prescription="$prescription"/>
+                    </div>
+
+                    <!-- Deuxième ligne : Autres boutons -->
+                    <div class="d-flex gap-2">
+                        @if($prescription->status !== 'VALIDE')
+                        <!-- Bouton Valider -->
+                        <button wire:click="validateAnalyse({{ $prescription->id }})"
+                            wire:loading.attr="disabled"
+                            class="btn btn-success flex-grow-1 d-flex align-items-center justify-content-center"
+                            style="font-size: 13px; padding: 8px 0; background-color: #198754; border-radius: 6px;">
+                            <span wire:loading.remove>
+                                <i class="fas fa-check-circle"></i>
+                                Valider
+                            </span>
+                            <span wire:loading>
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                        </button>
+                        <!-- Bouton À refaire -->
+                        <button wire:click="redoPrescription({{ $prescription->id }})"
+                            wire:loading.attr="disabled"
+                            class="btn btn-warning flex-grow-1 d-flex align-items-center justify-content-center"
+                            style="font-size: 13px; padding: 8px 0; background: #FFA500; border-color: #FFA500; border-radius: 6px;">
+                            <div wire:loading.remove wire:target="redoPrescription({{ $prescription->id }})">
+                                <i class="fa fa-refresh me-2"></i>
+                                À refaire
+                            </div>
+                            <div wire:loading wire:target="redoPrescription({{ $prescription->id }})">
+                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                En cours...
+                            </div>
+                        </button>
+                        @endif
+                        <button wire:click="openAnalyse({{ $prescription->id }})"
+                            class="btn btn-primary flex-grow-1 d-flex align-items-center justify-content-center"
+                            style="font-size: 13px; padding: 8px 0; background-color: #6f42c1; border-radius: 6px;">
+                            <i class="fas fa-eye me-2"></i>
+                            Détails
+                        </button>
+                    </div>
                 </div>
 
             </div>

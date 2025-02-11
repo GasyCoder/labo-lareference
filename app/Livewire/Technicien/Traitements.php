@@ -96,11 +96,35 @@ class Traitements extends Component
             ->orderBy('created_at', 'asc')
             ->paginate(15, ['*'], 'termine_page');
 
-        return view('livewire.technicien.traitements', [
-            'activePrescriptions' => $activePrescriptions,
-            'analyseTermines' => $analyseTermines,
-        ]);
-    }
+            // Prescriptions à refaire
+            $prescriptionsARefaire = Prescription::with(['patient', 'prescripteur', 'analyses'])
+                ->whereHas('patient', function ($query) {
+                    $query->whereNull('deleted_at');
+                })
+                ->where('is_archive', false)
+                ->where('status', Prescription::STATUS_A_REFAIRE)  // Utilise la constante du modèle Prescription
+                ->where(function ($query) use ($search) {
+                    $query->where('renseignement_clinique', 'like', $search)
+                        ->orWhere('status', 'like', $search)
+                        ->orWhereHas('patient', function ($query) use ($search) {
+                            $query->where('nom', 'like', $search)
+                                ->orWhere('prenom', 'like', $search)
+                                ->orWhere('telephone', 'like', $search);
+                        })
+                        ->orWhereHas('prescripteur', function ($query) use ($search) {
+                            $query->where('nom', 'like', $search)
+                                ->where('is_active', true);
+                        });
+                })
+                ->orderBy('created_at', 'desc')
+                ->paginate(15, ['*'], 'refaire_page');
+
+                    return view('livewire.technicien.traitements', [
+                        'activePrescriptions' => $activePrescriptions,
+                        'analyseTermines' => $analyseTermines,
+                        'prescriptionsARefaire' => $prescriptionsARefaire,
+                    ]);
+                }
 
 
     public function openPrescription($prescriptionId)

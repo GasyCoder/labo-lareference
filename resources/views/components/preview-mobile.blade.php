@@ -21,9 +21,9 @@
             });
     "
     :disabled="downloading"
-    {{ $attributes->merge(['class' => 'btn btn-danger flex-grow-1 d-flex align-items-center justify-content-center', 'style' => 'font-size: 13px; padding: 8px 0; background-color: #dc3545; border-radius: 6px;']) }}
+    {{ $attributes->merge(['class' => 'btn btn-danger w-100 d-flex align-items-center justify-content-center', 'style' => 'font-size: 13px; padding: 8px 0; background-color: #dc3545; border-radius: 6px;']) }}
     title="{{ $attributes->get('title', 'Aperçu') }}">
-    <div class="d-flex align-items-center justify-content-center">
+    <div class="">
         <template x-if="!downloading">
             <span>
                 <i class="fas fa-file-pdf me-2"></i>

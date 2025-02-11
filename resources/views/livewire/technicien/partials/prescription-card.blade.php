@@ -95,7 +95,15 @@
 </div>
 @else
 <div class="alert alert-info">
-    Aucune prescription {{ $tab === 'actifs' ? 'active' : ($tab === 'termine' ? 'terminée' : 'dans la corbeille') }} trouvée.
+    @php
+        $message = match($tab) {
+            'actifs' => 'active',
+            'termine' => 'terminée',
+            'refaire' => 'à refaire',
+            default => 'dans la corbeille'
+        };
+    @endphp
+    Aucune prescription {{ $message }} trouvée.
 </div>
 @endif
 @include('layouts.scripts')

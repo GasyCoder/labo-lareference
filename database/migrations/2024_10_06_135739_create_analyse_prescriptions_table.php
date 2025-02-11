@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->foreignId('analyse_id')->constrained('analyses')->onDelete('cascade');
             $table->decimal('prix', 10, 2)->default(0);
             $table->enum('is_payer', ['PAYE', 'NON_PAYE'])->default('NON_PAYE');
-            $table->enum('status', ['EN_ATTENTE', 'EN_COURS', 'TERMINE', 'VALIDE', 'ARCHIVE'])->default('EN_ATTENTE');
+            $table->enum('status', ['EN_ATTENTE', 'EN_COURS', 'TERMINE', 'VALIDE', 'A_REFAIRE', 'ARCHIVE'])->default('EN_ATTENTE');
             $table->timestamps();
         });
     }

@@ -3,6 +3,7 @@
         'EN_COURS' => ['class' => 'info', 'icon' => 'spinner', 'text' => 'En cours'],
         'TERMINE' => ['class' => 'primary', 'icon' => 'check', 'text' => 'Terminé'],
         'VALIDE' => ['class' => 'success', 'icon' => 'check-circle', 'text' => 'Validé'],
+        'A_REFAIRE' => ['class' => 'warning', 'icon' => 'refresh', 'text' => 'À refaire']
     ][$prescription->status] ?? ['class' => 'secondary', 'icon' => 'question', 'text' => 'Inconnu'];
 @endphp
 
@@ -10,12 +11,16 @@
 <div class="d-none d-md-block">
     <div class="col-lg-9">
         <div class="d-flex align-items-center mb-3">
+            <!-- Bouton Précédent -->
+            {{-- <a href="{{ route('biologiste.analyse.index')}}"
+                class="btn btn-light me-2">
+                Retour au précedent
+            </a> --}}
             <div class="icon-circle bg-primary-soft me-3">
                 <i class="fas fa-flask text-primary"></i>
             </div>
             <h2 class="mb-0">Résultats d'analyses</h2>
         </div>
-
         <div class="row g-3">
             <!-- Infos patient -->
             <div class="col-md-6">
@@ -55,7 +60,11 @@
                     </div>
                     <div class="info-content">
                         <label>Statut</label>
-                        @if($prescription->resultats()->where('validated_by', '!=', NULL)->exists())
+                        @if($prescription->status === 'A_REFAIRE')
+                            <span class="badge bg-warning rounded-pill">
+                                <i class="fa fa-refresh me-1"></i> À refaire
+                            </span>
+                        @elseif($prescription->resultats()->where('validated_by', '!=', NULL)->exists())
                             <span class="badge bg-success rounded-pill">
                                 <i class="fas fa-check-double me-1"></i> Validé
                             </span>
@@ -117,7 +126,11 @@
                     </div>
                     <div class="info-content">
                         <label>Statut</label>
-                        @if($prescription->resultats()->where('validated_by', '!=', NULL)->exists())
+                        @if($prescription->status === 'A_REFAIRE')
+                            <span class="badge bg-warning rounded-pill">
+                                <i class="fa fa-refresh me-1"></i> À refaire
+                            </span>
+                        @elseif($prescription->resultats()->where('validated_by', '!=', NULL)->exists())
                             <span class="badge bg-success rounded-pill">
                                 <i class="fas fa-check-double me-1"></i> Validé
                             </span>

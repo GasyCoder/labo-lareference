@@ -10,13 +10,25 @@
                         <div class="col-lg-8">
                             @include('livewire.forms-input.patient-info', ['patient' => $prescription->patient])
                         </div>
-
                         <!-- Actions -->
-                        <div class="col-lg-4 d-flex justify-content-end align-items-center gap-3">
-                            <a href="{{ route('biologiste.analyse.index')}}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-2"></i> Retour
-                            </a>
-                            <x-preview-button/>
+                        <div class="col-lg-4">
+                            <div class="d-flex gap-2 justify-content-end align-items-center">
+                                <button wire:click="redoPrescription({{ $prescription->id }})"
+                                    wire:loading.attr="disabled"
+                                    class="btn btn-warning me-2"
+                                    style="background: white; color: #FFA500; border-color: #FFA500;">
+                                    <div class="d-flex align-items-center">
+                                        <div wire:loading wire:target="redoPrescription({{ $prescription->id }})">
+                                            <i class="fas fa-spinner fa-spin me-2"></i>
+                                        </div>
+                                        <div wire:loading.remove wire:target="redoPrescription({{ $prescription->id }})">
+                                            <i class="fa fa-refresh me-1"></i>
+                                        </div>
+                                        <span>À refaire</span>
+                                    </div>
+                                </button>
+                                <x-preview-button wire:ignore.self/>
+                            </div>
                         </div>
                     </div>
                 </div>

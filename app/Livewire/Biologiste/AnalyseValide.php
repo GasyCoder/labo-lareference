@@ -121,6 +121,50 @@ class AnalyseValide extends Component
        }
    }
 
+   public function redoPrescription($prescriptionId)
+   {
+       try {
+           DB::beginTransaction();
+
+           $prescription = Prescription::findOrFail($prescriptionId);
+
+           // Mettre à jour le statut de la prescription
+           $prescription->update([
+               'status' => Prescription::STATUS_A_REFAIRE
+           ]);
+
+           // Mettre à jour toutes les analyses de la prescription
+           foreach ($prescription->analyses as $analyse) {
+               $analyse->pivot->update([
+                   'status' => AnalysePrescription::STATUS_A_REFAIRE
+               ]);
+           }
+
+           // Réinitialiser les résultats
+           Resultat::where('prescription_id', $prescriptionId)
+               ->update([
+                   'validated_by' => null,
+                   'validated_at' => null,
+                   'status' => Resultat::STATUS_EN_ATTENTE
+               ]);
+
+           DB::commit();
+
+           $this->dispatch('prescription-status-updated');
+           $this->alert('success', 'La prescription a été marquée à refaire');
+
+       } catch (\Exception $e) {
+           DB::rollback();
+           Log::error('Erreur lors de la mise à refaire de la prescription:', [
+               'message' => $e->getMessage(),
+               'prescription_id' => $prescriptionId,
+               'user_id' => Auth::id()
+           ]);
+
+           $this->alert('error', "Une erreur s'est produite lors de la mise à refaire de la prescription");
+       }
+   }
+
    public function validateAnalyse($prescriptionId)
    {
        try {
@@ -212,4 +256,5 @@ class AnalyseValide extends Component
            return false;
        }
    }
+
 }

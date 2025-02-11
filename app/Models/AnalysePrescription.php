@@ -25,6 +25,7 @@ class AnalysePrescription extends Pivot
     const STATUS_ARCHIVE = 'ARCHIVE';
     const STATUS_PAYE = 'PAYE';
     const STATUS_NON_PAYE = 'NON_PAYE';
+    const STATUS_A_REFAIRE = 'A_REFAIRE';
 
     public function prescription()
     {

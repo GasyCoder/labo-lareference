@@ -110,6 +110,7 @@ class Prescription extends Model
     const STATUS_TERMINE = 'TERMINE';
     const STATUS_VALIDE = 'VALIDE';
     const STATUS_ARCHIVE = 'ARCHIVE';
+    const STATUS_A_REFAIRE = 'A_REFAIRE';
 
     // Ajoutez cette relation
     public function prelevements()
@@ -183,6 +184,22 @@ class Prescription extends Model
         return $this->belongsTo(User::class, 'secretaire_id');
     }
 
+    public function marquerAnalyseARefaire($analyseId)
+    {
+        return DB::transaction(function () use ($analyseId) {
+            $analysePrescription = $this->analyses()
+                ->wherePivot('analyse_id', $analyseId)
+                ->first()
+                ->pivot;
+
+            $analysePrescription->status = AnalysePrescription::STATUS_A_REFAIRE;
+            $analysePrescription->save();
+
+            $this->updateStatus();
+
+            return true;
+        });
+    }
 
     public function archivePrescription()
     {

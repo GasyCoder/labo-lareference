@@ -1276,6 +1276,51 @@ class BiologisteAnalysisForm extends Component
         }
     }
 
+    public function redoPrescription($prescriptionId)
+    {
+        try {
+            DB::beginTransaction();
+
+            $prescription = Prescription::findOrFail($prescriptionId);
+
+            // Mettre à jour le statut de la prescription
+            $prescription->update([
+                'status' => Prescription::STATUS_A_REFAIRE
+            ]);
+
+            // Mettre à jour toutes les analyses de la prescription
+            foreach ($prescription->analyses as $analyse) {
+                $analyse->pivot->update([
+                    'status' => AnalysePrescription::STATUS_A_REFAIRE
+                ]);
+            }
+
+            // Mise à jour des résultats avec un statut valide au lieu de null
+            Resultat::where('prescription_id', $prescriptionId)
+                ->update([
+                    'validated_by' => null,
+                    'validated_at' => null,
+                    'status' => Resultat::STATUS_EN_ATTENTE  // Utiliser une constante appropriée de votre modèle Resultat
+                ]);
+
+            DB::commit();
+
+            $this->dispatch('prescription-status-updated');
+            $this->alert('success', 'La prescription a été marquée à refaire');
+            return redirect()->route('biologiste.analyse.index');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Erreur lors de la mise à refaire de la prescription:', [
+                'message' => $e->getMessage(),
+                'prescription_id' => $prescriptionId,
+                'user_id' => Auth::id()
+            ]);
+
+            $this->alert('error', "Une erreur s'est produite lors de la mise à refaire de la prescription");
+            return false;
+        }
+    }
     // Rendu de la vue
     public function render()
     {
